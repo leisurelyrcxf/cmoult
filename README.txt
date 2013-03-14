@@ -40,7 +40,7 @@ Installing on Archlinux
 
 A package is available on AUR here :
 
-http://aur.archlinux.org/packages/pypy-pymoult
+http://aur.archlinux.org/packages/pypy-pymoult-hg
 
 
 
