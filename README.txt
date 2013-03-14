@@ -43,4 +43,12 @@ A package is available on AUR here :
 http://aur.archlinux.org/packages/pypy-pymoult-hg
 
 
+Pydoc
+=====
 
+The pydoc can be generated with the doc.sh script
+
+	$> bash doc.sh
+
+The pydoc will be generated in the doc folder, open doc/pymoult.html to start
+browsing.
