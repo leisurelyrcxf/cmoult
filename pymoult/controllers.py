@@ -130,10 +130,13 @@ class Active_Thread(threading.Thread):
 			self.trigger_update = not self.update_function(self.pool, self.top_frame, self.bottom_frame)
 			self.tried_updates+=1
 			if not self.trigger_update:
+				self.update_function = None
 				self.version+=1
 				self.update_time = time.time() - t
 				self.start_update_time = 0
-			self.resume()
+		elif self.update_function == None:
+			self.trigger_update = False
+		self.resume()
 
 	def run(self):
 		c = continulet(self.run_main)
@@ -202,9 +205,12 @@ class Passive_Thread(threading.Thread):
 			self.trigger_update = not self.sleeping_continuation.switch()
 			self.tried_updates+=1
 			if not self.trigger_update:
+				self.update_function = None
 				self.update_time = time.time() - t
 				self.start_update_time = 0
 				self.version +=1
+		elif self.update_function == None:
+			self.trigger_update = False
 
 
 
