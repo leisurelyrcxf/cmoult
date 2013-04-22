@@ -47,12 +47,7 @@ def continue_with(func,args=None):
 	"""Continues the thread with the given function and arguments"""
 	thread = threading.current_thread()
 	thread.reboot = True
-	if type(thread) == pymoult.controllers.Active_Thread:
-		thread.main = m
-	elif type(thread) == pymoult.controllers.Passive_Thread:
-		thread.main = m
-	else:
-			return False
+	thread.main = m
 	return True
 
 
