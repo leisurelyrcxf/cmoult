@@ -1,6 +1,4 @@
 #!/usr/bin/pypy
-import sys
-sys.path.insert(0,"pymoult/")
 import pymoult
 import pymoult.controllers
 import time
