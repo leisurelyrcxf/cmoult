@@ -31,10 +31,12 @@ from _continuation import continulet
 import inspect
 import time
 
+
+Manager = None
+
+
 class RebootException(Exception):
 	pass
-
-
 
 
 class Active_Thread(threading.Thread):
@@ -206,18 +208,22 @@ class Passive_Thread(threading.Thread):
 
 
 
-
-
-
+def start_manager():
+	"""Starts the Manager if not already started
+	"""
+	global Manager
+	if Manager == None:
+		Manager = pymoult.listener.Listener()
+		Manager.start()
 
 
 def register_threads(threads):
 	"""This function adds a reference to all the threads given
-		in the argument to a new Listener object.
+		in the argument to the Manager.
 	"""
-	listener = pymoult.listener.Listener()
-	listener.controlled_threads = threads
-	listener.start()
+	global Manager
+	if Manager != None:
+		Manager.controlled_threads+=threads
 
 
 def enable_eager_object_conversion():
@@ -228,7 +234,9 @@ def enable_eager_object_conversion():
 def start_active_threads(pool=None,*functions):
 	"""This function creates active threads for every supplied function and starts them
 		an ObjectPool object can be given to be passed to the active threads. 
+		Starts the Manager if not already started.
 	"""
+	start_manager()
 	threads = []
 	for f in functions:
 		t = Active_Thread(f,pool)
@@ -239,7 +247,9 @@ def start_active_threads(pool=None,*functions):
 def start_passive_threads(pool=None,*functions):
 	"""This function creates passive threads for every supplied function and starts them
 		an ObjectPool object can be given to be passed to the active threads. 
+		Starts the Manager if not already started.
 	"""
+	start_manager()
 	threads = []
 	for f in functions:
 		t = Passive_Thread(f,pool)
