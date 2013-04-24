@@ -127,6 +127,7 @@ class Passive_Thread(threading.Thread):
 		self.start_update_time = 0
 		self.main = main
 		self.pool = pool
+		self.spawning_enabled = False
 		self.trigger_update = False
 		self.update_function = None
 		self.update_method = None
@@ -135,13 +136,14 @@ class Passive_Thread(threading.Thread):
 		self.top_frame = None
 
 	def trace(self,frame,event,arg):
+		self.top_frame = frame
 		if self.pool != None:
 			pool_trace(self.pool,frame,event,arg)
 		return self.trace
 
 	def run(self):
 		self.bottom_frame = inspect.currentframe()
-		if self.pool != None:
+		if self.pool != None or self.spawning_enabled:
 			sys.settrace(self.trace)
 		try:
 			self.main()
@@ -180,27 +182,25 @@ def self_update(thread):
 		thread.trigger_update = False
 
 
+def spawn_updater(thread):
+	"""Apply update in a spawned thread"""
+	def parallel_updater():
 		updated = False
-		if self.update_function != None:
-			updated = self.update_function(self.pool,self.top_frame,self.bottom_frame)
-		continuation.switch(updated)
+		thread.start_update_time = time.time()
+		while not updated:
+			updated = thread.update_function(thread.pool,thread.top_frame,thread.bottom_frame)
+			thread.tried_updates+=1
+		thread.update_function = None
+		thread.update_time = time.time() - thread.start_update_time
+		thread.start_update_time = 0
+		thread.version += 1
 
-	def start_update(self):
-		if self.trigger_update and self.update_function != None:
-			self.top_frame = inspect.currentframe()
-			self.sleeping_continuation = continulet(self.update)
-			if self.start_update_time == 0:
-				t = time.time()
-			self.trigger_update = not self.sleeping_continuation.switch()
-			self.tried_updates+=1
-			if not self.trigger_update:
-				self.update_function = None
-				self.update_time = time.time() - t
-				self.start_update_time = 0
-				self.version +=1
-		elif self.update_function == None:
-			self.trigger_update = False
-
+	if thread.trigger_update and thread.update_function != None:
+		thread.top_frame = inspect.currentframe()
+		updater = threading.Thread(target=parallel_updater)
+		updater.start()
+	elif thread.update_function == None:
+		thread.trigger_update = False
 
 
 def start_manager():
@@ -225,6 +225,11 @@ def enable_eager_object_conversion():
 	"""This function creates an new ObjectPool object and returns it"""
 	pool = pymoult.collector.ObjectsPool()
 	return pool
+
+def enable_spawning_updates(threads):
+	"""This function enables the spawning updates for passive threads""" 
+	for t in threads:
+		t.spawning_enabled = True
 
 def start_active_threads(pool=None,*functions):
 	"""This function creates active threads for every supplied function and starts them
