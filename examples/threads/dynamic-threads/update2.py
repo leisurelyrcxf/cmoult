@@ -12,4 +12,5 @@ myupdate = pymoult.stack.tools.safe_redefine("echo",new_echo2,"__main__")
 
 threads = sys.modules["__main__"].threads
 pymoult.controllers.set_update_function(myupdate,threads[2])
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,threads[2])
 

@@ -36,5 +36,7 @@ def new_manager_main():
 manager_update_function = pymoult.stack.tools.reboot_thread(new_manager_main)
 
 pymoult.controllers.set_update_function(manager_update_function,manager_thread)
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,manager_thread)
+
 
 

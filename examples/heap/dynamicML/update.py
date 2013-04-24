@@ -145,5 +145,6 @@ def myupdate(pool, top_frame, bottom_frame):
 
 l = sys.modules["__main__"].threads
 pymoult.controllers.set_update_function(myupdate,l[0])
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,l[0])
 
 

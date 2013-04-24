@@ -30,3 +30,6 @@ l = sys.modules["__main__"].threads
 pymoult.controllers.set_update_function(myupdate1,l[0])
 pymoult.controllers.set_update_function(myupdate2,l[1])
 pymoult.controllers.set_update_function(myupdate3,l[2])
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,l[0])
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,l[1])
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,l[2])

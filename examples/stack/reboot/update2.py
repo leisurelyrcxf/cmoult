@@ -14,3 +14,4 @@ myupdate2 = pymoult.stack.tools.reboot_thread(main3)
 
 l = sys.modules["__main__"].threads 
 pymoult.controllers.set_update_function(myupdate2,l[0])
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,l[0])

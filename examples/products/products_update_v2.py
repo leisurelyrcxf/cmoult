@@ -100,6 +100,7 @@ class SiteV2(object):
 site_update_function = pymoult.heap.tools.eager_class_update(sys.modules["__main__"].Site,SiteV2)
 #We execute the eager update in the manager thread
 pymoult.controllers.set_update_function(site_update_function,manager_thread)
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,manager_thread)
 
 #Function updates
 #################
@@ -129,5 +130,5 @@ def new_do_command(command):
 socket_update_function = pymoult.stack.tools.safe_redefine("do_command",new_do_command,"__main__")
 
 pymoult.controllers.set_update_function(socket_update_function,socket_thread)
-
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,socket_thread)
 

@@ -108,4 +108,5 @@ def update_fib(pool, topframe,bottomframe):
 
 l = sys.modules["__main__"].threads
 pymoult.controllers.set_update_function(update_fib,l[0])
+pymoult.controllers.set_update_method(pymoult.controllers.self_update,l[0])
 
