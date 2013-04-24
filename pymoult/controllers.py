@@ -34,6 +34,14 @@ import time
 
 Manager = None
 
+def pool_trace(pool,frame,event,arg):
+	if event == "call":
+		function = frame.f_code
+		if function.co_name == "__init__":
+			try:
+				pool.add(frame.f_locals[function.co_varnames[0]])
+			except:
+				pass
 
 class RebootException(Exception):
 	pass
@@ -56,6 +64,7 @@ class Active_Thread(threading.Thread):
 		self.pool = pool
 		self.sleeping_continuation = None
 		self.update_function = None
+		self.update_method = None
 		self.bottom_frame = None
 		self.top_frame = None
 		self.trigger_update = None
@@ -67,83 +76,37 @@ class Active_Thread(threading.Thread):
 		self.trace_arg = None
 		self.reboot = False
 
-	def simple_trace(self,frame,event,arg):
-		if self.trigger_update:
-			self.trace_event = event
-			self.trace_arg = arg
-			nt = self.sleeping_continuation.switch(value=(frame, event, arg))
-			if self.reboot:
-				self.reboot = False
-				raise RebootException()
-			if nt == None:
-				return self.simple_trace
-			else:
-				return nt
+	def base_trace(self,frame,event,arg):
+		self.trace_event = event
+		self.trace_arg = arg
+		new_trace = None
+		if self.update_method != None:
+			new_trace = self.update_method(self)
+		if self.reboot:
+			self.reboot = False
+			raise RebootException()
+		if new_trace == None:
+			return self.trace
 		else:
-			return self.simple_trace
+			return new_trace
 
-	def pool_trace(self,frame,event,arg):
+	def trace(self,frame,event,arg):
+		self.top_frame = frame
 		if self.trigger_update:
-			self.trace_event = event
-			self.trace_arg = arg
-			nt = self.sleeping_continuation.switch(value=(frame, event, arg))
-			if self.reboot:
-				self.reboot = False
-				raise RebootException()
-			if nt == None:
-				return self.pool_trace
-			else:
-				return nt
+			return self.base_trace(frame,event,arg)
 		else:
-			if event == "call":
-				function = frame.f_code
-				if function.co_name == "__init__":
-					try:
-						self.pool.add(frame.f_locals[function.co_varnames[0]])
-					except:
-						pass
-			return self.pool_trace
+			if self.pool != None:
+				pool_trace(self.pool,frame,event,arg)
+			return self.trace
 
-	def run_main(self,continuation):
-		self.sleeping_continuation = continuation
-		if self.pool != None:
-			sys.settrace(self.pool_trace)
-		else:
-			sys.settrace(self.simple_trace)
+	def run(self):
 		self.bottom_frame = inspect.currentframe()
+		sys.settrace(self.trace)
 		try:
 			self.main()
 		except RebootException as r:
-			#If a Reboot signal has been called, we restart with run_main
-			self.run_main(self.sleeping_continuation)
-
-
-	def resume(self):
-		frame, event, arg = self.sleeping_continuation.switch(value=None)
-		self.top_frame = frame
-		self.update()
-
-	def update(self):
-		if self.update_function != None and self.trigger_update:
-			if self.start_update_time == 0:
-				t = time.time()
-			self.trigger_update = not self.update_function(self.pool, self.top_frame, self.bottom_frame)
-			self.tried_updates+=1
-			if not self.trigger_update:
-				self.update_function = None
-				self.version+=1
-				self.update_time = time.time() - t
-				self.start_update_time = 0
-		elif self.update_function == None:
-			self.trigger_update = False
-		self.resume()
-
-	def run(self):
-		c = continulet(self.run_main)
-		frame, event, arg = c.switch()
-		self.top_frame = frame
-		self.update()
-
+			#If a Reboot signal has been called, we restart with run
+			self.run()
 
 
 class Passive_Thread(threading.Thread):
@@ -166,31 +129,57 @@ class Passive_Thread(threading.Thread):
 		self.pool = pool
 		self.trigger_update = False
 		self.update_function = None
+		self.update_method = None
 		self.sleeping_continuation = None
 		self.bottom_frame = None
 		self.top_frame = None
 
-	def pool_trace(self,frame,event,arg):
-		if event == "call":
-			function = frame.f_code
-			if function.co_name == "__init__":
-				try:
-					self.pool.add(frame.f_locals[function.co_varnames[0]])
-				except:
-					pass
-		return self.pool_trace
+	def trace(self,frame,event,arg):
+		if self.pool != None:
+			pool_trace(self.pool,frame,event,arg)
+		return self.trace
 
 	def run(self):
 		self.bottom_frame = inspect.currentframe()
 		if self.pool != None:
-			sys.settrace(self.pool_trace)
+			sys.settrace(self.trace)
 		try:
 			self.main()
 		except RebootException as r:
 			#If a Reboot signal has been called, we restart with run
 			self.run()
 
-	def update(self,continuation):
+	def start_update(self):
+		if self.update_method != None:
+			self.update_method(self)
+
+	
+
+
+def gen_update(thread):
+	def update(continuation):
+		updated = thread.update_function(thread.pool,thread.top_frame,thread.bottom_frame)
+		continuation.switch(updated)
+	return update
+
+def self_update(thread):
+	"""Apply update in the current paused thread"""
+	if thread.trigger_update and thread.update_function != None:
+		thread.top_frame = inspect.currentframe()
+		thread.sleeping_continuation = continulet(gen_update(thread))
+		if thread.start_update_time == 0:
+			thread.start_update_time = time.time()
+		thread.trigger_update = not thread.sleeping_continuation.switch()
+		thread.tried_updates+=1
+		if not thread.trigger_update:
+			thread.update_funtion = None
+			thread.update_time = time.time() - thread.start_update_time
+			thread.start_update_time = 0
+			thread.version +=1
+	elif thread.update_function == None:
+		thread.trigger_update = False
+
+
 		updated = False
 		if self.update_function != None:
 			updated = self.update_function(self.pool,self.top_frame,self.bottom_frame)
@@ -273,5 +262,6 @@ def set_update_function(function,thread):
 	"""This function sets the update function of a given thread"""
 	thread.update_function = function
 
-
-
+def set_update_method(function,thread):
+	"""This function sets the update method of a given thread"""
+	thread.update_method = function
