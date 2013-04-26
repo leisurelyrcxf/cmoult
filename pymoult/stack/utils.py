@@ -41,7 +41,7 @@ def replace_function(func1,func2):
 	"""replaces func1 by func2 in module"""
 	func1 = func2
 
-def continue_with(func,args=None):
+def continue_with(func,args=[]):
 	def m():
 		return func(*args)
 	"""Continues the thread with the given function and arguments"""
