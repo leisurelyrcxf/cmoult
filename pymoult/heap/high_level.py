@@ -1,4 +1,4 @@
-#    utils.py This file is part of Pymoult
+#    tools.py This file is part of Pymoult
 #    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -15,28 +15,35 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.heap.utils.py
+"""pymoult.heap.high_level.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-   This module provides mid-level functions for heap manipulation
+   This module provides high level heap manipulation functions.
 """
 
+from pymoult.heap.low_level import *
+from pymoult.heap.lazy import *
+from pymoult.collector import objectsPool
 
-def update_object_to_class(obj,new_class):
-	""" convert an object to a new class"""
-	#updating methods are automatic when redefining the class	
+def start_lazy_update_class(from_class,to_class):
+	""" Enables lazy update of objects of the from_class to the to_class
+	"""
+	def lazy_update_fun(obj):
+		if type(obj) == from_class:
+			return update_object_to_class(obj,to_class)
 	
-	#setting new class
-	obj.__class__ = new_class
-
-	#Converting attributes
-	obj.__convert__()
-	return True
+	lazy_update(from_class,make_lazy_update_function(lazy_update_fun))
 
 
-
-
-
+def eager_class_update(from_class,to_class):
+	""" Starts eager update of objects of the from_class to the to_class
+	"""
+	result = True
+	for ref in objectsPool.pool():
+		obj = ref()
+		if type(obj) == from_class:
+			result = result and update_object_to_class(obj,to_class)
+	return result
 
 
 

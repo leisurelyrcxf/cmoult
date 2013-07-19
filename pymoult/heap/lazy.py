@@ -21,7 +21,6 @@
    This module provides anything necessary for lazy object updates
 """
 
-import pymoult.listener
 import threading
 import sys
 

@@ -15,40 +15,25 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.stack.utils.py
+"""pymoult.heap.low_level.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-   This module supplied mid-level functions for stack manipulation
+   This module provides mid-level functions for heap manipulation
 """
 
-import sys
-import threading
-import pymoult.controllers
-import inspect
-from _continuation import continulet
 
-def is_function_in_stack(func,top_frame,bottom_frame):
-	"""Seeks for func code in the stack"""
-	x = top_frame
-	while x is not bottom_frame:
-		if x.f_code is func.func_code:
-			return True
-		x = x.f_back
-	return False
+def update_object_to_class(obj,new_class):
+	""" convert an object to a new class"""
+	#updating methods are automatic when redefining the class	
+	
+	#setting new class
+	obj.__class__ = new_class
 
-
-def replace_function(func1,func2):
-	"""replaces func1 by func2 in module"""
-	func1 = func2
-
-def continue_with(func,args=[]):
-	def m():
-		return func(*args)
-	"""Continues the thread with the given function and arguments"""
-	thread = threading.current_thread()
-	thread.reboot = True
-	thread.main = m
+	#Converting attributes
+	obj.__convert__()
 	return True
+
+
 
 
 

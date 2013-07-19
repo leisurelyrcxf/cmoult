@@ -1,4 +1,4 @@
-#    tools.py This file is part of Pymoult
+#    utils.py This file is part of Pymoult
 #    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -15,34 +15,51 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.stack.tools.py
+"""pymoult.stack.low_level.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-	This modules supplies high level functions for stack manipulaton,
-	generating the update functions for the user
+   This module supplied mid-level functions for stack manipulation
 """
 
-from pymoult.stack.utils import *
+import sys
+import threading
+import inspect
+from _continuation import continulet
+import pymoult
+from pymoult.threads import *
+from pymoult.common.low_level import *
 
 
-
-def safe_redefine(func1,func2,module):
-	"""Redefines func1 of moudule as func2 if the code of func1
-		cannot be found in the running stack
-		func1 and module are string arguments
-	"""
-	def safe_replace_update(pool,top_frame,bottom_frame):
-		if not is_function_in_stack(sys.modules[module].__dict__[func1],top_frame,bottom_frame):
-			sys.modules[module].__dict__[func1] = func2
+def is_function_in_stack(func,thread):
+	"""Seeks for func code in the stack of a thread"""
+	stack = sys._current_frames_2()[thread.ident]
+	x = stack
+	while x is not None:
+		if x.f_code is func.func_code:
 			return True
-		else:
-			return False
-	return safe_replace_update
+		x = x.f_back
+	return False
 
 
-def reboot_thread(func,*args):
-	"""Reboots a thread, statring func with args as the new main function of the thread
-	"""
-	def reboot_function(pool,top_frame,bottom_frame):
-		return continue_with(func,args)
-	return reboot_function
+def replace_function(func1,func2):
+	"""replaces func1 by func2 in module"""
+	func1 = func2
+
+
+
+def reset_thread(thread):
+	def trace(frame,event,arg):
+		raise RebootException()
+	set_trace_for_thread(thread,trace)
+
+def change_main(thread,func,args=[]):
+	def m():
+		return func(*args)
+	thread.main = m
+
+
+
+
+
+
+        

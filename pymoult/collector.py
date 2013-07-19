@@ -25,6 +25,8 @@
 
 import weakref
 
+objectsPool = None
+
 class ObjectsPool(object):
 	""" The Pool of objects, keeping a weak reference to all created objects"""
 	def __init__(self):
@@ -41,5 +43,16 @@ class ObjectsPool(object):
 		for x in d:
 			self.objects.remove(x)
 
+	def pool(self):
+		return self.objects
 
+
+def instance_hook(obj):
+	objectsPool.add(obj)
+
+def enable_pool():
+	"""Enable the pool of weak references, compulsory for eager object conversion"""
+	global objectsPool
+	objectsPool = ObjectsPool()
+	set_instance_hook(instance_hook)
 

@@ -36,29 +36,33 @@ Query_message = "status"
 Max_queued_connect = 5
 Parsed_header = "#parsed"
 
-class Listener(threading.Thread):
-	"""Listener class, opening a socket and listening for commands
+class Controller(threading.Thread):
+	"""Controller class, opening a socket and listening for commands
 		Loads update modules given with the command "update"
 	"""
-	def __init__(self,group=None, target=None, name=None, verbose=None):
+	def __init__(self,group=None, target="Pymoult Controller", name=None, verbose=None):
 		self.hostname = socket.gethostname()
 		self.port = Listener_port 
 		self.keep_running = True
-		self.trigger_update = False
-		self.controlled_threads = []
-		super(Listener,self).__init__(group=group, target=target, name=name,verbose=verbose)
+		self.update_thread_index = 0
+		super(Controller,self).__init__(group=group, target=target, name=name,verbose=verbose)
 		self.daemon = True
 	
-	def configure_update(self,update_address):
+	def start_update(self,update_address):
 		if os.path.exists(update_address):
 			f = open(update_address,"r")
 			if f.readline().strip() == Parsed_header:
 				t = imp.find_module(update_address.rstrip(".py"))
 				name = os.path.basename(update_address).rstrip(".py")
-				imp.load_module(name,t[0],t[1],t[2]) 
+				def update():
+					imp.load_module(name,t[0],t[1],t[2]) 
 			else:
 				#Parse the file to get the update function
 				pass
+			update_thread = threading.Thread(target=update,name="update thread "+str(self.update_thread_index))
+			update_thread.start()
+			self.update_thread_index+=1
+
 		else:
 			print("Error : the update module supplied was not found")
 
@@ -71,17 +75,13 @@ class Listener(threading.Thread):
 			data = conn.recv(Max_recieve)
 			if data.strip()[0:len(Trigger_message)] == Trigger_message:
 				update_address = data.strip()[len(Trigger_message)+1:]
-				self.configure_update(update_address)
-				self.trigger_update = True
-				for t in self.controlled_threads:
-					t.trigger_update = True
-			if data.strip()[0:len(Query_message)] == Query_message:
-				for thread in self.controlled_threads:
-					print("Thread "+str(thread.main.__name__)+" is in version "+str(thread.version))
-					print("It has tried "+str(thread.tried_updates)+" times to update ")
-					print("It took "+str(thread.update_time)+"s to update this thread")
-			
-
+				self.start_update(update_address)
 			data = ""
 			conn.close()
+
+
+def start_controller():
+	controller = Controller()
+	controller.start()
+	return controller
 

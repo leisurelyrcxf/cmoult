@@ -15,39 +15,36 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.heap.tools.py
+"""pymoult.stack.high_level.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-   This module provides high level heap manipulation functions.
+	This modules supplies high level functions for stack manipulaton,
+	generating the update functions for the user
 """
 
+from pymoult.stack.low_level import *
 
-
-from pymoult.heap.utils import *
-from pymoult.heap.lazy import *
-
-
-def start_lazy_update_class(from_class,to_class):
-	""" Enables lazy update of objects of the from_class to the to_class
+def safe_redefine(func1,func2,module,threads):
+	"""Redefines func1 of moudule as func2 if the code of func1
+		cannot be found in the running stack of the given threads
+		func1 and module are string arguments
 	"""
-	def lazy_update_fun(obj):
-		if type(obj) == from_class:
-			return update_object_to_class(obj,to_class)
-	
-	lazy_update(from_class,make_lazy_update_function(lazy_update_fun))
+	for thread in threads:
+		if is_function_in_stack(sys.modules[module].__dict__[func1],thread):
+			return False
+	sys.modules[module].__dict__[func1] = func2
+	return True
 
 
-def eager_class_update(from_class,to_class):
-	""" Starts eager update of objects of the from_class to the to_class
+
+def reboot_thread(thread,func,*args):
+	"""Reboots a thread, statring func with args as the new main function of the thread
 	"""
-	def eager_update_fun(pool,top_frame,bottom_frame):
-		result = True
-		for ref in pool.objects:
-			obj = ref()
-			if type(obj) == from_class:
-				result = result and update_object_to_class(obj,to_class)
-		return result
-	return eager_update_fun
+	change_main(thread,func,args)
+	reset_thread(thread)
+
+
+
 
 
 
