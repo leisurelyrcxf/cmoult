@@ -1,6 +1,7 @@
 #!/usr/bin/pypy
 import pymoult
-import pymoult.controllers
+from pymoult.threads import *
+from pymoult.controller import *
 import time
 import threading
 
@@ -79,6 +80,10 @@ def main3():
 
 
 
-threads = pymoult.controllers.start_active_threads(None,main1,main2,main3)	
-pymoult.controllers.register_threads(threads)
-
+t1 = DSU_Thread(target=main1,name="thread1")
+t2 = DSU_Thread(target=main2,name="thread2")
+t3 = DSU_Thread(target=main3,name="thread3")
+start_controller()
+t1.start()
+t2.start()
+t3.start()

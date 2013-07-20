@@ -1,7 +1,8 @@
 #parsed
 import sys
-import pymoult.controllers
-import pymoult.stack.tools
+import pymoult
+from pymoult.stack.high_level import *
+from pymoult.common.high_level import *
 import time
 
 def main3():
@@ -9,8 +10,5 @@ def main3():
 		print("This is the 3d version")
 		time.sleep(3)
 		
-
-myupdate2 = pymoult.stack.tools.reboot_thread(main3)
-
-l = sys.modules["__main__"].threads 
-pymoult.controllers.set_update_function(myupdate2,l[0])
+t = get_thread_by_name("thread1")
+pymoult.stack.high_level.reboot_thread(t,main3)

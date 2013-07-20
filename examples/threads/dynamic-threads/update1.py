@@ -1,17 +1,19 @@
 #parsed
 
 import sys
-import pymoult.controllers
-import pymoult.stack.tools
+from pymoult.threads import *
+from pymoult.stack.high_level import *
+from pymoult.common.high_level import *
 
 def new_echo(thread):
 	print("This is thread "+str(thread)+" in 2d version") 
 
-myupdate = pymoult.stack.tools.safe_redefine("echo",new_echo,"__main__")
 
-threads = sys.modules["__main__"].threads
-pymoult.controllers.set_update_function(myupdate,threads[0])
 
-newthreads = pymoult.controllers.start_active_threads(None,sys.modules["__main__"].genMain(3))
-pymoult.controllers.register_threads(newthreads)
-threads+=newthreads
+t1 = get_thread_by_name("thread1")
+t2 = get_thread_by_name("thread2")
+
+safe_redefine("echo",new_echo,"__main__",[t1,t2])
+
+t3 = DSU_Thread(target=sys.modules["__main__"].genMain(3),name="thread3")
+t3.start()

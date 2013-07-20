@@ -1,7 +1,8 @@
 #!/usr/bin/env pypy
 
 import pymoult
-import pymoult.controllers
+from pymoult.threads import *
+from pymoult.controller import *
 import socket
 import time
 
@@ -17,9 +18,11 @@ def genMain(num):
 			time.sleep(2)
 	return main
 
-threads = pymoult.controllers.start_active_threads(None,genMain(1),genMain(2))
-pymoult.controllers.register_threads(threads)
-
+t1= DSU_Thread(target=genMain(1),name="thread1")
+t2 = DSU_Thread(target=genMain(2),name="thread2")
+start_controller()
+t1.start()
+t2.start()
 
 
 

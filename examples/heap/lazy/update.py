@@ -1,7 +1,7 @@
 #parsed
 import sys
 sys.path.insert(0,"pymoult/")
-import pymoult.heap.tools
+import pymoult.heap.high_level
 import time
 
 t = None
@@ -24,4 +24,4 @@ class Cv2(object):
 		self.a += self.b
 		
 
-pymoult.heap.tools.start_lazy_update_class(sys.modules["__main__"].C,Cv2)
+pymoult.heap.high_level.start_lazy_update_class(sys.modules["__main__"].C,Cv2)

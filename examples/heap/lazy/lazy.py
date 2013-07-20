@@ -1,5 +1,6 @@
 #!/usr/bin/pypy
-import pymoult.controllers
+from pymoult.threads import *
+from pymoult.controller import *
 import time
 
 t = None
@@ -16,8 +17,6 @@ class C(object):
 	def addup(self):
 		self.trace.append(self.a)
 		self.a += self.b
-
-
 
 
 def main():
@@ -40,6 +39,8 @@ def main():
 
 
 
-t = pymoult.controllers.start_passive_threads(None,main)
-pymoult.controllers.register_threads(t)
+
+t = DSU_Thread(target=main)
+t.start()
+start_controller()
 

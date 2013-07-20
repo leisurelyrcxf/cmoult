@@ -1,6 +1,7 @@
 #!/usr/bin/pypy
-import pymoult
-import pymoult.controllers
+from pymoult.collector import *
+from pymoult.controller import *
+from pymoult.threads import * 
 import time
 
 t = None
@@ -14,14 +15,14 @@ class C(object):
 
 
 def main():
+	print("coucou")
 	c = C(9)
 	for i in range(4):
 		c.f()
 		time.sleep(10)
 
 
-
-pool = pymoult.controllers.enable_eager_object_conversion()
-threads = pymoult.controllers.start_active_threads(pool,main)
-pymoult.controllers.register_threads(threads)
-
+enable_pool()
+start_controller()
+t = DSU_Thread(target=main)
+t.start()

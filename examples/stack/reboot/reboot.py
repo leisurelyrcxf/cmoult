@@ -1,7 +1,8 @@
 #!/usr/bin/pypy
 import sys
 import pymoult
-import pymoult.controllers
+from pymoult.controller import *
+from pymoult.threads import *
 import time
 
 
@@ -11,5 +12,6 @@ def main():
 		print("this is the 1st version")
 		time.sleep(3)
 
-threads = pymoult.controllers.start_active_threads(None,main)
-pymoult.controllers.register_threads(threads)
+t = DSU_Thread(target=main,name="thread1")
+start_controller()
+t.start()
