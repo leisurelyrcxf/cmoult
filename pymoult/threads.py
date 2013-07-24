@@ -77,7 +77,7 @@ class DSU_Thread(threading.Thread):
 			self.active_update_function()
 
 
-def start_passive_update():
+def start_active_update():
 	"""This function calls the start_update of the current active thread"""
 	thread = threading.current_thread()
 	thread.start_update()
