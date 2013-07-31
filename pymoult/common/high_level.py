@@ -11,12 +11,13 @@ def get_thread_by_name(name):
 	return None
 
 def pause_thread(thread):
-	thread.pause_event = threading.Event()
-	thread.pause_event.clear()
-	def trace(frame,event,arg):
-		thread.pause_event.wait()
-		return None
-	settrace_for_thread(thread,trace)
+	if not hasattr(thread,"pause_event"):
+		thread.pause_event = threading.Event()
+		thread.pause_event.clear()
+		def trace(frame,event,arg):
+			thread.pause_event.wait()
+			return None
+		set_trace_for_thread(thread,trace)
 
 def resume_thread(thread):
 	if hasattr(thread,"pause_event"):
