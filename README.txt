@@ -16,9 +16,15 @@ Installing
 Requirements
 ------------
 
-Pymoult requires the pypy interpreter in its version 2.0 or newer.
-Its installation requires the python distribute module to be installed for
-pypy
+Pymoult requires the pypy interpreter in its version 2.0 or newer, 
+enhanced with the DSU features. Its installation requires the python
+distribute module to be installed for pypy.
+
+Building pypy-dsu
+-----------------
+
+Follow the instructions here : http://doc.pypy.org/en/improve-docs/build.html
+after applying the pypy-dsu patch
 
 
 Installing on Linux
