@@ -23,7 +23,7 @@
 
 from pymoult.heap.low_level import *
 from pymoult.heap.lazy import *
-from pymoult.collector import objectsPool
+import pymoult.collector 
 
 def start_lazy_update_class(from_class,to_class):
 	""" Enables lazy update of objects of the from_class to the to_class
@@ -39,7 +39,7 @@ def eager_class_update(from_class,to_class):
 	""" Starts eager update of objects of the from_class to the to_class
 	"""
 	result = True
-	for ref in objectsPool.pool():
+	for ref in pymoult.collector.objectsPool.pool():
 		obj = ref()
 		if type(obj) == from_class:
 			result = result and update_object_to_class(obj,to_class)
