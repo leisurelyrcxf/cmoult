@@ -1,4 +1,4 @@
-#!/usr/bin/env pypy
+#!/usr/bin/env pypy-dsu
 
 import pymoult
 from pymoult.threads import *

@@ -1,4 +1,4 @@
-#!/usr/bin/pypy
+#!/usr/bin/pypy-dsu
 import pymoult
 from pymoult.threads import *
 from pymoult.controller import *
