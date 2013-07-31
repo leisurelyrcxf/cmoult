@@ -48,7 +48,10 @@ class ObjectsPool(object):
 
 
 def instance_hook(obj):
-	objectsPool.add(obj)
+	try:
+		objectsPool.add(obj)
+	except:
+		pass
 
 def enable_pool():
 	"""Enable the pool of weak references, compulsory for eager object conversion"""
