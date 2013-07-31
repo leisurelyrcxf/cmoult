@@ -20,7 +20,7 @@ echo "rate 3 mango Brest" | netcat $hostname 5678
 sleep 2
 echo "Products example :  Starting second update" 
 echo "update products_update_v3.py" | netcat $hostname 4242
-sleep 11
+sleep 15
 echo "Products example : Ending the program"
 kill $prog
 

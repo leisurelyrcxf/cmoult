@@ -2,20 +2,15 @@
 """products_update_v2.py
    Published under the GPLv2 license (see LICENSE.txt)
 """
-import pymoult
-import pymoult.controllers
-import pymoult.stack
-import pymoult.heap
-import pymoult.stack.tools
-import pymoult.heap.tools
+from pymoult.stack.high_level import *
+from pymoult.heap.high_level import *
+from pymoult.common.high_level import *
 import time
 import sys
+import threading
 
-
-
-threads = sys.modules["__main__"].threads 
-manager_thread = threads[0]
-socket_thread = threads[1]
+manager_thread = get_thread_by_name("Site_Manager")
+socket_thread = get_thread_by_name("Command_Socket")
 
 
 #Object updates
@@ -41,8 +36,8 @@ class ProductV2(object):
 			self.mark = self.votes*(self.mark + mark) / float((self.votes*( self.votes +1) ))
 			self.votes +=1
 
-
-pymoult.heap.tools.start_lazy_update_class(sys.modules["__main__"].Product,ProductV2)
+product_update_v2 = sys.modules["__main__"].Product_Updater(ProductV2)
+product_update_v2.apply()
 
 # Site updates
 
@@ -96,10 +91,8 @@ class SiteV2(object):
 			m += product.mark
 		self.mark = float(m) / float(n)
 
-
-site_update_function = pymoult.heap.tools.eager_class_update(sys.modules["__main__"].Site,SiteV2)
-#We execute the eager update in the manager thread
-pymoult.controllers.set_update_function(site_update_function,manager_thread)
+site_update_v2 = sys.modules["__main__"].Site_Updater(SiteV2)
+site_update_v2.apply()
 
 #Function updates
 #################
@@ -117,7 +110,6 @@ def rate(mark,product,site):
 	print(the_site.mark_product(product,mark))
 
 
-
 def new_do_command(command):
 	operands = command.split()
 	if operands[0] == "order" and len(operands) == 4:
@@ -125,9 +117,5 @@ def new_do_command(command):
 	if operands[0] == "rate" and len(operands) == 4:
 		rate(float(operands[1]),operands[2],operands[3])
 
-
-socket_update_function = pymoult.stack.tools.safe_redefine("do_command",new_do_command,"__main__")
-
-pymoult.controllers.set_update_function(socket_update_function,socket_thread)
-
-
+command_update_v2 = sys.modules["__main__"].Command_Updater(new_do_command) 
+command_update_v2.apply()

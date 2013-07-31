@@ -2,17 +2,13 @@
 """products_update_v3.py
    Published under the GPLv2 license (see LICENSE.txt)
 """
-import pymoult
-import pymoult.controllers
-import pymoult.stack
-import pymoult.stack.tools
+from pymoult.stack.high_level import *
+from pymoult.common.high_level import *
 import time
 import sys
 
 
 
-threads = sys.modules["__main__"].threads 
-manager_thread = threads[0]
 
 #Function updates
 #################
@@ -33,8 +29,5 @@ def new_manager_main():
 		for x in range(10):
 			time.sleep(1)
 
-manager_update_function = pymoult.stack.tools.reboot_thread(new_manager_main)
-
-pymoult.controllers.set_update_function(manager_update_function,manager_thread)
-
-
+manager_update_v3 = sys.modules["__main__"].Manager_Updater(new_manager_main)
+manager_update_v3.apply()

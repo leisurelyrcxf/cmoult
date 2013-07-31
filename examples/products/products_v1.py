@@ -1,16 +1,22 @@
-#!/usr/bin/env pypy
+#!/usr/bin/pypy-dsu
+
 """products_v1.py
    Published under the GPLv2 license (see LICENSE.txt)
 """
 
 import pymoult
-import pymoult.controllers
+from pymoult.threads import *
+from pymoult.updates import *
+from pymoult.collector import *
+from pymoult.controller import *
+from pymoult.stack.generators import *
+from pymoult.heap.generators import *
 import socket
 import time
 
 
-Socket_port = 5678
 
+Socket_port = 5678
 
 class Product(object):
 	def __init__(self,name,quantity):
@@ -104,16 +110,28 @@ def socket_main():
 	while True:
 		conn,addr = s.accept()
 		command = conn.recv(9999)
-		pymoult.controllers.start_passive_update()
+		start_active_update()
 		do_command(command)
-		pymoult.controllers.start_passive_update()
+		start_active_update()
 		data = ""
 		conn.close()
 
+enable_pool()
+manager = DSU_Thread(name="Site_Manager",target=site_manager_main)
+socket_thread = DSU_Thread(name="Command_Socket",target=socket_main)
+start_controller()
+manager.start()
+socket_thread.start()
+
+
+Site_Updater = eager_class_updater(make_global_element("__main__","Site"))
+Product_Updater = lazy_class_updater(make_global_element("__main__","Product"))
+
+Command_Updater = safe_redefinition(make_global_element("__main__","do_command"),[make_thread_element(socket_thread)])
+Manager_Updater = thread_rebooting(make_thread_element(manager))
 
 
 
-pool = pymoult.controllers.enable_eager_object_conversion()
-threads = pymoult.controllers.start_active_threads(pool,site_manager_main)
-threads+= pymoult.controllers.start_passive_threads(pool,socket_main)
-pymoult.controllers.register_threads(threads)
+
+
+
