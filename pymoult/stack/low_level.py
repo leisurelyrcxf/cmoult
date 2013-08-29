@@ -32,7 +32,7 @@ from pymoult.common.low_level import *
 
 def is_function_in_stack(func,thread):
 	"""Seeks for func code in the stack of a thread"""
-	stack = sys._current_frames_2()[thread.ident]
+	stack = get_all_current_frames()[thread.ident]
 	x = stack
 	while x is not None:
 		if x.f_code is func.func_code:
