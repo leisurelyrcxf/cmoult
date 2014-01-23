@@ -1,4 +1,4 @@
-#    utils.py This file is part of Pymoult
+#    listener.py This file is part of Pymoult
 #    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -15,51 +15,30 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.stack.low_level.py
+"""pymoult.manager.py
    Published under the GPLv2 license (see LICENSE.txt)
-
-   This module supplied mid-level functions for stack manipulation
 """
+from pymoult.common.high_level import *
 
-import sys
-import threading
-import inspect
-from _continuation import continulet
-import pymoult
-from pymoult.threads import *
-from pymoult.common.low_level import *
+class Manager(object):
+    def __init__(self,**units):
+        for element in units.keys():
+            setattr(self,element,units[element])
 
+    def start(self):
+        pass
 
-def is_function_in_stack(func,thread):
-	"""Seeks for func code in the stack of a thread"""
-	stack = get_all_current_frames()[thread.ident]
-	x = stack
-	while x is not None:
-		if x.f_code is func.func_code:
-			return True
-		x = x.f_back
-	return False
+    def pause_threads(self):
+        if hasattr(self,"threads") and type(self.threads) == list:
+            for t in threads:
+                pause_thread(t)
 
-
-def replace_function(func1,func2):
-	"""replaces func1 by func2 in module"""
-	func1 = func2
-
-
-
-def reset_thread(thread):
-	def trace(frame,event,arg):
-		raise RebootException()
-	set_trace_for_thread(thread,trace)
-
-def change_main(thread,func,args=[]):
-	def m():
-		return func(*args)
-	thread.main = m
-
-
-
-
-
-
+    def resume_threads(self):
+        if hasattr(self,"threads") and type(self.threads) == list:
+            for t in threads:
+                resume_thread(t)
         
+
+    def is_alterable(self):
+        return False
+    

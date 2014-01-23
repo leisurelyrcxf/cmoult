@@ -36,17 +36,17 @@ Query_message = "status"
 Max_queued_connect = 5
 Parsed_header = "#parsed"
 
-class Controller(threading.Thread):
-	"""Controller class, opening a socket and listening for commands
-		Loads update modules given with the command "update"
-	"""
-	def __init__(self,group=None, target="Pymoult Controller", name=None, verbose=None):
-		self.hostname = socket.gethostname()
-		self.port = Listener_port 
-		self.keep_running = True
-		self.update_thread_index = 0
-		super(Controller,self).__init__(group=group, target=target, name=name,verbose=verbose)
-		self.daemon = True
+
+class Listener(threading.Thread):
+	"""Listener class, opening a socket and listening for commands"""
+	
+        def __init__(self,group=None, target=None, name="Pymoult Listener", verbose=None):
+            self.hostname = socket.gethostname()
+            self.port = Listener_port 
+            self.keep_running = True
+            self.update_thread_index = 0
+            super(Listener,self).__init__(group=group, target=target, name=name,verbose=verbose)
+            self.daemon = True
 	
 	def start_update(self,update_address):
 		if os.path.exists(update_address):
@@ -67,21 +67,16 @@ class Controller(threading.Thread):
 			print("Error : the update module supplied was not found")
 
 	def run(self):
-		s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-		s.bind((self.hostname,self.port))
-		s.listen(Max_queued_connect)
-		while self.keep_running:
-			conn,addr = s.accept()
-			data = conn.recv(Max_recieve)
-			if data.strip()[0:len(Trigger_message)] == Trigger_message:
-				update_address = data.strip()[len(Trigger_message)+1:]
-				self.start_update(update_address)
-			data = ""
-			conn.close()
+            s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+            s.bind((self.hostname,self.port))
+            s.listen(Max_queued_connect)
+            while self.keep_running:
+                conn,addr = s.accept()
+		data = conn.recv(Max_recieve)
+		if data.strip()[0:len(Trigger_message)] == Trigger_message:
+                    update_address = data.strip()[len(Trigger_message)+1:]
+                    self.start_update(update_address)
+		data = ""
+		conn.close()
 
-
-def start_controller():
-	controller = Controller()
-	controller.start()
-	return controller
 

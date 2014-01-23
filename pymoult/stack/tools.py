@@ -15,36 +15,40 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.stack.high_level.py
+"""pymoult.stack.tools.py
    Published under the GPLv2 license (see LICENSE.txt)
-
-	This modules supplies high level functions for stack manipulaton,
-	generating the update functions for the user
 """
 
-from pymoult.stack.low_level import *
-
-def safe_redefine(func1,func2,module,threads):
-	"""Redefines func1 of moudule as func2 if the code of func1
-		cannot be found in the running stack of the given threads
-		func1 and module are string arguments
-	"""
-	for thread in threads:
-		if is_function_in_stack(sys.modules[module].__dict__[func1],thread):
-			return False
-	sys.modules[module].__dict__[func1] = func2
-	return True
+import pymoult.common.tools.set_trace_for_thread
+import pymoult.common.tools.get_all_current_frames
 
 
+def resetThread(thread):
+    def trace(frame,event,arg):
+        raise RebootException()
+    set_trace_for_thread(thread,trace)
 
-def reboot_thread(thread,func,*args):
-	"""Reboots a thread, statring func with args as the new main function of the thread
-	"""
-	change_main(thread,func,args)
-	reset_thread(thread)
+def swicthMain(thread,func,args=[]):
+    def m():
+        return func(*args)
+    thread.main = m
+
+def isFunctionInStack(func,thread):
+    stack = get_all_current_frames()[thread.ident]
+    x = stack
+    while x is not None:
+        if x.f_code is func.func_code:
+            return True
+        x = x.f_back
+    return False
 
 
-
-
-
-
+def isFunctionInAllStack(func):
+    stacks = get_all_current_frames()
+    for stack in stacks:
+        x = stack
+        while x is not None:
+            if x.f_code is func.func_code:
+                return True
+            x = x.f_back
+    return False

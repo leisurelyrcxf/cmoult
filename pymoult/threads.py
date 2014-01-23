@@ -30,8 +30,6 @@ import inspect
 import time
 
 
-Manager = None
-
 
 class RebootException(Exception):
 	pass
@@ -41,22 +39,16 @@ class DSU_Thread(threading.Thread):
 	def __init__(self,group=None, target=None, name=None, args=(), kwargs={}):
 		super(DSU_Thread,self).__init__(group=group,name=name,args=args,kwargs=kwargs)
 		self.main = target
-		self.stop = False
+		self.stoped = False
 		self.sleeping_continuation = None
 		self.sleeping_continuation_fonction = None
-		self.active = False
 		self.active_update_function = None
-
-	def set_passive(self):
-		self.active = False
-
-	def set_active(self):
-		self.active = True
+                self.active = False
 
 	def execute_sleeping_continuation(self,continuation):
 		#we switch at once to continue with main
 		continuation.switch()
-		while not self.stop:
+		while not self.stoped:
 			if self.sleeping_continuation_fonction != None:
 				self.sleeping_continuation_fonction()
 			continuation.switch()
@@ -65,13 +57,19 @@ class DSU_Thread(threading.Thread):
 		c = continulet(self.execute_sleeping_continuation)
 		c.switch()
 		self.sleeping_continuation = c
-		while not self.stop:
+		while not self.stoped:
 			try:
 				self.main()
 			except RebootException as r:
 				#The thread has been rebooted, we just loop again
 				pass
 	
+        def stop(self):
+                self.stoped = not self.stoped
+                
+        def switch(self):
+                self.sleeping_continuation.switch()
+
 	def start_update(self):
 		if self.active and self.active_update_function != None:
 			self.active_update_function()
@@ -88,3 +86,30 @@ def set_active_update_function(function,thread):
 
 
 
+def get_thread_by_name(name):
+        threads = threading.enumerate()
+        for thread in threads:
+                if thread.name == name:
+                        return thread
+        return None
+
+def get_current_frames():
+        return sys._current_true_frames()
+
+
+def pause_thread(thread):
+        if not hasattr(thread,"pause_event"):
+                thread.paused_event = threading.Event()
+                thread.pause_event.clear()
+                def trace(frame,event,arg):
+                        thread.pause_event.wait()
+                        return None
+                set_thread_trace(thread,trace)
+
+def resume_thread(thread):
+        if hasattr(thread,"pause_event"):
+                thread.pause_event.set()
+                delattr(thread,"pause_event")
+
+def set_thread_trace(thread,trace):
+        sys.settrace_fro_thread(thread.ident,trace,True)
