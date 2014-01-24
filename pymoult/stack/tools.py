@@ -17,32 +17,37 @@
 #
 """pymoult.stack.tools.py
    Published under the GPLv2 license (see LICENSE.txt)
-
-	This modules supplies high level functions for stack manipulaton,
-	generating the update functions for the user
 """
 
-from pymoult.stack.utils import *
+from  pymoult.threads import set_thread_trace, get_current_frames, RebootException
 
 
+def resetThread(thread):
+    def trace(frame,event,arg):
+        raise RebootException()
+    set_thread_trace(thread,trace)
 
-def safe_redefine(func1,func2,module):
-	"""Redefines func1 of moudule as func2 if the code of func1
-		cannot be found in the running stack
-		func1 and module are string arguments
-	"""
-	def safe_replace_update(pool,top_frame,bottom_frame):
-		if not is_function_in_stack(sys.modules[module].__dict__[func1],top_frame,bottom_frame):
-			sys.modules[module].__dict__[func1] = func2
-			return True
-		else:
-			return False
-	return safe_replace_update
+def switchMain(thread,func,args=[]):
+    def m():
+        return func(*args)
+    thread.main = m
+
+def isFunctionInStack(func,thread):
+    stack = get_current_frames()[thread.ident]
+    x = stack
+    while x is not None:
+        if x.f_code is func.func_code:
+            return True
+        x = x.f_back
+    return False
 
 
-def reboot_thread(func,*args):
-	"""Reboots a thread, statring func with args as the new main function of the thread
-	"""
-	def reboot_function(pool,top_frame,bottom_frame):
-		return continue_with(func,args)
-	return reboot_function
+def isFunctionInAllStack(func):
+    stacks = get_current_frames()
+    for stack in stacks.values():
+        x = stack
+        while x is not None:
+            if x.f_code is func.func_code:
+                return True
+            x = x.f_back
+    return False
