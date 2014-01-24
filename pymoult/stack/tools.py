@@ -19,14 +19,13 @@
    Published under the GPLv2 license (see LICENSE.txt)
 """
 
-import pymoult.common.tools.set_trace_for_thread
-import pymoult.common.tools.get_all_current_frames
+from  pymoult.threads import set_thread_trace, get_current_frames
 
 
 def resetThread(thread):
     def trace(frame,event,arg):
         raise RebootException()
-    set_trace_for_thread(thread,trace)
+    set_thread_trace(thread,trace)
 
 def swicthMain(thread,func,args=[]):
     def m():
@@ -34,7 +33,7 @@ def swicthMain(thread,func,args=[]):
     thread.main = m
 
 def isFunctionInStack(func,thread):
-    stack = get_all_current_frames()[thread.ident]
+    stack = get_current_frames()[thread.ident]
     x = stack
     while x is not None:
         if x.f_code is func.func_code:
@@ -44,8 +43,8 @@ def isFunctionInStack(func,thread):
 
 
 def isFunctionInAllStack(func):
-    stacks = get_all_current_frames()
-    for stack in stacks:
+    stacks = get_current_frames()
+    for stack in stacks.values():
         x = stack
         while x is not None:
             if x.f_code is func.func_code:

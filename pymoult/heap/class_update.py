@@ -21,8 +21,8 @@
    This module provides functions for updating objects
 """
 
-def objectClassUpdate(obj,class,transformer=None):
-    obj.__class__ = class
+def objectClassUpdate(obj,nclass,transformer=None):
+    obj.__class__ = nclass
     if transformer != None:
         transformer(obj)
 

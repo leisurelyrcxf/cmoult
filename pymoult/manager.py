@@ -18,7 +18,9 @@
 """pymoult.manager.py
    Published under the GPLv2 license (see LICENSE.txt)
 """
-from pymoult.common.high_level import *
+
+import threading
+
 
 class Manager(object):
     def __init__(self,**units):
@@ -42,3 +44,29 @@ class Manager(object):
     def is_alterable(self):
         return False
     
+
+class BasicManager(Manager):
+    """Manager at application level that can handles every update
+    in its own thread if the update developper provides the whole update code"""
+
+    def __init__(self):
+        self.ownThread = None
+        self.update_triggered = False
+        self.stop = False
+        super(BasicManager).__init__()
+
+    def update_function(self):
+        pass
+
+    def thread_main(self):
+        while not self.stop:
+            if self.update_triggered:
+                if self.is_alterable():
+                    self.update_function()
+                    self.update_triggered = False
+
+    def start(self):
+        self.ownThread = threading.Thread(target=self.thread_main)
+        self.ownThread.start()
+
+
