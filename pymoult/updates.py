@@ -19,8 +19,6 @@
 """pymoult.updates.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-   This module provides the controlled threads and high level
-   functions initiating, configuring and starting them.
 """
 
 
@@ -40,6 +38,20 @@ class Update(object):
     def apply(self):
        raise UpdateDefinitionError("You should define your own Update-based class")
 
+
+class BasicUpdate(Update):
+    """Basic update class that works well with the Basic Manager"""
+    def __init__(self,manager,alterability,update):
+        self.alterability = alterability
+        self.update = update
+        super(BasicUpdate,self).__init__(manager=manager)
+
+    def setup(self):
+        self.manager.is_alterable = self.alterability
+        self.manager.update_function = self.update
+        
+    def apply(self):
+        self.manager.update_triggered = True
 
 
 

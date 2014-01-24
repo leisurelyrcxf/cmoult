@@ -27,7 +27,7 @@ def resetThread(thread):
         raise RebootException()
     set_thread_trace(thread,trace)
 
-def swicthMain(thread,func,args=[]):
+def switchMain(thread,func,args=[]):
     def m():
         return func(*args)
     thread.main = m
