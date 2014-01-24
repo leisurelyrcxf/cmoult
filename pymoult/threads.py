@@ -112,4 +112,4 @@ def resume_thread(thread):
                 delattr(thread,"pause_event")
 
 def set_thread_trace(thread,trace):
-        sys.settrace_fro_thread(thread.ident,trace,True)
+        sys.settrace_for_thread(thread.ident,trace,True)

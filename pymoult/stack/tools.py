@@ -19,7 +19,7 @@
    Published under the GPLv2 license (see LICENSE.txt)
 """
 
-from  pymoult.threads import set_thread_trace, get_current_frames
+from  pymoult.threads import set_thread_trace, get_current_frames, RebootException
 
 
 def resetThread(thread):
