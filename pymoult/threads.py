@@ -44,7 +44,7 @@ class DSU_Thread(threading.Thread):
 		self.sleeping_continuation_fonction = None
 		self.active_update_function = None
                 self.active = False
-
+               
 	def execute_sleeping_continuation(self,continuation):
 		#we switch at once to continue with main
 		continuation.switch()
@@ -99,12 +99,14 @@ def get_current_frames():
 
 def pause_thread(thread):
         if not hasattr(thread,"pause_event"):
-                thread.paused_event = threading.Event()
+                thread.pause_event = threading.Event()
                 thread.pause_event.clear()
                 def trace(frame,event,arg):
-                        thread.pause_event.wait()
+                        if hasattr(thread,"pause_event"):
+                                thread.pause_event.wait()
                         return None
                 set_thread_trace(thread,trace)
+                               
 
 def resume_thread(thread):
         if hasattr(thread,"pause_event"):
