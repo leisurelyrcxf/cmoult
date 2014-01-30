@@ -20,6 +20,10 @@
 """
 
 import threading
+from pymoult.stack.tools import *
+from pymoult.threads import *
+import time
+import Queue
 
 
 class Manager(object):
@@ -32,12 +36,12 @@ class Manager(object):
 
     def pause_threads(self):
         if hasattr(self,"threads") and type(self.threads) == list:
-            for t in threads:
+            for t in self.threads:
                 pause_thread(t)
 
     def resume_threads(self):
         if hasattr(self,"threads") and type(self.threads) == list:
-            for t in threads:
+            for t in self.threads:
                 resume_thread(t)
         
 
@@ -53,7 +57,7 @@ class BasicManager(Manager):
         self.ownThread = None
         self.update_triggered = False
         self.stop = False
-        super(BasicManager).__init__()
+        super(BasicManager,self).__init__()
 
     def update_function(self):
         pass
@@ -70,3 +74,50 @@ class BasicManager(Manager):
         self.ownThread.start()
 
 
+class SafeRedefineManager(Manager):
+    """Manager for handling safe redefinition update"""
+
+    def __init__(self,threads,sleepTime=3):
+        self.ownThread = None
+        self.update_triggered = False
+        self.stop = False
+        self.functions = Queue.Queue()
+        self.sleepTime = sleepTime
+        super(SafeRedefineManager,self).__init__(threads=threads)
+
+    def is_alterable(self,function):
+        for thread in self.threads:
+            if isFunctionInStack(function,thread):
+                return False
+        return True
+  
+    def add_function(self,function,function_updater):
+        self.functions.put((function,function_updater))
+
+
+    def thread_main(self):
+        while not self.stop:
+            if self.update_triggered:
+                while True:
+                    try:
+                        function = self.functions.get(False)
+                    except Queue.Empty:
+                        self.update_triggered = False
+                        break
+                    function_updated = False
+                    while not function_updated:
+                        if self.is_alterable(function[0]):
+                            self.pause_threads()
+                            function[1]()
+                            function_updated = True
+                            self.resume_threads()
+                        time.sleep(self.sleepTime)
+     
+    def start(self):
+        self.ownThread = threading.Thread(target=self.thread_main)
+        self.ownThread.start()
+        
+
+
+
+            

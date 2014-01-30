@@ -54,4 +54,14 @@ class BasicUpdate(Update):
         self.manager.update_triggered = True
 
 
+class SafeRedefineUpdate(Update):
+    def __init__(self,manager,functions):
+        self.functions = functions
+        super(SafeRedefineUpdate,self).__init__(manager=manager)
 
+    def setup(self):
+        for function in self.functions.keys():
+            self.manager.add_function(function,self.functions[function])
+    
+    def apply(self):
+        self.manager.update_triggered = True
