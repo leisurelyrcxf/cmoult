@@ -32,7 +32,7 @@ class ObjectsPool(object):
 	def __init__(self):
                 global objectsPool
                 objectsPool = ObjectsPool()
-                s[Aet_instance_hook(instance_hook)
+                set_instance_hook(instance_hook)
                 self.objects = set()
 
 	def add(self,obj):

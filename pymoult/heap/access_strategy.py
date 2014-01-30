@@ -33,8 +33,8 @@ class DataAccessorNull(object):
 
 
 class DataAccessor(object):
-    def __init__(self,strategy="immediate",class):
-        self.class = class
+    def __init__(self,tclass,strategy="immediate"):
+        self.tclass = tclass
         if strategy not in ["immediate","progressive"]:
             raise WrongStrategy()
         self.queue = Queue()
@@ -46,18 +46,18 @@ class DataAccessor(object):
         if self.strategy == "immediate":
             for ref in objectsPool.pool():
                 obj = ref()
-                if isinstance(obj,self.class):
+                if isinstance(obj,self.tclass):
                     self.put(obj)
             self.put(DataAccessorNull())
         if self.strategy == "progressive":
-            if type(self.class.__getattribute__) == GetItemRouter:
-                self.class.__getattribute__.dataAccessor = self
+            if type(self.tclass.__getattribute__) == GetItemRouter:
+                self.tclass.__getattribute__.dataAccessor = self
             else:
-                self.class.__gettattribute__ = GetItemRouter(getter = self.class.__gettattribute__,dataAcessor = self)
-            if type(self.class.__setattr__) == SetItemRouter:
-                self.class.__setattr__.dataAccessor = self
+                self.tclass.__gettattribute__ = GetItemRouter(getter = self.tclass.__gettattribute__,dataAcessor = self)
+            if type(self.tclass.__setattr__) == SetItemRouter:
+                self.tclass.__setattr__.dataAccessor = self
             else:
-                self.class.__setattr__ = SetItemRouter(setter = self.class.__setattr__,dataAcessor = self)
+                self.tclass.__setattr__ = SetItemRouter(setter = self.tclass.__setattr__,dataAcessor = self)
                 return self
     
     def next(self):
@@ -115,13 +115,13 @@ class SetItemRouter(object):
 
 
 #So far, lazy access does not handle heritage 
-def setLazyUpdate(class,function):
-    if type(class.__getattribute__) == GetItemRouter:
-        class.__getattribute__.function = function
+def setLazyUpdate(tclass,function):
+    if type(tclass.__getattribute__) == GetItemRouter:
+        tclass.__getattribute__.function = function
     else:
-        class.__getattribute__ = GetItemRouter(getter=class.__getattribute__,function=function)
-    if type(class.__setattr__) == SetItemRouter:
-        class.__setattr__.function = function
+        tclass.__getattribute__ = GetItemRouter(getter=tclass.__getattribute__,function=function)
+    if type(tclass.__setattr__) == SetItemRouter:
+        tclass.__setattr__.function = function
     else:
-        class.__setattr__ = SetItemRouter(setter=class.__setattr__,function=function)
+        tclass.__setattr__ = SetItemRouter(setter=tclass.__setattr__,function=function)
 
