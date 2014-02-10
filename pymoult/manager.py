@@ -47,16 +47,21 @@ class Manager(object):
 
     def is_alterable(self):
         return False
+
+    def is_over(self):
+        return False
     
 
 class BasicManager(Manager):
     """Manager at application level that can handles every update
     in its own thread if the update developper provides the whole update code"""
 
-    def __init__(self):
+    def __init__(self,sleepTime=3):
         self.ownThread = None
         self.update_triggered = False
         self.stop = False
+        self.sleepTime = sleepTime
+        self.over = threading.Event()
         super(BasicManager,self).__init__()
 
     def update_function(self):
@@ -68,6 +73,9 @@ class BasicManager(Manager):
                 if self.is_alterable():
                     self.update_function()
                     self.update_triggered = False
+                    while not self.is_over():
+                        time.sleep(self.sleepTime)
+                    self.over.set()
 
     def start(self):
         self.ownThread = threading.Thread(target=self.thread_main)
