@@ -91,6 +91,7 @@ class SafeRedefineManager(Manager):
         self.stop = False
         self.functions = Queue.Queue()
         self.sleepTime = sleepTime
+        self.over = threading.Event()
         super(SafeRedefineManager,self).__init__(threads=threads)
 
     def is_alterable(self,function):
@@ -111,6 +112,7 @@ class SafeRedefineManager(Manager):
                         function = self.functions.get(False)
                     except Queue.Empty:
                         self.update_triggered = False
+                        self.over.set()
                         break
                     function_updated = False
                     while not function_updated:
