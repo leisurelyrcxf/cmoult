@@ -128,6 +128,9 @@ def new_Station_move_next(self,train):
             lane = self.rightLane
     lane.condition.acquire()
     nextElement = self.next(train)
+    if nextElement == None:
+        lane.condition.release()
+        return self
     while not nextElement.can_enter(train):
         lane.condition.wait()
     self.removeTrain()
@@ -149,11 +152,23 @@ def generate_updater(function,clas,target):
     return f
 
 
-functions_updates = {elementClass.next:generate_updater("next",elementClass,new_Element_next),elementClass.previous:generate_updater("previous",elementClass,new_Element_previous),railClass.can_enter:generate_updater("can_enter",railClass,new_Rail_can_enter),stationClass.move_next:generate_updater("move_next",stationClass,new_Station_move_next)}
 
-update1 = SafeRedefineUpdate(station_and_rail_manager,functions_updates)
+#We need to update Rail.can_enter before allowing for trains to switch direction
+#If we don't, the old version of Rail.can_enter may be executed and allow an accident!!
+function_updates={railClass.can_enter:generate_updater("can_enter",railClass,new_Rail_can_enter)}
+
+update1 = SafeRedefineUpdate(station_and_rail_manager,function_updates)
 update1.setup()
 update1.apply()
+update1.wait_update()
+
+
+functions_updates = {elementClass.next:generate_updater("next",elementClass,new_Element_next),elementClass.previous:generate_updater("previous",elementClass,new_Element_previous),stationClass.move_next:generate_updater("move_next",stationClass,new_Station_move_next)}
+
+update2 = SafeRedefineUpdate(station_and_rail_manager,functions_updates)
+update2.setup()
+update2.apply()
+update2.wait_update()
 
 
 

@@ -13,7 +13,7 @@ lock = threading.Lock()
 
 def gprint(string):
     lock.acquire()
-    #print(string)
+    print(string)
     lock.release()
 
 
