@@ -7,13 +7,13 @@ from pymoult.listener import Listener
 import math
 import time
 import threading
-
+import socket
 
 lock = threading.Lock()
 
 def gprint(string):
     lock.acquire()
-    print(string)
+    #print(string)
     lock.release()
 
 
@@ -22,28 +22,40 @@ class Train(DSU_Thread):
         self.color = color
         self.speed = speed
         self.position = position
-        
         super(Train,self).__init__(target=self.main,name=self.color+"_train")
-        
+
+    def gsend(self,string):
+        global lock
+        lock.acquire()
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((socket.gethostname(), 31415))
+        self.socket.sendall(string)
+        self.socket.close()    
+        print(string)
+        lock.release()
+
     def move(self):
         if type(self.position) == Station:
             time.sleep(3)
             gprint("The "+self.color+" train wants to leave the "+self.position.name+" station")
             self.position = self.position.move_next(self)
             gprint("The "+self.color+" train entered on the "+self.position.name+" rail")
+            if isinstance(self.position,Rail):
+                self.gsend("rail "+self.color+" "+self.position.name)
         elif type(self.position) == Rail:
             time.sleep(math.ceil(self.position.length/self.speed))
             self.position = self.position.move_next()
             if isinstance(self.position,Station):
                 gprint("The "+self.color+" train entered the "+self.position.name+" station")
+                self.gsend("station "+self.color+" "+self.position.name) 
             else:
                 gprint("The "+self.color+" train entered on the "+self.position.name+" rail")
-
+                self.gsend("rail "+self.color+" "+self.position.name)
 
     def main(self):
         while not self.stoped:
             self.move()
-    
+
                
 class Element(object):
     def __init__(self,name,left=None,right=None):
@@ -192,10 +204,10 @@ def main():
     
     lane0 = Lane(montparnasse,rail0,rail1,rail2,est)
     lane1 = Lane(est,rail3,rail4,lazare)
-#    lane2 = Lane(lazare,rail5,montparnasse)
+ #   lane2 = Lane(lazare,rail5,montparnasse)
     lane0.link()
     lane1.link()
-#    lane2.link()
+ #   lane2.link()
 
     blueTrain = Train(30,"blue",montparnasse)
     redTrain = Train(10,"red",montparnasse)
