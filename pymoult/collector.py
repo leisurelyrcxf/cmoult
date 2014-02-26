@@ -56,6 +56,3 @@ def instance_hook(obj):
 	except:
 		pass
 
-def enable_pool():
-	"""Enable the pool of weak references, compulsory for eager object conversion"""
-	
