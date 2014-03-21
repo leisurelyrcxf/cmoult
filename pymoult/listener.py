@@ -56,13 +56,12 @@ class Listener(threading.Thread):
 				name = os.path.basename(update_address).rstrip(".py")
 				def update():
 					imp.load_module(name,t[0],t[1],t[2]) 
+				update_thread = threading.Thread(target=update,name="update thread "+str(self.update_thread_index))
+				update_thread.start()
+				self.update_thread_index+=1
 			else:
 				#Parse the file to get the update function
-				pass
-			update_thread = threading.Thread(target=update,name="update thread "+str(self.update_thread_index))
-			update_thread.start()
-			self.update_thread_index+=1
-
+				print("Error : the update module supplied does not start with " + Parsed_header)
 		else:
 			print("Error : the update module supplied was not found")
 
