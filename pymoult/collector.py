@@ -31,7 +31,7 @@ class ObjectsPool(object):
 	""" The Pool of objects, keeping a weak reference to all created objects"""
 	def __init__(self):
                 global objectsPool
-                objectsPool = ObjectsPool()
+                objectsPool = self
                 set_instance_hook(instance_hook)
                 self.objects = set()
 
