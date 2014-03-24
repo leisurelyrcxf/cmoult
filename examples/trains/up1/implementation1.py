@@ -58,7 +58,7 @@ manager1 = TrainManager()
 manager1.start()
 
 #We use the SafeRedefineUpdate to update stations and rails
-station_and_rail_manager = SafeRedefineManager(getTrainThreads(),sleepTime=3)
+station_and_rail_manager = SafeRedefineManager(getTrainThreads(),sleepTime=1)
 station_and_rail_manager.start()
 
 railClass = sys.modules["__main__"].Rail
@@ -157,19 +157,22 @@ def generate_updater(function,clas,target):
 #If we don't, the old version of Rail.can_enter may be executed and allow an accident!!
 function_updates={railClass.can_enter:generate_updater("can_enter",railClass,new_Rail_can_enter)}
 
+
+print("BEGIN STEP1")
 update1 = SafeRedefineUpdate(station_and_rail_manager,function_updates)
 update1.setup()
 update1.apply()
 update1.wait_update()
-
+print("STEP1 OF UPDATE OK")
 
 functions_updates = {elementClass.next:generate_updater("next",elementClass,new_Element_next),elementClass.previous:generate_updater("previous",elementClass,new_Element_previous),stationClass.move_next:generate_updater("move_next",stationClass,new_Station_move_next)}
 
+print("BEGIN STEP2")
 update2 = SafeRedefineUpdate(station_and_rail_manager,functions_updates)
 update2.setup()
 update2.apply()
 update2.wait_update()
-
+print("STEP2 OF UPDATE OK")
 
 
  
