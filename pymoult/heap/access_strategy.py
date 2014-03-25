@@ -77,7 +77,7 @@ class GetItemRouter(object):
         self.dataAccessor = dataAccessor
         self.function = function
         if getter == None:
-            self.getter = object.__getitem__
+            self.getter = object.__getattribute__
         else:
             self.getter = getter
 
@@ -86,9 +86,17 @@ class GetItemRouter(object):
             self.dataAccessor.queue.put(obj)
        
         if self.function != None:
-             type(obj).__getattribute__ = self.getter
-             self.function(obj)
-             type(obj).__getattribute__ = self
+            setter_back = None
+            getter_back = type(obj).__getattribute__
+            type(obj).__getattribute__ = self.getter
+            if hasattr(type(obj),"__setterrouter__")and type(type(obj).__setterrouter__) == SetItemRouter:
+                setter_back = type(obj).__setattr__
+                type(obj).__setattr__ = type(obj).__setterrouter__.setter
+            self.function(obj)
+            if setter_back is not None:
+                type(obj).__setattr__ = setter_back
+            type(obj).__getattribute__ = getter_back
+
 
         return self.getter(obj,attr)
 
@@ -98,7 +106,7 @@ class SetItemRouter(object):
         self.dataAccessor = dataAccessor
         self.function = function
         if setter == None:
-            self.setter = object.__setattr__
+            self.setter= object.__setattr__
         else:
             self.setter = setter
 
@@ -107,21 +115,31 @@ class SetItemRouter(object):
             self.dataAccessor.queue.put(obj)
        
         if self.function != None:
-             type(obj).__setattr__ = self.setter
-             self.function(obj)
-             type(obj).__setattr__ = self
+            getter_back = None
+            setter_back = type(obj).__setattr__
+            type(obj).__setattr__ = self.setter
+            if hasattr(type(obj),"__getterrouter__") and type(type(obj).__getterrouter__) == GetItemRouter:
+                getter_back = type(obj).__getattribute__
+                type(obj).__getattribute__ = type(obj).__getterrouter__.getter
+            self.function(obj)
+            if getter_back is not None:
+                type(obj).__getattribute__ = getter_back
+            type(obj).__setattr__ = setter_back
 
         return self.setter(obj,attr,value)
 
+def add_getter_router(tclass,getter=None,dataAccessor=None,function=None):
+    router = GetItemRouter(getter=getter,dataAccessor=dataAccessor,function=function)
+    tclass.__getattribute__ = lambda o,a : router(o,a)
+    tclass.__getterrouter__ = router
+
+def add_setter_touter(tclass,setter=None,dataAccessor=None,function=None):
+    router = SetItemRouter(setter=setter,dataAccessor=dataAccessor,function=function)
+    tclass.__setattr__ = lambda o,a,v : router(o,a,v)
+    tclass.__setterrouter__ = router
 
 #So far, lazy access does not handle heritage 
 def setLazyUpdate(tclass,function):
-    if type(tclass.__getattribute__) == GetItemRouter:
-        tclass.__getattribute__.function = function
-    else:
-        tclass.__getattribute__ = GetItemRouter(getter=tclass.__getattribute__,function=function)
-    if type(tclass.__setattr__) == SetItemRouter:
-        tclass.__setattr__.function = function
-    else:
-        tclass.__setattr__ = SetItemRouter(setter=tclass.__setattr__,function=function)
+    add_getter_router(tclass,function=function)
+    add_setter_touter(tclass,function=function)
 
