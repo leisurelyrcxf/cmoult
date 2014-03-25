@@ -11,6 +11,6 @@ if __name__ == "__main__":
 			author="Sebastien Martinez",
 			author_email="sebastien.martinez@telecom-bretagne.eu",
 			url="http://bitbucket.org/smartinezgd/pymoult",
-			packages=["pymoult","pymoult.stack","pymoult.heap","pymoult.common"],
+			packages=["pymoult","pymoult.stack","pymoult.heap"],
 			license="GPLv2"
 			)
