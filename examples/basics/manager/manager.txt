@@ -1,0 +1,14 @@
+DSU Mechanisms concerning the manager
+=====================================
+
+
+Examples in this folder concern the use of the update manager.
+
+example1 shows the most commonly used manager : platform level, application global, present from the beginning and always the same
+
+example2 shows a manager added to the application when updating
+
+example3 shows a manager evolving with the updates
+ 
+example4 shows a custom manager tied to an element of the application     
+
