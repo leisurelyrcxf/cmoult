@@ -51,6 +51,8 @@ class Manager(object):
     def is_over(self):
         return False
     
+    def trigger(self):
+        self.update_triggered = True
 
 class BasicManager(Manager):
     """Manager at application level that can handles every update
@@ -62,6 +64,7 @@ class BasicManager(Manager):
         self.stop = False
         self.sleepTime = sleepTime
         self.over = threading.Event()
+        self.trig = threading.Event()
         super(BasicManager,self).__init__()
 
     def update_function(self):
@@ -69,10 +72,11 @@ class BasicManager(Manager):
 
     def thread_main(self):
         while not self.stop:
-            if self.update_triggered:
+            self.trig.wait()
+            if self.trig.is_set():
                 if self.is_alterable():
                     self.update_function()
-                    self.update_triggered = False
+                    self.trig.clear()
                     while not self.is_over():
                         time.sleep(self.sleepTime)
                     self.over.set()
@@ -80,6 +84,9 @@ class BasicManager(Manager):
     def start(self):
         self.ownThread = threading.Thread(target=self.thread_main)
         self.ownThread.start()
+
+    def trigger(self):
+        self.trig.set()
 
 
 class SafeRedefineManager(Manager):
