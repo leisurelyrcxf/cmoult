@@ -1,0 +1,35 @@
+I like trains!
+==============
+
+This application handle a fleet of trains circling through Paris.
+This application model is the following
+
+A train has color, speed and an initial position.
+A Lane element is either a Rail or a Station.
+A Lane has a starting Station followed by any number of Lane element.
+
+Each Station has a maximum capacity and each Rail as a length.
+
+Before leaving a station, a train has to check if all along its journey, 
+it will stay alone on any rail it circulates on and if there will be enough 
+room for it at the next Station. 
+
+
+
+This applications comes with 3 dynamic updates. For each of them, several implementations are provided.
+Theses different implementations use different DSU techniques.
+
+Update 1
+--------
+
+This updates adds the possibility for trains to switch its direction.
+
+Update 2
+--------
+
+This update adds rail switches
+
+Updates 3
+---------
+
+This updates adds the possibility for stations to have different lanes of rail.

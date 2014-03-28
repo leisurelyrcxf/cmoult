@@ -1,0 +1,192 @@
+diff --git a/pypy/interpreter/executioncontext.py b/pypy/interpreter/executioncontext.py
+--- a/pypy/interpreter/executioncontext.py
++++ b/pypy/interpreter/executioncontext.py
+@@ -171,13 +171,15 @@
+         if frame:     # else, the exception goes nowhere and is lost
+             frame.last_exception = operror
+ 
+-    def settrace(self, w_func):
++    def settrace(self, w_func, force_now=False):
+         """Set the global trace function."""
+         if self.space.is_w(w_func, self.space.w_None):
+             self.w_tracefunc = None
+         else:
+             self.force_all_frames()
+             self.w_tracefunc = w_func
++            if force_now:
++                self.gettopframe().w_f_trace = w_func
+             self.space.frame_trace_action.fire()
+ 
+     def gettrace(self):
+diff --git a/pypy/interpreter/pyframe.py b/pypy/interpreter/pyframe.py
+--- a/pypy/interpreter/pyframe.py
++++ b/pypy/interpreter/pyframe.py
+@@ -673,6 +673,24 @@
+             return space.wrap(self.builtin is not space.builtin)
+         return space.w_False
+ 
++    def set_local(self, space, w_name, w_value):
++        varnames = self.getcode().getvarnames()
++        try:
++            index = varnames.index(space.str_w(w_name))
++        except ValueError, e:
++            freevarnames = self.pycode.co_cellvars + self.pycode.co_freevars
++            try:
++                index = freevarnames.index(space.str_w(w_name))
++            except ValueError, e:
++                raise OperationError(space.w_ValueError, space.wrap("the name must be in f_code.co_varnames, or in f_code.co_cellvars, or in f_code.co_freevars"))
++            else:
++                cell = self.cells[index]
++                cell.set(w_value)
++        else:
++            new_fastlocals_w = self.getfastscope()[:index+1]
++            new_fastlocals_w[index] = w_value
++            self.setfastscope(new_fastlocals_w)
++
+ class CPythonFrame(PyFrame):
+     """
+     Execution of host (CPython) opcodes.
+diff --git a/pypy/interpreter/typedef.py b/pypy/interpreter/typedef.py
+--- a/pypy/interpreter/typedef.py
++++ b/pypy/interpreter/typedef.py
+@@ -760,6 +760,7 @@
+     f_exc_value = GetSetProperty(PyFrame.fget_f_exc_value),
+     f_exc_traceback = GetSetProperty(PyFrame.fget_f_exc_traceback),
+     f_restricted = GetSetProperty(PyFrame.fget_f_restricted),
++    f_set_local = interp2app(PyFrame.set_local),
+     **Frame.typedef.rawdict)
+ PyFrame.typedef.acceptable_as_base_class = False
+ 
+diff --git a/pypy/module/__builtin__/__init__.py b/pypy/module/__builtin__/__init__.py
+--- a/pypy/module/__builtin__/__init__.py
++++ b/pypy/module/__builtin__/__init__.py
+@@ -29,6 +29,8 @@
+ 
+         'bin'           : 'app_operation.bin',
+ 
++        'set_instance_hook' : 'app_hook.set_instance_hook',
++        'call_instance_hook' : 'app_hook.call_instance_hook',
+     }
+ 
+     interpleveldefs = {
+diff --git a/pypy/module/__builtin__/app_hook.py b/pypy/module/__builtin__/app_hook.py
+new file mode 100644
+--- /dev/null
++++ b/pypy/module/__builtin__/app_hook.py
+@@ -0,0 +1,12 @@
++# NOT_RPYTHON (but maybe soon)
++
++__instance_hook = None
++
++def set_instance_hook(hook):
++    global __instance_hook
++    __instance_hook = hook
++
++def call_instance_hook(newobj):
++    hook = __instance_hook
++    if hook is not None:
++        hook(newobj)
+diff --git a/pypy/module/__builtin__/interp_classobj.py b/pypy/module/__builtin__/interp_classobj.py
+--- a/pypy/module/__builtin__/interp_classobj.py
++++ b/pypy/module/__builtin__/interp_classobj.py
+@@ -60,6 +60,12 @@
+             w_inst = cache.cls_with_del(space, self)
+         else:
+             w_inst = cache.cls_without_del(space, self)
++        w_mod = space.getbuiltinmodule('__builtin__')
++        if w_mod is not None:
++            try:
++                space.call_method(w_mod, "call_instance_hook", w_inst)
++            except OperationError, e:
++                e.write_unraisable(space, "__builtin__.call_instance_hook()")
+         return w_inst
+ 
+     def getdict(self, space):
+diff --git a/pypy/module/sys/__init__.py b/pypy/module/sys/__init__.py
+--- a/pypy/module/sys/__init__.py
++++ b/pypy/module/sys/__init__.py
+@@ -51,6 +51,7 @@
+ 
+         '_getframe'             : 'vm._getframe', 
+         '_current_frames'       : 'currentframes._current_frames', 
++        '_current_frames_2'       : 'currentframes._current_frames_2', 
+         'setrecursionlimit'     : 'vm.setrecursionlimit', 
+         'getrecursionlimit'     : 'vm.getrecursionlimit', 
+         'setcheckinterval'      : 'vm.setcheckinterval', 
+@@ -58,6 +59,7 @@
+         'exc_info'              : 'vm.exc_info', 
+         'exc_clear'             : 'vm.exc_clear', 
+         'settrace'              : 'vm.settrace',
++        'settrace_for_thread'   : 'vm.settrace_for_thread',
+         'gettrace'              : 'vm.gettrace',
+         'setprofile'            : 'vm.setprofile',
+         'getprofile'            : 'vm.getprofile',
+diff --git a/pypy/module/sys/currentframes.py b/pypy/module/sys/currentframes.py
+--- a/pypy/module/sys/currentframes.py
++++ b/pypy/module/sys/currentframes.py
+@@ -75,3 +75,30 @@
+                       space.wrap(thread_ident),
+                       w_topframe)
+     return w_result
++
++def get_top_frame_of(space, ec):
++    f = ec.gettopframe_nohidden()
++    f.mark_as_escaped()
++    return space.wrap(f)
++
++def _current_frames_2(space):
++    """_current_frames() -> dictionary
++
++    Return a dictionary mapping each current thread T's thread id to T's
++    current stack "frame".  Functions in the traceback module can build the
++    call stack given such a frame.
++
++    Note that in PyPy this returns fake frame objects, to avoid a runtime
++    penalty everywhere with the JIT.  (So far these fake frames can be
++    completely uninformative depending on the JIT state; we could return
++    more with more efforts.)
++
++    This function should be used for specialized purposes only."""
++    w_result = space.newdict()
++    w_fake_frame = app.wget(space, "fake_frame")
++    ecs = space.threadlocals.getallvalues()
++    for thread_ident, ec in ecs.items():
++        space.setitem(w_result,
++                      space.wrap(thread_ident),
++                      get_top_frame_of(space, ec))
++    return w_result
+diff --git a/pypy/module/sys/vm.py b/pypy/module/sys/vm.py
+--- a/pypy/module/sys/vm.py
++++ b/pypy/module/sys/vm.py
+@@ -164,6 +164,13 @@
+ function call.  See the debugger chapter in the library manual."""
+     space.getexecutioncontext().settrace(w_func)
+ 
++def settrace_for_thread(space, w_thread_ident, w_func, w_force_now):
++    """Set the tracing function for a given thread."""
++    ecs = space.threadlocals.getallvalues()
++    ident = space.int_w(w_thread_ident)
++    ec = ecs[ident]
++    ec.settrace(w_func, force_now=space.is_true(w_force_now))
++
+ def gettrace(space):
+     """Return the global debug tracing function set with sys.settrace.
+ See the debugger chapter in the library manual."""
+diff --git a/pypy/objspace/std/typeobject.py b/pypy/objspace/std/typeobject.py
+--- a/pypy/objspace/std/typeobject.py
++++ b/pypy/objspace/std/typeobject.py
+@@ -1088,6 +1088,14 @@
+     w_newobject = space.call_obj_args(w_newfunc, w_type, __args__)
+     call_init = space.isinstance_w(w_newobject, w_type)
+ 
++    if w_type.is_heaptype():
++        w_mod = space.getbuiltinmodule('__builtin__')
++        if w_mod is not None:
++            try:
++                space.call_method(w_mod, "call_instance_hook", w_newobject)
++            except OperationError, e:
++                e.write_unraisable(space, "__builtin__.call_instance_hook()")
++
+     # maybe invoke the __init__ of the type
+     if (call_init and not (space.is_w(w_type, space.w_type) and
+         not __args__.keywords and len(__args__.arguments_w) == 1)):
