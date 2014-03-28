@@ -54,7 +54,7 @@ class BasicUpdate(Update):
         self.manager.over.clear()
 
     def apply(self):
-        self.manager.update_triggered = True
+        self.manager.trigger()
 
     def wait_update(self):
         self.manager.over.wait() 
@@ -71,7 +71,7 @@ class SafeRedefineUpdate(Update):
         self.manager.over.clear()
     
     def apply(self):
-        self.manager.update_triggered = True
+        self.manager.trigger()
 
     def wait_update(self):
         self.manager.over.wait()
