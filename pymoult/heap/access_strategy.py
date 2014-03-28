@@ -82,20 +82,21 @@ class GetItemRouter(object):
             self.getter = getter
 
     def __call__(self,obj,attr):
+        objtype = type(obj)
         if self.dataAccessor != None:
             self.dataAccessor.queue.put(obj)
        
         if self.function != None:
             setter_back = None
-            getter_back = type(obj).__getattribute__
-            type(obj).__getattribute__ = self.getter
-            if hasattr(type(obj),"__setterrouter__")and type(type(obj).__setterrouter__) == SetItemRouter:
-                setter_back = type(obj).__setattr__
-                type(obj).__setattr__ = type(obj).__setterrouter__.setter
+            getter_back = objtype.__getattribute__
+            objtype.__getattribute__ = self.getter
+            if hasattr(objtype,"__setterrouter__")and type(objtype.__setterrouter__) == SetItemRouter:
+                setter_back = objtype.__setattr__
+                objtype.__setattr__ = objtype.__setterrouter__.setter
             self.function(obj)
             if setter_back is not None:
-                type(obj).__setattr__ = setter_back
-            type(obj).__getattribute__ = getter_back
+                objtype.__setattr__ = setter_back
+            objtype.__getattribute__ = getter_back
 
 
         return self.getter(obj,attr)
@@ -111,20 +112,21 @@ class SetItemRouter(object):
             self.setter = setter
 
     def __call__(self,obj,attr,value):
+        objtype = type(obj)
         if self.dataAccessor != None:
             self.dataAccessor.queue.put(obj)
        
         if self.function != None:
             getter_back = None
-            setter_back = type(obj).__setattr__
-            type(obj).__setattr__ = self.setter
-            if hasattr(type(obj),"__getterrouter__") and type(type(obj).__getterrouter__) == GetItemRouter:
-                getter_back = type(obj).__getattribute__
-                type(obj).__getattribute__ = type(obj).__getterrouter__.getter
+            setter_back = objtype.__setattr__
+            objtype.__setattr__ = self.setter
+            if hasattr(objtype,"__getterrouter__") and type(objtype.__getterrouter__) == GetItemRouter:
+                getter_back = objtype.__getattribute__
+                objtype.__getattribute__ = objtype.__getterrouter__.getter
             self.function(obj)
             if getter_back is not None:
-                type(obj).__getattribute__ = getter_back
-            type(obj).__setattr__ = setter_back
+                objtype.__getattribute__ = getter_back
+            objtype.__setattr__ = setter_back
 
         return self.setter(obj,attr,value)
 
