@@ -29,11 +29,11 @@ def objectClassUpdate(obj,nclass,transformer=None):
 def generateMixinUser(class1,*mixins):
     class MixinUser(class1):
         pass
-    MixinUser.__bases__ = tuple(mixins+[class1])
+    MixinUser.__bases__ = mixins+(class1,)
     return MixinUser
 
 def applyMixinToInstance(obj,*mixins):
     class NewClass(type(obj)):
         pass
-    NewClass.__bases__ = tuple(mixins+[type(obj)])
+    NewClass.__bases__ = mixins+(type(obj),)
     obj.__class__ = NewClass
