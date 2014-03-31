@@ -50,15 +50,15 @@ class DataAccessor(object):
                     self.put(obj)
             self.put(DataAccessorNull())
         if self.strategy == "progressive":
-            if type(self.tclass.__getattribute__) == GetItemRouter:
-                self.tclass.__getattribute__.dataAccessor = self
+            if hasattr(self.tclass,"__getterrouter__") and type(self.tclass.__getterrouter__) == GetItemRouter:
+                self.tclass.__getterrouter__.dataAccessor = self
             else:
-                self.tclass.__gettattribute__ = GetItemRouter(getter = self.tclass.__gettattribute__,dataAcessor = self)
-            if type(self.tclass.__setattr__) == SetItemRouter:
-                self.tclass.__setattr__.dataAccessor = self
+                add_getter_router(self.tclass,getter=self.tclass.__getattribute,dataAccessor=self)
+            if hasattr(self.tclass,"__setterrouter__") and type(self.tclass.__setterrouter__) == SetItemRouter:
+                self.tclass.__setterrouter__.dataAccessor = self
             else:
-                self.tclass.__setattr__ = SetItemRouter(setter = self.tclass.__setattr__,dataAcessor = self)
-                return self
+                add_setter_router(self.tclass,setter=self.tclass.__setattr__,dataAccessor = self)
+        return self
     
     def next(self):
         item = self.queue.get()
@@ -135,7 +135,7 @@ def add_getter_router(tclass,getter=None,dataAccessor=None,function=None):
     tclass.__getattribute__ = lambda o,a : router(o,a)
     tclass.__getterrouter__ = router
 
-def add_setter_touter(tclass,setter=None,dataAccessor=None,function=None):
+def add_setter_router(tclass,setter=None,dataAccessor=None,function=None):
     router = SetItemRouter(setter=setter,dataAccessor=dataAccessor,function=function)
     tclass.__setattr__ = lambda o,a,v : router(o,a,v)
     tclass.__setterrouter__ = router
@@ -143,5 +143,5 @@ def add_setter_touter(tclass,setter=None,dataAccessor=None,function=None):
 #So far, lazy access does not handle heritage 
 def setLazyUpdate(tclass,function):
     add_getter_router(tclass,function=function)
-    add_setter_touter(tclass,function=function)
+    add_setter_router(tclass,function=function)
 
