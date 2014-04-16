@@ -99,6 +99,7 @@ class SafeRedefineManager(Manager):
         self.functions = Queue.Queue()
         self.sleepTime = sleepTime
         self.over = threading.Event()
+        self.trig = threading.Event()
         super(SafeRedefineManager,self).__init__(threads=threads)
 
     def is_alterable(self,function):
@@ -113,22 +114,22 @@ class SafeRedefineManager(Manager):
 
     def thread_main(self):
         while not self.stop:
-            if self.update_triggered:
-                while True:
-                    try:
-                        function = self.functions.get(False)
-                    except Queue.Empty:
-                        self.update_triggered = False
-                        self.over.set()
-                        break
-                    function_updated = False
-                    while not function_updated:
-                        if self.is_alterable(function[0]):
-                            self.pause_threads()
-                            function[1]()
-                            function_updated = True
-                            self.resume_threads()
-                        time.sleep(self.sleepTime)
+            self.trig.wait()
+            if self.trig.is_set():
+                try:
+                    function = self.functions.get(False)
+                except Queue.Empty:
+                    self.trig.clear()
+                    self.over.set()
+                    break
+                function_updated = False
+                while not function_updated:
+                    if self.is_alterable(function[0]):
+                        self.pause_threads()
+                        function[1]()
+                        function_updated = True
+                        self.resume_threads()
+                    time.sleep(self.sleepTime)
      
     def start(self):
         self.ownThread = threading.Thread(target=self.thread_main)
@@ -136,5 +137,6 @@ class SafeRedefineManager(Manager):
         
 
 
-
+    def trigger(self):
+        self.trig.set()
             
