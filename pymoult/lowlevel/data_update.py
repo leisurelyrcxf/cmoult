@@ -1,5 +1,5 @@
-#    class_update.py This file is part of Pymoult
-#    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
+#    collector.py This file is part of Pymoult
+#    Copyright (C) 2013  Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,14 +14,16 @@
 #    You should have received a copy of the GNU General Public License along
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-"""pymoult.heap.class_update.py
+
+"""pymoult.lowlevel.data_update.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-   This module provides functions for updating objects
+   This module provides low level tools for updating data (updating
+   data structures and converting objects)
+
 """
 
-def objectClassUpdate(obj,nclass,transformer=None):
+def updateToClass(obj,nclass,transformer=None):
     obj.__class__ = nclass
     if transformer != None:
         transformer(obj)
@@ -32,8 +34,19 @@ def generateMixinUser(class1,*mixins):
     MixinUser.__bases__ = mixins+(class1,)
     return MixinUser
 
-def applyMixinToInstance(obj,*mixins):
+def applyMixinToObject(obj,*mixins):
     class NewClass(type(obj)):
         pass
     NewClass.__bases__ = mixins+(type(obj),)
     obj.__class__ = NewClass
+
+def addFieldToClass(cls,name,field):
+    clas.name = field
+
+def redefineClass(tclass,nclass):
+    pass
+    
+
+
+
+

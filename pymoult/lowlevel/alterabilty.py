@@ -15,44 +15,34 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-"""pymoult.collector.py
+"""pymoult.lowlevel.alterability.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-	This module supplies the ObjectPool, used for 
-	eager object conversions
+   This module supplies low level tools for handling the alterability
 
 """
 
-import weakref
+from pymoult.threads import start_active_update
 
-objectsPool = None
+def isFunctionInStack(func,thread):
+    stack = get_current_frames()[thread.ident]
+    x = stack
+    while x is not None:
+        if x.f_code is func.func_code:
+            return True
+        x = x.f_back
+    return False
 
-class ObjectsPool(object):
-	""" The Pool of objects, keeping a weak reference to all created objects"""
-	def __init__(self):
-                global objectsPool
-                objectsPool = self
-                set_instance_hook(instance_hook)
-                self.objects = set()
+def isFunctionInAllStack(func):
+    stacks = get_current_frames()
+    for stack in stacks.values():
+        x = stack
+        while x is not None:
+            if x.f_code is func.func_code:
+                return True
+            x = x.f_back
+    return False
 
-	def add(self,obj):
-		self.objects.add(weakref.ref(obj))
-
-	def cleanup(self):
-		d = []
-		for ref in self.objects:
-			if ref() == None:
-				d.append(ref)
-		for x in d:
-			self.objects.remove(x)
-
-	def pool(self):
-		return self.objects
-
-
-def instance_hook(obj):
-	try:
-		objectsPool.add(obj)
-	except:
-		pass
+def staticUpdatePoint():
+    start_active_update()
 

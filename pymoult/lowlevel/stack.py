@@ -1,5 +1,5 @@
-#    tools.py This file is part of Pymoult
-#    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
+#    collector.py This file is part of Pymoult
+#    Copyright (C) 2013  Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,9 +14,11 @@
 #    You should have received a copy of the GNU General Public License along
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-"""pymoult.stack.tools.py
+
+"""pymoult.lowlevel.stack.py
    Published under the GPLv2 license (see LICENSE.txt)
+
+   This module provides low level tools for manipulating the stack 
 """
 
 from  pymoult.threads import set_thread_trace, get_current_frames, RebootException
@@ -32,22 +34,6 @@ def switchMain(thread,func,args=[]):
         return func(*args)
     thread.main = m
 
-def isFunctionInStack(func,thread):
-    stack = get_current_frames()[thread.ident]
-    x = stack
-    while x is not None:
-        if x.f_code is func.func_code:
-            return True
-        x = x.f_back
-    return False
 
-
-def isFunctionInAllStack(func):
-    stacks = get_current_frames()
-    for stack in stacks.values():
-        x = stack
-        while x is not None:
-            if x.f_code is func.func_code:
-                return True
-            x = x.f_back
-    return False
+def suspendThread(thread):
+    pass

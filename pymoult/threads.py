@@ -16,7 +16,7 @@
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-"""pymoult.controllers.py
+"""pymoult.threads.py
    Published under the GPLv2 license (see LICENSE.txt)
 
    This module provides the controlled threads and high level
@@ -28,8 +28,6 @@ import sys
 from _continuation import continulet
 import inspect
 import time
-
-
 
 class RebootException(Exception):
 	pass
@@ -83,8 +81,6 @@ def start_active_update():
 def set_active_update_function(function,thread):
 	"""This function sets the active update function of a given thread"""
 	thread.active_update_function = function
-
-
 
 def get_thread_by_name(name):
         threads = threading.enumerate()
