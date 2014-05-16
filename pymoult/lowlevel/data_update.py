@@ -23,6 +23,8 @@
 
 """
 
+import sys
+
 def updateToClass(obj,nclass,transformer=None):
     obj.__class__ = nclass
     if transformer != None:
@@ -44,7 +46,11 @@ def addFieldToClass(cls,name,field):
     clas.name = field
 
 def redefineClass(tclass,nclass):
-    pass
+    tname = tclass.__name__
+    tmod = tclass.__module__
+    if not tname in dir(sys.modules[tmod]):
+        raise ValueError("class "+tname+" is not a toplevel class")
+    setattr(sys.modules[tmod],tname,nclass)
     
 
 
