@@ -22,6 +22,7 @@
 """
 
 from tputil import make_proxy
+import sys
 
 #Proxys
 class ProxyManager(object):
@@ -52,10 +53,13 @@ def proxify(obj):
 def rerouteProxy(proxy,obj):
     return proxy.proxy_controller.reroute(obj)
 
-
-
 def redefineFunction(tfunction,nfunction):
-        pass
+        tname = tfunction.__name__
+        tmod = tfunction.__module__
+        if not tname in dir(sys.modules[tmod]):
+            raise ValueError("function "+tname+" is not toplevel")
+        setattr(sys.modules[tmod],tname,nfunction)
 
-def redirectPointer(pointer,targer):
+
+def redirectPointer(pointer,target):
         pass
