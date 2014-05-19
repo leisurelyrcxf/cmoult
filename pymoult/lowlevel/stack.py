@@ -21,7 +21,8 @@
    This module provides low level tools for manipulating the stack 
 """
 
-from  pymoult.threads import set_thread_trace, get_current_frames, RebootException
+from  pymoult.threads import set_thread_trace, RebootException
+import threading
 
 
 def resetThread(thread):
@@ -34,6 +35,21 @@ def switchMain(thread,func,args=[]):
         return func(*args)
     thread.main = m
 
-
 def suspendThread(thread):
     pass
+
+
+def suspendThread(thread):
+        if not hasattr(thread,"pause_event"):
+                thread.pause_event = threading.Event()
+                thread.pause_event.clear()
+                def trace(frame,event,arg):
+                        if hasattr(thread,"pause_event"):
+                                thread.pause_event.wait()
+                        return None
+                set_thread_trace(thread,trace)
+                               
+def resumeThread(thread):
+        if hasattr(thread,"pause_event"):
+                thread.pause_event.set()
+                delattr(thread,"pause_event")

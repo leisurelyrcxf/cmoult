@@ -20,16 +20,20 @@
 """
 
 import threading
-from pymoult.stack.tools import *
+from pymoult.lowlevel.stack import *
+from pymoult.lowlevel.relinking import *
+from pymoult.lowlevel.alterability import *
 from pymoult.threads import *
 import time
 import Queue
 
-
 class Manager(object):
-    def __init__(self,**units):
+    def __init__(self,sleepTime=3,**units):
         for element in units.keys():
             setattr(self,element,units[element])
+        self.invoked = threading.Event()
+        self.over = threading.Event()
+        self.sleepTime=sleepTime
 
     def start(self):
         pass
@@ -37,69 +41,65 @@ class Manager(object):
     def pause_threads(self):
         if hasattr(self,"threads") and type(self.threads) == list:
             for t in self.threads:
-                pause_thread(t)
+                suspendThread(t)
 
     def resume_threads(self):
         if hasattr(self,"threads") and type(self.threads) == list:
             for t in self.threads:
-                resume_thread(t)
+                resumeThread(t)
         
-
     def is_alterable(self):
         return False
 
     def is_over(self):
         return False
+
+    def invoke(self):
+        self.invoked.set()
+
+    def finish(self):
+        self.over.set()
+        self.invoked.clear()
     
-    def trigger(self):
-        self.update_triggered = True
+    def begin(self):
+        self.over.clear()
 
-class BasicManager(Manager):
-    """Manager at application level that can handles every update
-    in its own thread if the update developper provides the whole update code"""
+    def wait_over(self):
+        self.over.wait()
+    
+class ThreadedManager(Manager):
+    """Manager using its owwn thread to monitor alterabilty and apply the
+       update"""
 
-    def __init__(self,sleepTime=3):
+    def __init__(self,sleepTime=3,**units):
         self.ownThread = None
-        self.update_triggered = False
         self.stop = False
-        self.sleepTime = sleepTime
-        self.over = threading.Event()
-        self.trig = threading.Event()
-        super(BasicManager,self).__init__()
+        super(ThreadedManager,self).__init__(sleepTime=sleepTime,**units)
 
     def update_function(self):
         pass
 
     def thread_main(self):
         while not self.stop:
-            self.trig.wait()
-            if self.trig.is_set():
-                if self.is_alterable():
-                    self.update_function()
-                    self.trig.clear()
-                    while not self.is_over():
-                        time.sleep(self.sleepTime)
-                    self.over.set()
+            self.invoked.wait()
+            self.begin()
+            if self.is_alterable():
+                self.update_function()
+                while not self.is_over():
+                    time.sleep(self.sleepTime)
+                self.finish()
 
     def start(self):
         self.ownThread = threading.Thread(target=self.thread_main)
         self.ownThread.start()
 
-    def trigger(self):
-        self.trig.set()
 
-
-class SafeRedefineManager(Manager):
+class SafeRedefineManager(ThreadedManager):
     """Manager for handling safe redefinition update"""
 
     def __init__(self,threads,sleepTime=3):
-        self.ownThread = None
-        self.update_triggered = False
-        self.stop = False
         self.functions = Queue.Queue()
-        self.sleepTime = sleepTime
-        self.over = threading.Event()
-        super(SafeRedefineManager,self).__init__(threads=threads)
+        super(SafeRedefineManager,self).__init__(sleepTime=sleepTime,threads=threads)
 
     def is_alterable(self,function):
         for thread in self.threads:
@@ -107,33 +107,30 @@ class SafeRedefineManager(Manager):
                 return False
         return True
   
-    def add_function(self,function,function_updater):
-        self.functions.put((function,function_updater))
-
+    def add_function(self,function,new_function):
+        self.functions.put((function,new_function))
 
     def thread_main(self):
         while not self.stop:
-            if self.update_triggered:
-                while True:
-                    try:
-                        function = self.functions.get(False)
-                    except Queue.Empty:
-                        self.update_triggered = False
-                        self.over.set()
-                        break
-                    function_updated = False
-                    while not function_updated:
-                        if self.is_alterable(function[0]):
-                            self.pause_threads()
-                            function[1]()
-                            function_updated = True
-                            self.resume_threads()
-                        time.sleep(self.sleepTime)
+            self.invoked.wait()
+            self.begin()
+            while True:
+                try:
+                    function = self.functions.get(False)
+                except Queue.Empty:
+                    self.finish()
+                    break
+                function_updated = False
+                while not function_updated:
+                    if self.is_alterable(function[0]):
+                        self.pause_threads()
+                        redefineFunction(function[0],function[1])
+                        function_updated = True
+                        self.resume_threads()
+                    time.sleep(self.sleepTime)
      
-    def start(self):
-        self.ownThread = threading.Thread(target=self.thread_main)
-        self.ownThread.start()
-        
+
+                        
 
 
 

@@ -23,6 +23,10 @@
 """
 
 from pymoult.threads import start_active_update
+import sys
+
+def get_current_frames():
+        return sys._current_true_frames()
 
 def isFunctionInStack(func,thread):
     stack = get_current_frames()[thread.ident]
