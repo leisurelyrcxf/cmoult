@@ -59,6 +59,7 @@ def redefineFunction(tfunction,nfunction):
         if not tname in dir(sys.modules[tmod]):
             raise ValueError("function "+tname+" is not toplevel")
         setattr(sys.modules[tmod],tname,nfunction)
+        setattr(nfunction,"__name__",tname)
 
 
 def redirectPointer(pointer,target):
