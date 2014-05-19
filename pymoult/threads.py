@@ -89,25 +89,5 @@ def get_thread_by_name(name):
                         return thread
         return None
 
-def get_current_frames():
-        return sys._current_true_frames()
-
-
-def pause_thread(thread):
-        if not hasattr(thread,"pause_event"):
-                thread.pause_event = threading.Event()
-                thread.pause_event.clear()
-                def trace(frame,event,arg):
-                        if hasattr(thread,"pause_event"):
-                                thread.pause_event.wait()
-                        return None
-                set_thread_trace(thread,trace)
-                               
-
-def resume_thread(thread):
-        if hasattr(thread,"pause_event"):
-                thread.pause_event.set()
-                delattr(thread,"pause_event")
-
 def set_thread_trace(thread,trace):
         sys.settrace_for_thread(thread.ident,trace,True)
