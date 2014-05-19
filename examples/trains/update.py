@@ -1,14 +1,12 @@
 #parsed
 
-#First implementation : 
-#Update of Train by Mixin 
-#Update of functions by 
-
-from pymoult.manager import Manager,SafeRedefineManager
-from pymoult.updates import SafeRedefineUpdate
+from pymoult.highlevel.manager import Manager,SafeRedefineManager
+from pymoult.highlevel.updates import SafeRedefineUpdate
 import threading
 import sys
 import math
+import time
+import Queue
 
 def newTrainInit(self,speed,color,position,direction):
     train.color = color
@@ -23,9 +21,6 @@ def switch_direction(self):
     else:
         self.direction = "right"
     sys.modules["__main__"].gprint("The "+self.color+" train is changing direction to "+self.direction)
-
-
-
 
 def getTrainThreads():
     def f(t):
@@ -57,8 +52,43 @@ class TrainManager(Manager):
 manager1 = TrainManager()
 manager1.start()
 
-#We use the SafeRedefineUpdate to update stations and rails
-station_and_rail_manager = SafeRedefineManager(getTrainThreads(),sleepTime=1)
+
+#We use a SafeRedefineUpdate-like to update stations and rails
+class SafeRedefMethod(SafeRedefineManager):
+    
+    def add_function(self,method):
+        self.functions.put(method)
+
+    def thread_main(self):
+        while not self.stop:
+            self.invoked.wait()
+            self.begin()
+            while True:
+                try:
+                    method = self.functions.get(False)
+                except Queue.Empty:
+                    self.finish()
+                    break
+                method_updated = False
+                while not method_updated:
+                    if self.is_alterable(method[1]):
+                        self.pause_threads()
+                        tname= method[1].__name__
+
+                        setattr(method[0],tname,method[2])
+                        setattr(method[2],"__name__",tname)
+                        method_updated = True
+                        self.resume_threads()
+                    time.sleep(self.sleepTime)
+
+class SafeRedefMethodUpdate(SafeRedefineUpdate):
+    def setup(self):
+        for method in self.functions:
+            self.manager.add_function(method)
+
+
+
+station_and_rail_manager = SafeRedefMethod(getTrainThreads(),sleepTime=1)
 station_and_rail_manager.start()
 
 railClass = sys.modules["__main__"].Rail
@@ -142,33 +172,23 @@ def new_Station_move_next(self,train):
     lane.condition.release()
     return nextElement
 
-
-
-
-
-def generate_updater(function,clas,target):
-    def f():
-        setattr(clas,function,target)
-    return f
-
-
-
 #We need to update Rail.can_enter before allowing for trains to switch direction
 #If we don't, the old version of Rail.can_enter may be executed and allow an accident!!
-function_updates={railClass.can_enter:generate_updater("can_enter",railClass,new_Rail_can_enter)}
-
+function_updates=[[railClass,railClass.can_enter,new_Rail_can_enter]]
 
 print("BEGIN STEP1")
-update1 = SafeRedefineUpdate(station_and_rail_manager,function_updates)
+update1 = SafeRedefMethodUpdate(station_and_rail_manager,function_updates)
 update1.setup()
 update1.apply()
 update1.wait_update()
 print("STEP1 OF UPDATE OK")
 
-functions_updates = {elementClass.next:generate_updater("next",elementClass,new_Element_next),elementClass.previous:generate_updater("previous",elementClass,new_Element_previous),stationClass.move_next:generate_updater("move_next",stationClass,new_Station_move_next)}
+
+function_updates = [[elementClass,elementClass.next,new_Element_next],[elementClass,elementClass.previous,new_Element_previous],[stationClass,stationClass.move_next,new_Station_move_next]]
+
 
 print("BEGIN STEP2")
-update2 = SafeRedefineUpdate(station_and_rail_manager,functions_updates)
+update2 = SafeRedefMethodUpdate(station_and_rail_manager,function_updates)
 update2.setup()
 update2.apply()
 update2.wait_update()

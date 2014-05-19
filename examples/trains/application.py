@@ -1,8 +1,6 @@
 #!/usr/bin/pypy-dsu
 
-from pymoult.threads import DSU_Thread
-from pymoult.listener import Listener
-
+from pymoult.highlevel.listener import Listener
 
 import math
 import time
@@ -17,13 +15,13 @@ def gprint(string):
     lock.release()
 
 
-class Train(DSU_Thread):
+class Train(threading.Thread):
     def __init__(self,speed,color,position):
         self.color = color
         self.speed = speed
         self.position = position
-        
-        super(Train,self).__init__(target=self.main,name=self.color+"_train")
+        self.stoped = False
+        super(Train,self).__init__(name=self.color+"_train")
         
     def move(self):
         if type(self.position) == Station:
@@ -39,8 +37,7 @@ class Train(DSU_Thread):
             else:
                 gprint("The "+self.color+" train entered on the "+self.position.name+" rail")
 
-
-    def main(self):
+    def run(self):
         while not self.stoped:
             self.move()
     

@@ -51,6 +51,7 @@ def redefineClass(tclass,nclass):
     if not tname in dir(sys.modules[tmod]):
         raise ValueError("class "+tname+" is not a toplevel class")
     setattr(sys.modules[tmod],tname,nclass)
+    setattr(nclass,"__name__",tname)
     
 
 
