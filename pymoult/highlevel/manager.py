@@ -23,6 +23,8 @@ import threading
 from pymoult.lowlevel.stack import *
 from pymoult.lowlevel.relinking import *
 from pymoult.lowlevel.alterability import *
+from pymoult.lowlevel.data_access import *
+from pymoult.lowlevel.data_update import *
 from pymoult.threads import *
 import time
 import Queue
@@ -131,7 +133,49 @@ class SafeRedefineManager(ThreadedManager):
      
 
                         
+class EagerConversionManager(Manager):
+    def __init__(self,threads=[],sleepTime=3):
+        self.cls = None
+        self.transformer = None
+        super(EagerUpdateManager,self).__init__(threads=threads,sleepTime=sleepTime)
+    
+    def start(self):
+        try:
+            ObjectsPool.getObjectsPool()
+        except TypeError:
+            ObjectsPool()
+
+    def run(self):
+        self.pause_threads()
+        if self.transformer and self.cls:
+            startEagerUpdate(self.cls,self.transformer)
+        self.resume_threads()
+
+
+class LazyConversionManager(ThreadedManager):
+    def __init__(self,sleepTime=3):
+        self.cls = None
+        self.transformer = None
+        self.ending =None
+        super(LazyConversionUpdate,self).__init__(sleepTime=sleepTime)
+        
+    def thread_main(self):
+        while not self.stop:
+            self.invoked.wait()
+            if self.cls and self.transformer:
+                self.begin()
+                setLazyUpdate(self.cls,self.transformer)
+                if self.ending:
+                    while not self.ending():
+                        time.sleep(self.sleepTime)
+                self.finish()
+        
+        
+    
+
 
 
 
             
+
+
