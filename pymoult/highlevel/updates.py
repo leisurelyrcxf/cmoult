@@ -96,7 +96,7 @@ class LazyConversionUpdate(ThreadedUpdate):
         self.manager.cls = self.cls
         self.manager.tcls = self.tcls
         self.manager.transformer = self.transformer
-        self.manager.ending.ending = self.ending
+        self.manager.ending = self.ending
 
 
 
