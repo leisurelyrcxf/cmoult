@@ -162,7 +162,7 @@ class LazyConversionManager(ThreadedManager):
         self.tcls = None
         self.transformer = None
         self.ending =None
-        super(LazyConversionUpdate,self).__init__(sleepTime=sleepTime)
+        super(LazyConversionManager,self).__init__(sleepTime=sleepTime)
         
     def thread_main(self):
         while not self.stop:
