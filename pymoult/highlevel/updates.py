@@ -21,6 +21,8 @@
 
 """
 
+from pymoult.lowlevel.data_update import *
+
 
 class UpdateDefinitionError(Exception):
     def __init__(self,message):
@@ -64,13 +66,15 @@ class SafeRedefineUpdate(ThreadedUpdate):
             self.manager.add_function(function,self.functions[function])
     
 class EagerConversionUpdate(Update):
-    def __init__(self,manager,cls,transformer):
+    def __init__(self,manager,tcls,cls,transformer):
         self.cls=cls
+        self.tcls = tcls
         self.transformer = transformer
         super(EagerConversionUpdate,self).__init__(manager=manager)
     
     def setup(self):
         self.manager.cls = self.cls
+        self.manager.tcls = self.tcls
         self.manager.transformer = self.transformer
 
     def apply(self):
@@ -81,14 +85,16 @@ class EagerConversionUpdate(Update):
 
 
 class LazyConversionUpdate(ThreadedUpdate):
-    def __init__(self,manager,cls,transformer,ending):
+    def __init__(self,manager,tcls,cls,transformer,ending):
         self.cls=cls
+        self.tcls=tcls
         self.transformer = transformer
         self.ending = ending
         super(LazyConversionUpdate,self).__init__(manager=manager)
 
     def setup(self):
         self.manager.cls = self.cls
+        self.manager.tcls = self.tcls
         self.manager.transformer = self.transformer
         self.manager.ending.ending = self.ending
 

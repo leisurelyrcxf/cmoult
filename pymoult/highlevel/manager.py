@@ -136,8 +136,9 @@ class SafeRedefineManager(ThreadedManager):
 class EagerConversionManager(Manager):
     def __init__(self,threads=[],sleepTime=3):
         self.cls = None
+        self.tcls = None
         self.transformer = None
-        super(EagerUpdateManager,self).__init__(threads=threads,sleepTime=sleepTime)
+        super(EagerConversionManager,self).__init__(threads=threads,sleepTime=sleepTime)
     
     def start(self):
         try:
@@ -146,15 +147,19 @@ class EagerConversionManager(Manager):
             ObjectsPool()
 
     def run(self):
-        self.pause_threads()
-        if self.transformer and self.cls:
-            startEagerUpdate(self.cls,self.transformer)
-        self.resume_threads()
+        if self.cls:
+            def t(obj):
+                updateToClass(obj,self.cls,transformer = self.transformer)
+            self.pause_threads()
+            if self.tcls:
+                startEagerUpdate(self.tcls,t)
+                self.resume_threads()
 
 
 class LazyConversionManager(ThreadedManager):
     def __init__(self,sleepTime=3):
         self.cls = None
+        self.tcls = None
         self.transformer = None
         self.ending =None
         super(LazyConversionUpdate,self).__init__(sleepTime=sleepTime)
@@ -162,9 +167,12 @@ class LazyConversionManager(ThreadedManager):
     def thread_main(self):
         while not self.stop:
             self.invoked.wait()
-            if self.cls and self.transformer:
+            if self.cls:
+                def t(obj):
+                    updateToClass(obj,self.cls,transformer = self.transformer)
                 self.begin()
-                setLazyUpdate(self.cls,self.transformer)
+                if self.tcls:
+                    setLazyUpdate(self.tcls,t)
                 if self.ending:
                     while not self.ending():
                         time.sleep(self.sleepTime)
