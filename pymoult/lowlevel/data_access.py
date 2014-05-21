@@ -24,6 +24,7 @@
 import weakref
 from Queue import Queue
 
+
 class ObjectsPool(object):
 	"""A Pool of objects, keeping a weak reference to all created
         objects"""
@@ -57,7 +58,7 @@ class ObjectsPool(object):
 
 def instance_hook(obj):
     try:
-        objectsPool.add(obj)
+        ObjectsPool.objectsPool.add(obj)
     except:
         pass
 
@@ -81,10 +82,11 @@ class DataAccessor(object):
     def __iter__(self):
         #called when begining an iteration called, we can initiate the getter
         if self.strategy == "immediate":
-            for ref in ObjectsPool.getObjectsPool().pool():
+            opool = ObjectsPool.getObjectsPool().pool()
+            for ref in opool:
                 obj = ref()
                 if isinstance(obj,self.tclass):
-                    self.put(obj)
+                        self.put(obj)
             self.stop()
 
         if self.strategy == "progressive":
@@ -189,6 +191,6 @@ def setLazyUpdate(tclass,function):
     add_setter_router(tclass,function=function)
 
 def startEagerUpdate(tclass,function):
-    accessor = Dataaccessor(tsclass,strategy="immediate")
+    accessor = DataAccessor(tclass,strategy="immediate")
     for obj in accessor:
         function(obj)
