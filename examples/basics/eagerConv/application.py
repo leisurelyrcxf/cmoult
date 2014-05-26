@@ -1,6 +1,6 @@
 #/usr/bin/pypy-dsu
 
-from pymoult.highlevel.manager import EagerConversionManager
+from pymoult.highlevel.managers import EagerConversionManager
 from pymoult.highlevel.listener import Listener
 import threading
 import time

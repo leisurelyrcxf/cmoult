@@ -1,10 +1,10 @@
 #/usr/bin/pypy-dsu
 
 
-from pymoult.highlevel.managers import SafeRedefineManager
+from pymoult.highlevel.managers import ThreadRebootManager
+from pymoult.threads import DSU_Thread
 from pymoult.highlevel.listener import Listener
 import time
-import threading
 
   
 def say_hello():
@@ -16,11 +16,10 @@ def main():
         say_hello()
 
 
-
-thread = threading.Thread(target=main)
+thread = DSU_Thread(target=main,name="main")
 thread.start()
 
-manager = SafeRedefineManager([thread])
+manager = ThreadRebootManager()
 manager.start()
 
 listener = Listener()
