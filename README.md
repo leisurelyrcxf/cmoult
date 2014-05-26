@@ -1,7 +1,13 @@
-Pymoult
-=======
+#Pymoult
 
-Pymoult is a Pypy library providing a prototyping platform for dynamic updates.
+Pymoult is a Pypy library providing a prototyping platform for dynamic
+software updates (DSU). It provides as many DSU mechanisms from the
+literature as possible and provdes them through an API.
+
+To read more about dynamic software updates and how Pymoult
+contributes to this domain you can read the [wiki page on DSU](http://bitbucket.org/smartinezgd/pymoult/wiki/Dynamic%20Software%20Updates)
+
+To read the manual of Pymoult, please follow [this link](http://bitbucket.org/smartinezgd/pymoult/wiki/Pymoult%20manual)
 
 
 LICENSE
@@ -9,16 +15,13 @@ LICENSE
 
 Pymoult is published under the GPLv2 license (see LICENSE.txt)
 
-
 Installing
 ==========
 
 Requirements
 ------------
 
-Pymoult requires the pypy interpreter in its version 2.0 or newer, 
-enhanced with the DSU features. Its installation requires the python
-distribute module to be installed for pypy.
+Pymoult requires our custom pypy interpreter. 
 
 Building pypy-dsu
 -----------------
