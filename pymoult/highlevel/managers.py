@@ -179,7 +179,34 @@ class LazyConversionManager(ThreadedManager):
                 self.finish()
         
         
-    
+class ThreadRebootManager(Manager):
+    def __init__(self):
+        self.units = Queue.Queue()
+        super(ThreadRebootManager,self).__init__()
+
+    def is_alterable(self):
+        return True
+
+    def run(self):
+        reboot_list = []
+        while True:
+            try:
+                unit = self.units.get(False)
+            except Queue.Empty:
+                break
+            thread = unit[0] #Thread to be rebooted
+            main = unit[1] #new main function
+            args = unit[2] #new args
+            if thread.__class__ is not DSU_Thread and not DSU_Thread in thread.__class__.__bases__:
+                raise TypeError("threads in ThreadRebootManager must be of type or of a subtype of DSU_Thread")
+            switchMain(thread,main,args=args)
+            reboot_list.append(thread)
+        for thread in reboot_list:
+            resetThread(thread)
+                
+                
+            
+
 
 
 

@@ -99,4 +99,18 @@ class LazyConversionUpdate(ThreadedUpdate):
         self.manager.ending = self.ending
 
 
+class ThreadRebootUpdate(Update):
+    def __init__(self,manager,units):
+        self.units = units
+        super(ThreadRebootUpdate,self).__init__(manager)
+
+    def setup(self):
+        for unit in self.units:
+            self.manager.units.put(unit)
+    
+    def apply(self):
+        self.manager.run()
+
+    def wait_update(self):
+        pass
 
