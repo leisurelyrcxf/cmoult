@@ -1,12 +1,15 @@
 #parsed
 
-from pymoult.highlevel.manager import Manager,SafeRedefineManager
+from pymoult.highlevel.managers import Manager,SafeRedefineManager
 from pymoult.highlevel.updates import SafeRedefineUpdate
 import threading
 import sys
 import math
 import time
 import Queue
+
+print("BEGIN STEP 1 OF UPDATE")
+
 
 def newTrainInit(self,speed,color,position,direction):
     train.color = color
@@ -51,6 +54,9 @@ class TrainManager(Manager):
 
 manager1 = TrainManager()
 manager1.start()
+
+print("STEP 1 OF UPDATE OK")
+print("BEGIN STEP 2 OF UPDATE") 
 
 
 #We use a SafeRedefineUpdate-like to update stations and rails
@@ -176,25 +182,25 @@ def new_Station_move_next(self,train):
 #If we don't, the old version of Rail.can_enter may be executed and allow an accident!!
 function_updates=[[railClass,railClass.can_enter,new_Rail_can_enter]]
 
-print("BEGIN STEP1")
+print("BEGIN SUBSTEP1")
 update1 = SafeRedefMethodUpdate(station_and_rail_manager,function_updates)
 update1.setup()
 update1.apply()
 update1.wait_update()
-print("STEP1 OF UPDATE OK")
+print("SUBSTEP1 OF STEP 2 OK")
 
 
 function_updates = [[elementClass,elementClass.next,new_Element_next],[elementClass,elementClass.previous,new_Element_previous],[stationClass,stationClass.move_next,new_Station_move_next]]
 
 
-print("BEGIN STEP2")
+print("BEGIN SUBSTEP2")
 update2 = SafeRedefMethodUpdate(station_and_rail_manager,function_updates)
 update2.setup()
 update2.apply()
 update2.wait_update()
-print("STEP2 OF UPDATE OK")
+print("SUBSTEP2 OF STEP 2 OK")
 
-
- 
+print("STEP 2 of UPDATE OK")
+print("UPDATE COMPLETE")
 
         
