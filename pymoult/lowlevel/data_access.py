@@ -1,5 +1,5 @@
-#    access_strategy.py This file is part of Pymoult
-#    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
+#    collector.py This file is part of Pymoult
+#    Copyright (C) 2013  Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,15 +14,53 @@
 #    You should have received a copy of the GNU General Public License along
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-"""pymoult.heap.access_startegy.py
+
+"""pymoult.lowlevel.data_access.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-   This module provides strategy to acess the data in the heap.
-"""
+   This module provides the low level tools for accessing data
 
-from pymoult.collector import objectsPool
+"""
+import weakref
 from Queue import Queue
+
+
+class ObjectsPool(object):
+	"""A Pool of objects, keeping a weak reference to all created
+        objects"""
+
+        objectsPool = None
+        @classmethod
+        def getObjectsPool(cls):
+            p = cls.objectsPool
+            if not p:
+                raise TypeError("No ObjectsPool was created")
+            return cls.objectsPool
+
+	def __init__(self):
+            ObjectsPool.objectsPool = self
+            set_instance_hook(instance_hook)
+            self.objects = set()
+
+	def add(self,obj):
+            self.objects.add(weakref.ref(obj))
+
+	def cleanup(self):
+            d = []
+            for ref in self.objects:
+                if ref() == None:
+                    d.append(ref)
+            for x in d:
+                self.objects.remove(x)
+                
+        def pool(self):
+            return self.objects
+
+def instance_hook(obj):
+    try:
+        ObjectsPool.objectsPool.add(obj)
+    except:
+        pass
 
 
 class WrongStrategy(Exception):
@@ -31,7 +69,6 @@ class WrongStrategy(Exception):
 class DataAccessorNull(object):
     pass
 
-
 class DataAccessor(object):
     def __init__(self,tclass,strategy="immediate"):
         self.tclass = tclass
@@ -39,37 +76,45 @@ class DataAccessor(object):
             raise WrongStrategy()
         self.queue = Queue()
         self.strategy = strategy
+        self.accessing = None
 
 
     def __iter__(self):
         #called when begining an iteration called, we can initiate the getter
         if self.strategy == "immediate":
-            for ref in objectsPool.pool():
+            opool = ObjectsPool.getObjectsPool().pool()
+            for ref in opool:
                 obj = ref()
                 if isinstance(obj,self.tclass):
-                    self.put(obj)
-            self.put(DataAccessorNull())
+                        self.put(obj)
+            self.stop()
+
         if self.strategy == "progressive":
             if hasattr(self.tclass,"__getterrouter__") and type(self.tclass.__getterrouter__) == GetItemRouter:
                 self.tclass.__getterrouter__.dataAccessor = self
             else:
-                add_getter_router(self.tclass,getter=self.tclass.__getattribute,dataAccessor=self)
+                add_getter_router(self.tclass,getter=self.tclass.__getattribute__,dataAccessor=self)
             if hasattr(self.tclass,"__setterrouter__") and type(self.tclass.__setterrouter__) == SetItemRouter:
                 self.tclass.__setterrouter__.dataAccessor = self
             else:
                 add_setter_router(self.tclass,setter=self.tclass.__setattr__,dataAccessor = self)
+     
         return self
     
     def next(self):
         item = self.queue.get()
         if type(item) == DataAccessorNull:
+            self.accessing = None
             raise StopIteration()
         else:
+            self.accessing = item
             return item
 
     def put(self,item):
         self.queue.put(item)
-        
+    
+    def stop(self):
+        self.queue.put(DataAccessorNull())
         
 
 class GetItemRouter(object):
@@ -83,14 +128,14 @@ class GetItemRouter(object):
 
     def __call__(self,obj,attr):
         objtype = type(obj)
-        if self.dataAccessor != None:
-            self.dataAccessor.queue.put(obj)
+        if self.dataAccessor != None and self.dataAccessor.accessing != obj:
+              self.dataAccessor.put(obj)
        
         if self.function != None:
             setter_back = None
             getter_back = objtype.__getattribute__
             objtype.__getattribute__ = self.getter
-            if hasattr(objtype,"__setterrouter__")and type(objtype.__setterrouter__) == SetItemRouter:
+            if hasattr(objtype,"__setterrouter__") and type(objtype.__setterrouter__) == SetItemRouter:
                 setter_back = objtype.__setattr__
                 objtype.__setattr__ = objtype.__setterrouter__.setter
             self.function(obj)
@@ -113,7 +158,7 @@ class SetItemRouter(object):
 
     def __call__(self,obj,attr,value):
         objtype = type(obj)
-        if self.dataAccessor != None:
+        if self.dataAccessor != None and self.dataAccessor.accessing != obj:
             self.dataAccessor.queue.put(obj)
        
         if self.function != None:
@@ -145,3 +190,7 @@ def setLazyUpdate(tclass,function):
     add_getter_router(tclass,function=function)
     add_setter_router(tclass,function=function)
 
+def startEagerUpdate(tclass,function):
+    accessor = DataAccessor(tclass,strategy="immediate")
+    for obj in accessor:
+        function(obj)

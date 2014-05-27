@@ -1,5 +1,5 @@
-#    relinking.py This file is part of Pymoult
-#    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
+#    collector.py This file is part of Pymoult
+#    Copyright (C) 2013  Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,18 +14,15 @@
 #    You should have received a copy of the GNU General Public License along
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-"""pymoult.stack.relinking.py
+
+"""pymoult.lowlevel.relinking.py
    Published under the GPLv2 license (see LICENSE.txt)
+
+   This module provides low level tools for relinking new functions
 """
 
 from tputil import make_proxy
-
-
-#Indirection should be put in the pypy-dsu interpretor in the future. We have it application level until then.
-
-indirection_table = {}
-#Yes, it is a simple dictionnary
+import sys
 
 #Proxys
 class ProxyManager(object):
@@ -56,7 +53,14 @@ def proxify(obj):
 def rerouteProxy(proxy,obj):
     return proxy.proxy_controller.reroute(obj)
 
+def redefineFunction(tfunction,nfunction):
+        tname = tfunction.__name__
+        tmod = tfunction.__module__
+        if not tname in dir(sys.modules[tmod]):
+            raise ValueError("function "+tname+" is not toplevel")
+        setattr(sys.modules[tmod],tname,nfunction)
+        setattr(nfunction,"__name__",tname)
 
 
-
- 
+def redirectPointer(pointer,target):
+        pass

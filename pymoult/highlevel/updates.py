@@ -21,6 +21,8 @@
 
 """
 
+from pymoult.lowlevel.data_update import *
+
 
 class UpdateDefinitionError(Exception):
     def __init__(self,message):
@@ -39,28 +41,22 @@ class Update(object):
        raise UpdateDefinitionError("You should define your own Update-based class")
 
 
-class BasicUpdate(Update):
-    """Basic update class that works well with the Basic Manager"""
-    def __init__(self,manager,alterability,update,is_over):
-        self.alterability = alterability
-        self.update = update
-        self.is_over = is_over
-        super(BasicUpdate,self).__init__(manager=manager)
+class ThreadedUpdate(Update):
+    """Update class that works with the Threaded Manager"""
+    def __init__(self,manager):
+        super(ThreadedUpdate,self).__init__(manager=manager)
 
     def setup(self):
-        self.manager.is_alterable = self.alterability
-        self.manager.update_function = self.update
-        self.manager.is_over = self.is_over
-        self.manager.over.clear()
-
+        pass
+      
     def apply(self):
-        self.manager.trigger()
+        self.manager.invoke()
 
     def wait_update(self):
-        self.manager.over.wait() 
+        self.manager.wait_over() 
 
 
-class SafeRedefineUpdate(Update):
+class SafeRedefineUpdate(ThreadedUpdate):
     def __init__(self,manager,functions):
         self.functions = functions
         super(SafeRedefineUpdate,self).__init__(manager=manager)
@@ -68,10 +64,53 @@ class SafeRedefineUpdate(Update):
     def setup(self):
         for function in self.functions.keys():
             self.manager.add_function(function,self.functions[function])
-        self.manager.over.clear()
     
+class EagerConversionUpdate(Update):
+    def __init__(self,manager,tcls,cls,transformer):
+        self.cls=cls
+        self.tcls = tcls
+        self.transformer = transformer
+        super(EagerConversionUpdate,self).__init__(manager=manager)
+    
+    def setup(self):
+        self.manager.cls = self.cls
+        self.manager.tcls = self.tcls
+        self.manager.transformer = self.transformer
+
     def apply(self):
-        self.manager.trigger()
+        self.manager.run()
 
     def wait_update(self):
-        self.manager.over.wait()
+        pass
+
+
+class LazyConversionUpdate(ThreadedUpdate):
+    def __init__(self,manager,tcls,cls,transformer,ending):
+        self.cls=cls
+        self.tcls=tcls
+        self.transformer = transformer
+        self.ending = ending
+        super(LazyConversionUpdate,self).__init__(manager=manager)
+
+    def setup(self):
+        self.manager.cls = self.cls
+        self.manager.tcls = self.tcls
+        self.manager.transformer = self.transformer
+        self.manager.ending = self.ending
+
+
+class ThreadRebootUpdate(Update):
+    def __init__(self,manager,units):
+        self.units = units
+        super(ThreadRebootUpdate,self).__init__(manager)
+
+    def setup(self):
+        for unit in self.units:
+            self.manager.units.put(unit)
+    
+    def apply(self):
+        self.manager.run()
+
+    def wait_update(self):
+        pass
+
