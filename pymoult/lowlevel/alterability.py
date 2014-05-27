@@ -1,5 +1,5 @@
-#    tools.py This file is part of Pymoult
-#    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
+#    collector.py This file is part of Pymoult
+#    Copyright (C) 2013  Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -14,23 +14,19 @@
 #    You should have received a copy of the GNU General Public License along
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-"""pymoult.stack.tools.py
+
+"""pymoult.lowlevel.alterability.py
    Published under the GPLv2 license (see LICENSE.txt)
+
+   This module supplies low level tools for handling the alterability
+
 """
 
-from  pymoult.threads import set_thread_trace, get_current_frames, RebootException
+from pymoult.threads import start_active_update
+import sys
 
-
-def resetThread(thread):
-    def trace(frame,event,arg):
-        raise RebootException()
-    set_thread_trace(thread,trace)
-
-def switchMain(thread,func,args=[]):
-    def m():
-        return func(*args)
-    thread.main = m
+def get_current_frames():
+        return sys._current_true_frames()
 
 def isFunctionInStack(func,thread):
     stack = get_current_frames()[thread.ident]
@@ -41,7 +37,6 @@ def isFunctionInStack(func,thread):
         x = x.f_back
     return False
 
-
 def isFunctionInAllStack(func):
     stacks = get_current_frames()
     for stack in stacks.values():
@@ -51,3 +46,7 @@ def isFunctionInAllStack(func):
                 return True
             x = x.f_back
     return False
+
+def staticUpdatePoint():
+    start_active_update()
+
