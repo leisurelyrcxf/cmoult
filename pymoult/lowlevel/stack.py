@@ -26,30 +26,30 @@ import threading
 
 
 def resetThread(thread):
+    """Reboots the given thread"""
     def trace(frame,event,arg):
         raise RebootException()
     set_thread_trace(thread,trace)
 
 def switchMain(thread,func,args=[]):
+    """Changes the "main" function of the given thread"""
     def m():
         return func(*args)
     thread.main = m
 
 def suspendThread(thread):
-    pass
-
-
-def suspendThread(thread):
-        if not hasattr(thread,"pause_event"):
-                thread.pause_event = threading.Event()
-                thread.pause_event.clear()
-                def trace(frame,event,arg):
-                        if hasattr(thread,"pause_event"):
-                                thread.pause_event.wait()
-                        return None
-                set_thread_trace(thread,trace)
+    """Suspends the given thread"""
+    if not hasattr(thread,"pause_event"):
+        thread.pause_event = threading.Event()
+        thread.pause_event.clear()
+        def trace(frame,event,arg):
+            if hasattr(thread,"pause_event"):
+                thread.pause_event.wait()
+            return None
+        set_thread_trace(thread,trace)
                                
 def resumeThread(thread):
-        if hasattr(thread,"pause_event"):
-                thread.pause_event.set()
-                delattr(thread,"pause_event")
+    """resumes the execution fo the given thread if it is suspended"""
+    if hasattr(thread,"pause_event"):
+        thread.pause_event.set()
+        delattr(thread,"pause_event")
