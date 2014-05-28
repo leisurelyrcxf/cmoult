@@ -26,16 +26,22 @@ import sys
 
 #Proxys
 class ProxyManager(object):
+    """Proxy class that will handle a proxy to a given object"""
+
     def __init__(self,obj):
+        """Constructor"""
         self.obj = obj
 
     def reroute(self,obj):
+        """Reroutes the proxy to another fiven object"""
         self.obj = obj        
         self.proxy = make_proxy(self.controller,type(self.obj),self.obj)
         return self.proxy
 
     
     def controller(self,operation):
+        """Controller for the proxy. Allows access to the ProxyManager
+        throught the "proxy_controller" attribute."""
         if operation.opname == "__getattribute__" and operation.args[0] == "proxy_controller":
             return self
         if operation.opname == "__getattribute__" and (operation.args[0] not in type(operation.obj).__dict__) and (operation.args[0] not in [A.__dict__ for A in type(operation.obj).__bases__]):
@@ -43,24 +49,30 @@ class ProxyManager(object):
         operation.delegate()
 
     def generate(self):
+        """Generates the proxy to the object and returns it""" 
         self.proxy = make_proxy(self.controller,type(self.obj),self.obj)
         return self.proxy
 
 
 def proxify(obj):
+    """Returns a proxy to the given object"""
     return ProxyManager(obj).generate()
 
 def rerouteProxy(proxy,obj):
+    """Reroutes the given proxy so that it targets the given object"""
     return proxy.proxy_controller.reroute(obj)
 
 def redefineFunction(tfunction,nfunction):
-        tname = tfunction.__name__
-        tmod = tfunction.__module__
-        if not tname in dir(sys.modules[tmod]):
-            raise ValueError("function "+tname+" is not toplevel")
-        setattr(sys.modules[tmod],tname,nfunction)
-        setattr(nfunction,"__name__",tname)
+    """Redefines a given top level function so that it is eaqual to the
+    given new one""" 
+    tname = tfunction.__name__
+    tmod = tfunction.__module__
+    if not tname in dir(sys.modules[tmod]):
+        raise ValueError("function "+tname+" is not toplevel")
+    setattr(sys.modules[tmod],tname,nfunction)
+    setattr(nfunction,"__name__",tname)
 
 
 def redirectPointer(pointer,target):
-        pass
+    """Not implemented yet"""
+    pass

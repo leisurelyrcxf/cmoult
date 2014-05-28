@@ -26,37 +26,44 @@ from Queue import Queue
 
 
 class ObjectsPool(object):
-	"""A Pool of objects, keeping a weak reference to all created
+    """A Pool of objects, keeping a weak reference to all created
         objects"""
 
-        objectsPool = None
-        @classmethod
-        def getObjectsPool(cls):
-            p = cls.objectsPool
-            if not p:
-                raise TypeError("No ObjectsPool was created")
-            return cls.objectsPool
+    objectsPool = None
+    @classmethod
+    def getObjectsPool(cls):
+        """Returns the instance of ObjectsPool. Raises an error if no
+        ObjectsPoolinstance was created"""
+        p = cls.objectsPool
+        if not p:
+            raise TypeError("No ObjectsPool was created")
+        return cls.objectsPool
 
-	def __init__(self):
-            ObjectsPool.objectsPool = self
-            set_instance_hook(instance_hook)
-            self.objects = set()
+    def __init__(self):
+        """Constructor, sets the instance hook""" 
+        ObjectsPool.objectsPool = self
+        set_instance_hook(instance_hook)
+        self.objects = set()
 
-	def add(self,obj):
-            self.objects.add(weakref.ref(obj))
+    def add(self,obj):
+        """Adds a weak reference to the object given as argument"""
+        self.objects.add(weakref.ref(obj))
 
-	def cleanup(self):
-            d = []
-            for ref in self.objects:
-                if ref() == None:
-                    d.append(ref)
-            for x in d:
-                self.objects.remove(x)
-                
-        def pool(self):
-            return self.objects
+    def cleanup(self):
+        """Revoves all stale weak references from the pool""" 
+        d = []
+        for ref in self.objects:
+            if ref() == None:
+                d.append(ref)
+        for x in d:
+            self.objects.remove(x)
+                        
+    def pool(self):
+        """Returns the pool of weak references"""
+        return self.objects
 
 def instance_hook(obj):
+    """The hook to be set on object instanciation when using the ObjectsPool"""
     try:
         ObjectsPool.objectsPool.add(obj)
     except:
@@ -64,13 +71,20 @@ def instance_hook(obj):
 
 
 class WrongStrategy(Exception):
+    """Error raised if an unknown strategy has been asked"""
     pass
 
 class DataAccessorNull(object):
+    """Class for empty objects, used as signal that all targeted data as
+    been accessed in the DataAccessor class."""
     pass
 
 class DataAccessor(object):
+    """Iteraor that will give access to all instances of a given class,
+    using either immediate or progressive strategy"""
     def __init__(self,tclass,strategy="immediate"):
+        """Constructor. Takes the class whose instances are to be accessed and
+    the strategy to be used as arguments"""
         self.tclass = tclass
         if strategy not in ["immediate","progressive"]:
             raise WrongStrategy()
@@ -80,13 +94,24 @@ class DataAccessor(object):
 
 
     def __iter__(self):
+        """Imposed by the Iterator interface. Called when initiating a loop
+        over the iterator.
+        
+        When using the immediate strategy, gets all instances of the
+        given class from the pool.
+
+        When using the progressive strategy, used the metaobject
+        protocol, binding routers to the __getattribute__ and
+        __setattr__ methods of the given class.
+
+        """
         #called when begining an iteration called, we can initiate the getter
         if self.strategy == "immediate":
             opool = ObjectsPool.getObjectsPool().pool()
             for ref in opool:
                 obj = ref()
                 if isinstance(obj,self.tclass):
-                        self.put(obj)
+                    self.put(obj)
             self.stop()
 
         if self.strategy == "progressive":
@@ -98,10 +123,12 @@ class DataAccessor(object):
                 self.tclass.__setterrouter__.dataAccessor = self
             else:
                 add_setter_router(self.tclass,setter=self.tclass.__setattr__,dataAccessor = self)
-     
+                    
         return self
-    
+        
     def next(self):
+        """Gets the next item of the data accessor. Stops when it meets a
+        DataAccessorNull object"""
         item = self.queue.get()
         if type(item) == DataAccessorNull:
             self.accessing = None
@@ -111,14 +138,35 @@ class DataAccessor(object):
             return item
 
     def put(self,item):
+        """pushes an item in the data accessor"""
         self.queue.put(item)
-    
+        
     def stop(self):
+        """pushes a DataAccessorNull object in the data accessor"""
         self.queue.put(DataAccessorNull())
         
 
 class GetItemRouter(object):
+    """Router used with the metaobject protocol, as replacement for
+    object.__getattribute__, to call a given function whenever a field of
+    an object of the given class is read.  The router can also add the
+    accessed object to a data accessor.
+
+    """
+
     def __init__(self,getter=None,dataAccessor=None,function=None):
+        """Constructor. Takes a getter, a data accessor instance and a
+        function as arguments.
+        
+        If the getter is set, it will be used instead of object.__getattribute__.
+        
+        If the dataAccessor is set, whenever a field of an object
+        of the given class is read, the object is added to the dataAccessor.
+
+        If the function is set, it will be called every time such read
+        action is taken.
+
+        """
         self.dataAccessor = dataAccessor
         self.function = function
         if getter == None:
@@ -127,10 +175,13 @@ class GetItemRouter(object):
             self.getter = getter
 
     def __call__(self,obj,attr):
+        """Handles operations to be donne whenever a field of an object of the
+        given class is read."""
+        
         objtype = type(obj)
         if self.dataAccessor != None and self.dataAccessor.accessing != obj:
-              self.dataAccessor.put(obj)
-       
+            self.dataAccessor.put(obj)
+            
         if self.function != None:
             setter_back = None
             getter_back = objtype.__getattribute__
@@ -138,17 +189,35 @@ class GetItemRouter(object):
             if hasattr(objtype,"__setterrouter__") and type(objtype.__setterrouter__) == SetItemRouter:
                 setter_back = objtype.__setattr__
                 objtype.__setattr__ = objtype.__setterrouter__.setter
-            self.function(obj)
-            if setter_back is not None:
-                objtype.__setattr__ = setter_back
-            objtype.__getattribute__ = getter_back
+                self.function(obj)
+                if setter_back is not None:
+                    objtype.__setattr__ = setter_back
+                    objtype.__getattribute__ = getter_back
 
 
         return self.getter(obj,attr)
 
 
 class SetItemRouter(object):
+    """Router used with the metaobject protocol, as replacement for
+    object.__setattr__, to call a given function whenever a field of an
+    object of the given class is written.  The router can also add the
+    accessed object to a data accessor.
+
+    """
+
     def __init__(self,setter=None,dataAccessor=None,function=None):
+        """Constructor. Takes a setter, a data accessor instance and a
+        function as arguments.
+        
+        If the setter is set, it will be used instead of object.__setattr__.
+        
+        If the dataAccessor is set, whenever a field of an object
+        of the given class is written, the object is added to the dataAccessor.
+        
+        If the function is set, it will be called every time such write
+        action is taken.
+        """
         self.dataAccessor = dataAccessor
         self.function = function
         if setter == None:
@@ -157,10 +226,12 @@ class SetItemRouter(object):
             self.setter = setter
 
     def __call__(self,obj,attr,value):
+        """Handles operations to be donne whenever a field of an object of the
+        given class is read."""
         objtype = type(obj)
         if self.dataAccessor != None and self.dataAccessor.accessing != obj:
             self.dataAccessor.queue.put(obj)
-       
+            
         if self.function != None:
             getter_back = None
             setter_back = objtype.__setattr__
@@ -168,29 +239,37 @@ class SetItemRouter(object):
             if hasattr(objtype,"__getterrouter__") and type(objtype.__getterrouter__) == GetItemRouter:
                 getter_back = objtype.__getattribute__
                 objtype.__getattribute__ = objtype.__getterrouter__.getter
-            self.function(obj)
-            if getter_back is not None:
-                objtype.__getattribute__ = getter_back
-            objtype.__setattr__ = setter_back
+                self.function(obj)
+                if getter_back is not None:
+                    objtype.__getattribute__ = getter_back
+                    objtype.__setattr__ = setter_back
 
         return self.setter(obj,attr,value)
 
 def add_getter_router(tclass,getter=None,dataAccessor=None,function=None):
+    """Adds a GetItemRouter to a class given as argument. Takes optional
+    arguents that will be passed to the GetItemRouter router"""
     router = GetItemRouter(getter=getter,dataAccessor=dataAccessor,function=function)
     tclass.__getattribute__ = lambda o,a : router(o,a)
     tclass.__getterrouter__ = router
 
 def add_setter_router(tclass,setter=None,dataAccessor=None,function=None):
+    """Adds a SetItemRouter to a class given as argument. Takes optional
+    arguents that will be passed to the SetItemRouter router"""
     router = SetItemRouter(setter=setter,dataAccessor=dataAccessor,function=function)
     tclass.__setattr__ = lambda o,a,v : router(o,a,v)
     tclass.__setterrouter__ = router
 
 #So far, lazy access does not handle heritage 
 def setLazyUpdate(tclass,function):
+    """Uses router to set up lazy updates. Takes the target class and the
+    update function as arguments"""
     add_getter_router(tclass,function=function)
     add_setter_router(tclass,function=function)
 
 def startEagerUpdate(tclass,function):
+    """Uses a data accessor to run an eager update. Takes the target class
+    and the update function as argumments."""
     accessor = DataAccessor(tclass,strategy="immediate")
     for obj in accessor:
         function(obj)

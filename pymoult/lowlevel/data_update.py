@@ -26,34 +26,35 @@
 import sys
 
 def updateToClass(obj,nclass,transformer=None):
-    obj.__class__ = nclass
+    """Updates a given object to a given class. If a trasformer is given
+    in argument, applies it to the object""" 
+    obj.__class__ = nclass 
     if transformer != None:
         transformer(obj)
 
 def generateMixinUser(class1,*mixins):
+    """Creates a class based on the given class and the given mixins"""
     class MixinUser(class1):
         pass
     MixinUser.__bases__ = mixins+(class1,)
     return MixinUser
 
 def applyMixinToObject(obj,*mixins):
+    """Applies the given mixins to the given object"""
     class NewClass(type(obj)):
         pass
     NewClass.__bases__ = mixins+(type(obj),)
     obj.__class__ = NewClass
 
 def addFieldToClass(cls,name,field):
+    """Adds the given field to the given class under the given name"""
     clas.name = field
 
 def redefineClass(tclass,nclass):
+    """redfefines a given class so it is equals to a new class""" 
     tname = tclass.__name__
     tmod = tclass.__module__
     if not tname in dir(sys.modules[tmod]):
         raise ValueError("class "+tname+" is not a toplevel class")
     setattr(sys.modules[tmod],tname,nclass)
     setattr(nclass,"__name__",tname)
-    
-
-
-
-

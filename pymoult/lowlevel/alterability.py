@@ -26,9 +26,12 @@ from pymoult.threads import start_active_update
 import sys
 
 def get_current_frames():
-        return sys._current_true_frames()
+    """Returns a dictionary mapping the current frame of each thread to its id""" 
+    return sys._current_true_frames()
 
 def isFunctionInStack(func,thread):
+    """Takes a function and a thread object as arguments. Returns True if
+the function is in the stack of the given thread, False either."""    
     stack = get_current_frames()[thread.ident]
     x = stack
     while x is not None:
@@ -38,6 +41,7 @@ def isFunctionInStack(func,thread):
     return False
 
 def isFunctionInAllStack(func):
+    """Takes a function as argument. Returns True if the function is in teh stack of any thread, False either."""
     stacks = get_current_frames()
     for stack in stacks.values():
         x = stack
@@ -48,5 +52,6 @@ def isFunctionInAllStack(func):
     return False
 
 def staticUpdatePoint():
+    """Indicates a static update point in the code"""
     start_active_update()
 
