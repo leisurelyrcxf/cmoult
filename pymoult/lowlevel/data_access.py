@@ -23,6 +23,7 @@
 """
 import weakref
 from Queue import Queue
+from threading import Lock
 
 
 class ObjectsPool(object):
@@ -44,10 +45,23 @@ class ObjectsPool(object):
         ObjectsPool.objectsPool = self
         set_instance_hook(instance_hook)
         self.objects = set()
+        self.buffer = set()
+        self.lock = Lock()
+        self.in_use = False
+
 
     def add(self,obj):
         """Adds a weak reference to the object given as argument"""
-        self.objects.add(weakref.ref(obj))
+        if self.in_use:
+            self.buffer.add(weakref.ref(obj))
+        else:
+            self.objects.add(weakref.ref(obj))
+
+    def merge(self):
+        self.lock.acquire()
+        self.objects.union(self.buffer)
+        self.buffer.clear()
+        self.lock.release()
 
     def cleanup(self):
         """Revoves all stale weak references from the pool""" 
@@ -61,6 +75,13 @@ class ObjectsPool(object):
     def pool(self):
         """Returns the pool of weak references"""
         return self.objects
+
+    def begin_use(self):
+        self.in_use = True
+
+    def end_use(self):
+        self.in_use = False
+        self.merge()
 
 def instance_hook(obj):
     """The hook to be set on object instanciation when using the ObjectsPool"""
@@ -107,12 +128,16 @@ class DataAccessor(object):
         """
         #called when begining an iteration called, we can initiate the getter
         if self.strategy == "immediate":
-            opool = ObjectsPool.getObjectsPool().pool()
+            pool = ObjectsPool.getObjectsPool()
+            pool.begin_use()
+            opool = pool.pool()
             for ref in opool:
                 obj = ref()
                 if isinstance(obj,self.tclass):
                     self.put(obj)
+            pool.end_use()
             self.stop()
+            
 
         if self.strategy == "progressive":
             if hasattr(self.tclass,"__getterrouter__") and type(self.tclass.__getterrouter__) == GetItemRouter:
