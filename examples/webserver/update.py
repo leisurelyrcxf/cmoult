@@ -83,9 +83,6 @@ class WebServerV2(main.WebServer):
         self.sessions[str(s.get_id())] = s
         return s
 
-
-
-
 class StaticPage(main.Page):
     def __init__(self,path,title,content):
         self.path = path
