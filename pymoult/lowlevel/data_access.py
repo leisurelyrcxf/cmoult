@@ -24,7 +24,7 @@
 import weakref
 from Queue import Queue
 from threading import Lock
-
+import sys
 
 class ObjectsPool(object):
     """A Pool of objects, keeping a weak reference to all created
@@ -298,3 +298,52 @@ def startEagerUpdate(tclass,function):
     accessor = DataAccessor(tclass,strategy="immediate")
     for obj in accessor:
         function(obj)
+
+
+#Heap Traversal tools
+
+class HeapWalker(object):
+    """A base class for applying function on elements of the Heap based on
+    their type"""
+
+    def walk(self,item):
+        methodname = "walk_"+type(item).__name__
+        if hasattr(self,methodname):
+            self.__getattribute__(methodname)(item)
+
+    def walk_int(self,item):
+        pass
+
+    def walk_str(self,item):
+        pass
+
+    def walk_module(self,item):
+        pass
+
+    def walk_object(self,item):
+        for attr in dir(item):
+            if not (attr.startswith("__") and attr.endswith("__")):
+                self.walk(item.__gettattribute__(attr))
+
+
+def traverseHeap(walker,module_names=["__main__"]):
+    """Runs the given walker on the globals of the modules names in the
+    module_names parameter. If this parameter is empty, it will
+    default to the main module.
+    """
+
+    if not isinstance(walker,HeapWalker):
+        raise TypeError("walker should be of type HeapWalker") 
+    modules = [sys.modules[m] for m in filter(lambda x : x in module_names,sys.modules.keys())]
+    #For each module of the application, we will run the walker on the globals 
+    for modul in modules:
+        globs = dir(modul)
+        for var in globs:
+            if not (var.startswith('__') and var.endswith('__')):
+                walker.walk(modul.__getattribute__(var))
+            
+
+    
+
+
+

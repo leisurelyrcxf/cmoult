@@ -154,3 +154,27 @@ class ThreadRebootUpdate(Update):
         """Waits for the update to be complete"""
         pass
 
+
+class HeapTraversalUpdate(Update):
+    """Update to be used with HeapTraversalManager"""
+
+    def __init__(self,manager,walker,modules=["__main__"]):
+        """Constructor. Takes a heap walker as argument and a list of modules to walk"""
+        self.walker = walker
+        self.modules = modules
+        super(HeapTraversalUpdate,self).__init__(manager)
+
+    def setup(self):
+        """Sets up the update in the manager"""
+        self.manager.walker = self.walker
+        self.manager.modules = self.modules
+        
+
+    def apply(self):
+        """Invokes the update in the manager"""
+        self.manager.run()
+
+    def wait_update(self):
+        """Waits for the update to be complete"""
+        pass
+    
