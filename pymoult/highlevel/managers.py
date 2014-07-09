@@ -250,12 +250,25 @@ class ThreadRebootManager(Manager):
             resetThread(thread)
                 
                 
-            
+class HeapTraversalManager(Manager):
+    """Traverses the heap with the walker given by the update. Pauses the
+    application when doing so"""
+    
+    def __init__(self,threads):
+        """Constructor"""
+        self.walker = None
+        self.modules = []
+        super(HeapTraversalManager,self).__init__(threads=threads)
+    
+    def run(self):
+        """Walks the heap while the application is suspended"""
+        if self.walker and len(self.modules) > 0:
+            self.pause_threads()
+            traverseHeap(self.walker,self.modules)
+            self.resume_threads()
 
 
 
-
-
-            
-
+        
+        
 
