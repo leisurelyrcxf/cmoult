@@ -50,6 +50,12 @@ class DSU_Thread(threading.Thread):
         self.active_update_function = None
         self.active = False
                
+    def set_active(self):
+        self.active = True
+
+    def set_passive(self):
+        self.active = False
+
     def execute_sleeping_continuation(self,continuation):
         """Switches to the continuation associated with the thread. If
         sleeping_continuation_function is set, calls it.  Called once
@@ -88,6 +94,7 @@ class DSU_Thread(threading.Thread):
         active_update_function"""
         if self.active and self.active_update_function != None:
             self.active_update_function()
+            self.active_update_function = None
 
 
 def start_active_update():
