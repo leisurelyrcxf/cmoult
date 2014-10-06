@@ -2,6 +2,8 @@
 
 
 import socket
+from pymoult.highlevel.listener import Listener
+from pymoult.threads import DSU_Thread
 
 hostname = "localhost"
 port = 8080
@@ -140,7 +142,9 @@ def main_loop():
         conn.close()
 
 if __name__ == "__main__":
+    listener = Listener()
+    listener.start()
+    main_thread = DSU_Thread(name="main thread",target=main_loop)
     print("Starting server")
-    main_loop()
-    
+    main_thread.start()
 
