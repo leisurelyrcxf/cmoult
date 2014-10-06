@@ -30,6 +30,7 @@ class Site(object):
     number = 0
     def __init__(self,name):
         self.name = name
+        self.number = Site.number
         Site.number+=1
         self.pages = []
 
@@ -50,6 +51,7 @@ class Page(object):
     number = 0
     def __init__(self,name):
         self.name = name
+        self.number = Page.number
         Page.number+=1
 
     def __str__(self):
@@ -59,6 +61,7 @@ class Account(object):
     number = 0
     def __init__(self,user):
         self.user = user
+        self.number = Account.number
         Account.number+=1
 
     def __str__(self):
@@ -100,6 +103,7 @@ def do_show(comm):
                 print(site.get_page(l[2]))
 
 def do_login(comm):
+    global current_user
     ul = filter(lambda x : x.user == comm.strip(),users)
     if len(ul) == 1:
         current_user = ul[0]
@@ -107,6 +111,7 @@ def do_login(comm):
  
 
 def do_logout(comm):
+    global current_user
     if current_user != None:
         current_user = None
     
