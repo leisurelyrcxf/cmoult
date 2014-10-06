@@ -9,6 +9,7 @@ class SiteV2(object):
     
     def __init__(self,name,owner):
         self.name = name
+        self.number = SiteV2.number
         Site.number+=1
         self.pages = []
         self.owner = owner
@@ -30,6 +31,7 @@ class AccountV2(object):
     def __init__(self,user):
         self.user = user
         self.friends = []
+        self.number = AccountV2.number
         Account.number+=1
 
     def can_access(self,site):
