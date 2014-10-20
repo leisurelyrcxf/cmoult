@@ -57,3 +57,11 @@ The pydoc can be generated with the doc.sh script
 
 The pydoc will be generated in the doc folder, open doc/pymoult.html to start
 browsing.
+
+Virtual Machine
+===============
+
+A Virtual machine with the custom pypy-dsu installed as well as Pymoult can be downloaded on the following link.
+
+
+[VM download link](https://partage.mines-telecom.fr/public.php?service=files&t=b9ae9bdffe6f9d1c6be2b8e100543ff5&download)
