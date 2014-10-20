@@ -120,8 +120,6 @@ def do_showV2(comm):
 
 data_manager = LazyConversionManager()
 data_manager.start()
-functions_manager = SafeRedefineManager([main.main_thread])
-functions_manager.start()
 
 def transformer_site(site):
     site.owner = None
@@ -142,7 +140,11 @@ account_update.wait_update()
 redefineClass(main.Site,SiteV2)
 redefineClass(main.Account,AccountV2)
 
-functions = {main.do_command:do_commandV2,main.do_create:do_createV2,main.do_delete:do_deleteV2,main.do_show:do_showV2}
+
+functions_updates = {main.do_command:do_commandV2,main.do_create:do_createV2,main.do_delete:do_deleteV2,main.do_show:do_showV2}
+
+fuctions_manager = SafeRedefineManager([main.main_thread])
+functions_manager.start()
 
 functions_update = SafeRedefineUpdate(functions_manager,functions)
 functions_update.setup()
