@@ -286,18 +286,18 @@ def add_setter_router(tclass,setter=None,dataAccessor=None,function=None):
     tclass.__setterrouter__ = router
 
 #So far, lazy access does not handle heritage 
-def setLazyUpdate(tclass,function):
+def setLazyUpdate(tclass,transformer):
     """Uses router to set up lazy updates. Takes the target class and the
-    update function as arguments"""
-    add_getter_router(tclass,function=function)
-    add_setter_router(tclass,function=function)
+    transformer function as arguments"""
+    add_getter_router(tclass,function=transformer)
+    add_setter_router(tclass,function=transformer)
 
-def startEagerUpdate(tclass,function):
+def startEagerUpdate(tclass,transformer):
     """Uses a data accessor to run an eager update. Takes the target class
-    and the update function as argumments."""
+    and the transformer function as argumments."""
     accessor = DataAccessor(tclass,strategy="immediate")
     for obj in accessor:
-        function(obj)
+        transformer(obj)
 
 
 #Heap Traversal tools
@@ -317,8 +317,9 @@ class HeapWalker(object):
     def walk_str(self,item):
         pass
 
-    def walk_module(self,item):
-        pass
+    def walk_module(self,mod):
+        for item in dir(mod):
+            self.walk(mod[item])
 
     def walk_object(self,item):
         for attr in dir(item):

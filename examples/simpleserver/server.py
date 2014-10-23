@@ -24,8 +24,6 @@ def find_name_in_list(name,l):
     else:
         return None
 
-
-
 class Site(object):
     number = 0
     def __init__(self,name):
