@@ -29,6 +29,7 @@ from _continuation import continulet
 import inspect
 import time
 
+
 class RebootException(Exception):
     """Exception raised for rebooting a thread"""
     pass
@@ -40,7 +41,7 @@ class DSU_Thread(threading.Thread):
     - The thread can be rebooted by raising a RebootException
     - The thread can switch to continuation if requested
     """
-    def __init__(self,group=None, target=None, name=None, args=(), kwargs={}):
+    def __init__(self,active=False,group=None, target=None, name=None, args=(), kwargs={}):
         """Constructor. Takes classic thread arguments"""
         super(DSU_Thread,self).__init__(group=group,name=name,args=args,kwargs=kwargs)
         self.main = target
@@ -48,7 +49,7 @@ class DSU_Thread(threading.Thread):
         self.sleeping_continuation = None
         self.sleeping_continuation_fonction = None
         self.active_update_function = None
-        self.active = False
+        self.active = active
                
     def set_active(self):
         self.active = True
@@ -92,10 +93,16 @@ class DSU_Thread(threading.Thread):
         """Starts active update. If the active is set (active update mode),
         the thread will run the udate function set in
         active_update_function"""
-        if self.active and self.active_update_function != None:
-            self.active_update_function()
-            self.active_update_function = None
-
+        if self.active:
+            if self.active_update_function is not None:
+                self.active_update_function()
+                self.active_update_function = None
+        else:
+            if hasattr(self,"static_point_event"):
+                self.static_point_event.set()
+                self.pause_event.wait()
+                delattr(self,"static_point_event")
+                delattr(self,"pause_event")
 
 def start_active_update():
     """This function calls the start_update of the current active thread"""
@@ -119,3 +126,7 @@ def set_thread_trace(thread,trace):
     """Sets the given trace to the given thread. Starts the trace
     immediately (does not wait forthe next function return)"""
     sys.settrace_for_thread(thread.ident,trace,True)
+
+
+
+

@@ -1,7 +1,8 @@
 #parsed
 
 from pymoult.highlevel.updates import ThreadRebootUpdate
-from pymoult.threads import set_active_update_function 
+from pymoult.lowlevel.alterability import wait_static_points
+from pymoult.lowlevel.stack import resumeThread
 import sys
 import time
 
@@ -20,13 +21,14 @@ def new_main():
 
 update = ThreadRebootUpdate(main.manager,[(main.thread,new_main,[])])
 
-def update_function():
-    update.setup()
-    update.apply()
-    update.wait_update()
-    print("update complete")
+wait_static_points([main.thread])
+update.setup()
+update.apply()
+update.wait_update()
+resumeThread(main.thread)
+print("update complete")
     
-set_active_update_function(update_function,main.thread)
+
 
     
 

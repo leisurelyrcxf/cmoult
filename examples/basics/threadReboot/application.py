@@ -20,8 +20,6 @@ def main():
 
 thread = DSU_Thread(target=main,name="main")
 thread.start()
-thread.active = True
-
 
 manager = ThreadRebootManager()
 manager.start()
