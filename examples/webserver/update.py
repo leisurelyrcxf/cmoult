@@ -1,14 +1,15 @@
 #parsed
 
 from pymoult.highlevel.updates import *
-
-
-
+from pymoult.highlevel.managers import *
+from pymoult.lowlevel.data_access import DataAccessor
+from pymoult.lowlevel.alterability import isFunctionInAllStack
+from pymoult.lowlevel.data_update import updateToClass
 import sys
 
 main = sys.modules["__main__"]
 
-#We define the new Page class
+#Updating the Page class so it tells the login in use
 class PageV2(main.Page):
     def call(self,session):
         self.n = int(session.values[self.path]) + 1
@@ -22,15 +23,34 @@ class PageV2(main.Page):
        s+= "<p>"+self.name+", you saw this page "+str(self.n)+" times</p></body></html>"
        return s
 
+#Class Session with login support
+class SessionV2(main.Session):
+    session_id = main.Session.session_id
+    def __init__(self,items,login,session_id=None):
+        self.login = login
+        self.values = items
+        if session_id and session_id <= SessionV2.session_id:
+            self.session_id = session_id
+        else:
+            self.session_id = SessionV2.session_id
+            SessionV2.session_id += 1
 
-#We use eager conversion to update the Page class
-pageUpd = EagerUpdateConversion(main.PageManager,main.Page,maine.PageV2,None)
+        
+class User(object):
+    def __init__(self,login,passwd):
+        self.login = login
+        self.passwd = passwd
+
+    def log_in(self,passwd):
+        return passwd == self.passwd
+
+#Using eager update to update pages
+pageUpd = EagerConversionUpdate(main.pageManager,main.Page,PageV2,None)
 pageUpd.setup()
 pageUpd.apply()
+pageUpd.wait_update()
 
 
-<<<<<<< local
-=======
 
 #Using Lazy update for sessions
 
@@ -165,4 +185,3 @@ webUpdate.wait_update()
 
 
 
->>>>>>> other
