@@ -50,11 +50,8 @@ def addFieldToClass(cls,name,field):
     """Adds the given field to the given class under the given name"""
     clas.name = field
 
-def redefineClass(tclass,nclass):
-    """redfefines a given class so it is equals to a new class""" 
+def redefineClass(module,tclass,nclass):
+    """redfefines a given class from a given module so it is equals to a new class""" 
     tname = tclass.__name__
-    tmod = tclass.__module__
-    if not tname in dir(sys.modules[tmod]):
-        raise ValueError("class "+tname+" is not a toplevel class")
-    setattr(sys.modules[tmod],tname,nclass)
+    setattr(module,tname,nclass)
     setattr(nclass,"__name__",tname)

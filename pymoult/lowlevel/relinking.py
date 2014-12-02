@@ -62,16 +62,12 @@ def rerouteProxy(proxy,obj):
     """Reroutes the given proxy so that it targets the given object"""
     return proxy.proxy_controller.reroute(obj)
 
-def redefineFunction(tfunction,nfunction):
-    """Redefines a given top level function so that it is eaqual to the
-    given new one""" 
-    tname = tfunction.__name__
-    tmod = tfunction.__module__
-    if not tname in dir(sys.modules[tmod]):
-        raise ValueError("function "+tname+" is not toplevel")
-    setattr(sys.modules[tmod],tname,nfunction)
-    setattr(nfunction,"__name__",tname)
-
+def redefineFunction(module,tfunction,nfunction):
+    """Redefines a given function from a given module so that it is eaqual
+    to the given new one"""
+    tfname = tfunction.__name__
+    setattr(module,tfname,nfunction)
+    setattr(nfunction,"__name__",tfname)
 
 def redirectPointer(pointer,target):
     """Not implemented yet"""
