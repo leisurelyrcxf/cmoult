@@ -1,6 +1,9 @@
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from Cookie import SimpleCookie
-from threading import Thread
+from pymoult.highlevel.listener import Listener
+from pymoult.highlevel.managers import EagerConversionManager
+from pymoult.lowlevel.alterability import staticUpdatePoint
+from pymoult.threads import DSU_Thread
 
 class Page(object):
     def __init__(self,path,title,content):
@@ -107,6 +110,7 @@ class WebServer(object):
         #The server will use the self.Handler class to handle the clients requests
         httpd = HTTPServer(("",8080),self.Handler)
         while True:
+            staticUpdatePoint()
             httpd.handle_request()
 
 def main():
@@ -117,7 +121,15 @@ def main():
     ws = WebServer(pages)
     ws.run()
 
+#Listener 
+listener = Listener()
+listener.start()
+
 #Setup the main thread
-main_thread = Thread(target=main)
+main_thread = DSU_Thread(target=main)
+
+#Eager update manager for the Page class
+pageManager = EagerConversionManager(threads=[main_thread])
+pageManager.start()
 
 main_thread.start()
