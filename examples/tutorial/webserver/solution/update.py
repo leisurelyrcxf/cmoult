@@ -7,8 +7,14 @@ from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
 from pymoult.lowlevel.stack import resumeThread
 import sys
 
+from Cookie import SimpleCookie
+
+
 main = sys.modules["__main__"]
 
+#Step one : Updating the pages and the sessions
+
+#Updating the Page class so it tells the login in use
 class PageV2(object):
     def __init__(self,path,title,content):
         self.path = path
@@ -27,6 +33,7 @@ class PageV2(object):
        s+= "<p>"+self.name+", you saw this page "+str(self.n)+" times</p></body></html>"
        return s
 
+#Class Session with login support
 class SessionV2(object):
     session_id = main.Session.session_id
     def __init__(self,items,login,session_id=None):
@@ -47,6 +54,37 @@ class SessionV2(object):
             c[key] = self.values[key]
         c["session_id"] = self.session_id
         return c
+
+
+#Using eager update to update pages
+
+#We need to enable the eager manager when starting the application !!!
+
+pageUpd = EagerConversionUpdate(main.pageManager,main.Page,PageV2,None)
+pageUpd.setup()
+pageUpd.apply()
+pageUpd.wait_update()
+
+#Using Lazy conversion for sessions
+
+#Start the manager 
+sessionManager = LazyConversionManager()
+sessionManager.start()
+
+#Create a transformer
+#Each session opened before the update will be considered as "anonymous" session
+def session_trans(obj):
+    obj.login = "anonymous"
+
+#Start the conversion with the Update class
+sessionUpd = LazyConversionUpdate(sessionManager,main.Session,SessionV2,session_trans,None)
+sessionUpd.setup()
+sessionUpd.apply()
+
+#Step two : updating the webserver
+#We will proceed in 2 substeps : (1) modify its state and (2) modify its methods
+
+#Substep 1 : modifying the state of the webserver
 
 class User(object):
     def __init__(self,login,passwd):
@@ -81,6 +119,33 @@ Password: <input type="password" name="password">
 
 loggedPage = StaticPage("logged","Logged in!","You are logged in!")
 notLogged = StaticPage("nlogged","Login failed","You are not logged in")
+
+
+#First we need to retrieve the webserver, for this purpose we will use
+#the DataAccessor from the lowlevel API
+
+#Remember : using the immediate strategy requires the ObjectPool to be
+#created before creating the webserver !!
+
+#Fortunately, we started a EagerConversionManager that did the work
+#for the step 1 ;)
+
+da = DataAccessor(main.WebServer,strategy="immediate")
+server = None
+for ws in da:
+    server = ws
+
+#Then, we add the static pages to the webserver
+server.pages['login'] = loginPage
+server.pages['logged'] = loggedPage
+server.pages['nlogged'] = notLogged
+    
+#We add a users attribute to the server, containing the users
+#We add a new user "bob" with password "alice"
+server.users = {"bob":User("bob","alice")}
+
+
+#Substep 2 :  modifiy the methods of the webserver
 
 class WebServerV2(object):
     def __init__(self,pages):
@@ -158,5 +223,31 @@ def create_new_do_GET(webserver):
             handler.send_response(404)
             handler.send_error(404, "Page not found")
     return new_do_GET
+
+
+# First, we need to consider the alterability of the application.  We
+# will place a staticUpdatePoint in the "run" method of the webserver,
+# at the begining of the while loop.
+
+#We will wait for the main_thread to reach that update point
+
+wait_static_points([main.main_thread])
+#The static point has been reached !!!
+#Let's continue the update
+
+#To update the addSession method of the webserver, we need to update the WebServer class
+updateToClass(server,WebServerV2)
+
+#We need to change the do_GET method of the Handler class possesed by the server
+handler = server.Handler
+#We create a new do_GET method using create_new_do_GET and set it to the handler class
+addFieldToClass(handler,"do_GET",create_new_do_GET(server))
+
+
+#We have finished the update, we need to resume the execution of the Thread
+resumeThread(main.main_thread)
+
+
+print("UPDATE COMPLETE")
 
 
