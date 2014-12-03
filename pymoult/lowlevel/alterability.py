@@ -22,7 +22,6 @@
 
 """
 
-from pymoult.threads import start_active_update
 from pymoult.lowlevel.stack import resumeThread
 import threading
 import sys
@@ -53,10 +52,11 @@ def isFunctionInAnyStack(func):
             x = x.f_back
     return False
 
-def staticUpdatePoint():
+def staticUpdatePoint(name=None):
     """Indicates a static update point in the code"""
-    start_active_update()
-
+    thread = threading.current_thread()
+    #if name is not None and thread.last_update_point == name:
+    thread.start_update()
 
 def wait_static_points(threads):
     """Takes a list of threads as arguments. wait for each of them to reach a static point"""
@@ -65,7 +65,7 @@ def wait_static_points(threads):
         thread.pause_event.clear()
         thread.static_point_event = threading.Event()
         thread.static_point_event.clear()
-    for thread in threads:  
+    for thread in threads:
         thread.static_point_event.wait()
         delattr(thread,"static_point_event")
 

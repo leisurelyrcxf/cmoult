@@ -114,6 +114,7 @@ def create_new_do_GET(webserver):
     def new_do_GET(handler):
         path = handler.path.lstrip("/")
         session = handler.getSession()
+        print(session.login)
         if path.startswith("logged"):
             l = path[7:].split("&")
             login = l[0][6:]

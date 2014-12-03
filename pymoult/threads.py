@@ -50,6 +50,7 @@ class DSU_Thread(threading.Thread):
         self.sleeping_continuation_fonction = None
         self.active_update_function = None
         self.active = active
+        self.last_update_point = None
                
     def set_active(self):
         self.active = True
@@ -102,10 +103,6 @@ class DSU_Thread(threading.Thread):
                 self.static_point_event.set()
                 self.pause_event.wait()
 
-def start_active_update():
-    """This function calls the start_update of the current active thread"""
-    thread = threading.current_thread()
-    thread.start_update()
 
 def set_active_update_function(function,thread):
     """This function sets the active update function of a given thread"""
