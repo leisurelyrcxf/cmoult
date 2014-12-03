@@ -4,8 +4,8 @@
 from pymoult.highlevel.updates import ThreadRebootUpdate,HeapTraversalUpdate
 from pymoult.lowlevel.data_access import HeapWalker
 from pymoult.lowlevel.data_update import updateToClass
-from pymoult.lowlevel.alterability import get_current_frames
-from pymoult.threads import set_active_update_function, start_active_update
+from pymoult.lowlevel.alterability import get_current_frames,wait_static_points,staticUpdatePoint
+from pymoult.lowlevel.stack import resumeThread
 import sys
 import socket
 main = sys.modules["__main__"]
@@ -47,7 +47,7 @@ class AccountV2(object):
     def add_friend(self,friend):
         self.friends.append(friend)
 
-    def is_friend_with(friend):
+    def is_friend_with(self,friend):
         return friend in self.friends
 
     def __str__(self):
@@ -65,7 +65,7 @@ def do_commandV2(comm):
     elif comm.startswith("logout"):
         main.do_logout(comm.lstrip("logout").strip())
     elif comm.startswith("register "):
-        main.do_registerV2(comm.lstrip("register").strip())
+        do_registerV2(comm.lstrip("register").strip())
     elif comm.startswith("befriend "):
         do_befriend(comm.lstrip("befriend").strip())
 
@@ -126,7 +126,7 @@ def do_registerV2(comm):
 def new_main(s):
     while True:
         #This is a safe point for updating
-        start_active_update()
+        staticUpdatePoint()
         conn,addr = s.accept()
         data = conn.recv(main.max_data_length)
         do_commandV2(data.decode("ascii"))
@@ -164,16 +164,14 @@ sock = get_socket_fromstack()
 heap_update = HeapTraversalUpdate(main.heap_manager,MyHeapWalker())
 thread_update = ThreadRebootUpdate(main.thread_manager,[(main.main_thread,new_main,[sock])])
 
-def update_function():
-    main.main_thread.active_update_function = None
-    print("update started")
-    heap_update.setup()
-    heap_update.apply()
-    print("heap traversed")
-    print("rebooting main thread")
-    thread_update.setup()
-    thread_update.apply()
-
-
-set_active_update_function(update_function,main.main_thread)
+wait_static_points([main.main_thread])
+print("update started")
+heap_update.setup()
+heap_update.apply()
+print("heap traversed")
+print("rebooting main thread")
+thread_update.setup()
+thread_update.apply()
+resumeThread(main.main_thread)
+print("Update complete")
 

@@ -72,15 +72,16 @@ class ThreadedUpdate(Update):
 class SafeRedefineUpdate(ThreadedUpdate):
     """Update to be used with the SafeRedefineManager"""
     def __init__(self,manager,functions):
-        """Constructor. Takes a dictionnary associating old functions to their
-        new version in arguelnts"""
+        """Constructor. Takes a dictionnary associating old functions to their module and 
+        new version in arguments"""
         self.functions = functions
         super(SafeRedefineUpdate,self).__init__(manager=manager)
 
     def setup(self):
         """Sets up the dictionary of functions to be updated in the manager"""
         for function in self.functions.keys():
-            self.manager.add_function(function,self.functions[function])
+            f = self.functions[function]
+            self.manager.add_function(f[0],function,f[1])
     
 class EagerConversionUpdate(Update):
     """Update to be used with the EagerConversionManager"""

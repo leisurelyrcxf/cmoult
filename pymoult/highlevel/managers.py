@@ -132,10 +132,10 @@ class SafeRedefineManager(ThreadedManager):
                 return False
         return True
   
-    def add_function(self,function,new_function):
+    def add_function(self,module,function,new_function):
         """Adds a pair (old function, new function) to the queue of functions
         to be redefined"""
-        self.functions.put((function,new_function))
+        self.functions.put((module,function,new_function))
 
     def thread_main(self):
         """Main of the manager thread"""
@@ -150,9 +150,9 @@ class SafeRedefineManager(ThreadedManager):
                     break
                 function_updated = False
                 while not function_updated:
-                    if self.is_alterable(function[0]):
+                    if self.is_alterable(function[1]):
                         self.pause_threads()
-                        redefineFunction(function[0],function[1])
+                        redefineFunction(function[0],function[1],function[2])
                         function_updated = True
                         self.resume_threads()
                     time.sleep(self.sleepTime)

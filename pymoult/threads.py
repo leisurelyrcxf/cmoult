@@ -101,8 +101,6 @@ class DSU_Thread(threading.Thread):
             if hasattr(self,"static_point_event"):
                 self.static_point_event.set()
                 self.pause_event.wait()
-                delattr(self,"static_point_event")
-                delattr(self,"pause_event")
 
 def start_active_update():
     """This function calls the start_update of the current active thread"""
