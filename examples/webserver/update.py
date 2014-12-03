@@ -3,7 +3,7 @@
 from pymoult.highlevel.updates import *
 from pymoult.highlevel.managers import *
 from pymoult.lowlevel.data_access import DataAccessor
-from pymoult.lowlevel.alterability import isFunctionInAllStack
+from pymoult.lowlevel.alterability import isFunctionInAnyStack
 from pymoult.lowlevel.data_update import updateToClass
 import sys
 
@@ -162,7 +162,7 @@ class WebManager(ThreadedManager):
         super(WebManager,self).__init__()
 
     def is_alterable(self):
-        return not isFunctionInAllStack(self.server.Handler.do_GET)
+        return not isFunctionInAnyStack(self.server.Handler.do_GET)
 
     def update_function(self):
         self.server.pages["login"] = loginPage
