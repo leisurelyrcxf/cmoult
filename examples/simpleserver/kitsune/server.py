@@ -3,8 +3,9 @@
 
 import socket
 from pymoult.highlevel.listener import Listener
-from pymoult.threads import DSU_Thread,start_active_update
+from pymoult.threads import DSU_Thread
 from pymoult.highlevel.managers import HeapTraversalManager,ThreadRebootManager
+from pymoult.lowlevel.alterability import staticUpdatePoint
 
 
 hostname = "localhost"
@@ -143,7 +144,7 @@ def main_loop():
     s.listen(max_connections)
     while True:
         #This is a safe point for updating
-        start_active_update()
+        staticUpdatePoint()
         conn,addr = s.accept()
         data = conn.recv(max_data_length)
         do_command(data.decode("ascii"))
@@ -155,7 +156,6 @@ if __name__ == "__main__":
     listener = Listener()
     listener.start()
     main_thread = DSU_Thread(name="main thread",target=main_loop)
-    main_thread.set_active()
     print("Starting server")
     main_thread.start()
     thread_manager = ThreadRebootManager()

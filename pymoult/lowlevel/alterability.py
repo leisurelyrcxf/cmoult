@@ -67,6 +67,7 @@ def wait_static_points(threads):
         thread.static_point_event.clear()
     for thread in threads:  
         thread.static_point_event.wait()
+        delattr(thread,"static_point_event")
 
 
 

@@ -80,7 +80,6 @@ class SafeRedefMethod(SafeRedefineManager):
                     if self.is_alterable(method[1]):
                         self.pause_threads()
                         tname= method[1].__name__
-
                         setattr(method[0],tname,method[2])
                         setattr(method[2],"__name__",tname)
                         method_updated = True

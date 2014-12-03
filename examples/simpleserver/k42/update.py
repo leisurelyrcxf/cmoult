@@ -52,8 +52,6 @@ class AccountV2(object):
         return "Account of "+self.user+" of id "+str(self.number)
 
 def do_commandV2(comm):
-    import pdb
-    pdb.set_trace()
     if comm.startswith("create "):
         main.do_create(comm.lstrip("create").strip())
     elif comm.startswith("delete "):
@@ -118,8 +116,10 @@ def do_showV2(comm):
                 print(site.get_page(l[2]))
 
 
-data_manager = LazyConversionManager()
-data_manager.start()
+account_manager = LazyConversionManager()
+account_manager.start()
+site_manager = LazyConversionManager()
+site_manager.start()
 
 def transformer_site(site):
     site.owner = None
@@ -128,8 +128,8 @@ def transformer_account(account):
     account.friends=[]
 
 
-site_update = LazyConversionUpdate(data_manager,main.Site,SiteV2,transformer_site,None)
-account_update = LazyConversionUpdate(data_manager,main.Account,AccountV2,transformer_account,None)
+site_update = LazyConversionUpdate(account_manager,main.Site,SiteV2,transformer_site,None)
+account_update = LazyConversionUpdate(site_manager,main.Account,AccountV2,transformer_account,None)
 site_update.setup()
 site_update.apply()
 site_update.wait_update()
@@ -137,16 +137,18 @@ account_update.setup()
 account_update.apply()
 account_update.wait_update()
 
-redefineClass(main.Site,SiteV2)
-redefineClass(main.Account,AccountV2)
+redefineClass(main,main.Site,SiteV2)
+redefineClass(main,main.Account,AccountV2)
 
 
-functions_updates = {main.do_command:do_commandV2,main.do_create:do_createV2,main.do_delete:do_deleteV2,main.do_show:do_showV2}
+functions = {main.do_command:[main,do_commandV2],main.do_create:[main,do_createV2],main.do_delete:[main,do_deleteV2],main.do_show:[main,do_showV2]}
 
-fuctions_manager = SafeRedefineManager([main.main_thread])
+functions_manager = SafeRedefineManager([main.main_thread])
 functions_manager.start()
 
 functions_update = SafeRedefineUpdate(functions_manager,functions)
 functions_update.setup()
 functions_update.apply()
 functions_update.wait_update()
+
+print("Updated complete")
