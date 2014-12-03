@@ -40,7 +40,9 @@ class Session(object):
             c[key] = self.values[key]
         c["session_id"] = self.session_id
         return c
-            
+
+#The Handler class needs to be generated for a specific webserver.
+#We therefore define a function that generates a Handler class for a given webserver 
 def produceHandler(webserver):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -83,6 +85,7 @@ class WebServer(object):
         self.pages = {}
         for page in pages:
             self.pages[page.path] = page
+        #Generate a Handler class specifically for the current Webserver.
         self.Handler = produceHandler(self)
         self.sessions = {}
 
@@ -102,6 +105,8 @@ class WebServer(object):
         return s
     
     def run(self):
+        #Create a http server listening on localhost port 8080
+        #The server will use the self.Handler class to handle the clients requests
         httpd = HTTPServer(("",8080),self.Handler)
         while True:
             httpd.handle_request()

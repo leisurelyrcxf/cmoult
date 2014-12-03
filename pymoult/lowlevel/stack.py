@@ -53,3 +53,4 @@ def resumeThread(thread):
     if hasattr(thread,"pause_event"):
         thread.pause_event.set()
         delattr(thread,"pause_event")
+        set_thread_trace(thread,None)

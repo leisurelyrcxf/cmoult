@@ -48,7 +48,7 @@ def applyMixinToObject(obj,*mixins):
 
 def addFieldToClass(cls,name,field):
     """Adds the given field to the given class under the given name"""
-    clas.name = field
+    setattr(cls,name,field)
 
 def redefineClass(module,tclass,nclass):
     """redfefines a given class from a given module so it is equals to a new class""" 
