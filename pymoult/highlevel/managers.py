@@ -189,7 +189,7 @@ class EagerConversionManager(Manager):
             self.pause_threads()
             if self.tcls:
                 startEagerUpdate(self.tcls,t)
-                self.resume_threads()
+            self.resume_threads()
 
 
 class LazyConversionManager(ThreadedManager):
