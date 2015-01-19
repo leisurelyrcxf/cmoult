@@ -19,14 +19,22 @@ def new_main():
         say_hi()
 
 
-update = ThreadRebootUpdate(main.manager,[(main.thread,new_main,[])])
+class CustomUpdate(ThreadRebootUpdate):
 
-wait_static_points([main.thread])
-update.setup()
-update.apply()
-update.wait_update()
-resumeThread(main.thread)
-print("update complete")
+    def alterability(self):
+        wait_static_points([main.thread])
+        return True
+
+    def over(self):
+        resumeThread(self.thread)
+        return True
+
+
+        
+update = CustomUpdate(main.thread,new_main,[])
+main.manager.add_update(update)
+
+
     
 
 

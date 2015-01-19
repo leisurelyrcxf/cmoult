@@ -1,6 +1,7 @@
 #/usr/bin/pypy-dsu
 
-from pymoult.highlevel.managers import EagerConversionManager
+from pymoult.highlevel.managers import ThreadedManager
+from pymoult.lowlevel.data_access import ObjectsPool
 from pymoult.highlevel.listener import Listener
 import threading
 import time
@@ -20,9 +21,6 @@ class Item(object):
         self.color = color
 
 
-
-
-
 def main():
     items = [Item("apple","red"),Item("banana","yellow"),Item("mango","green")]
     colors = ["orange","pink","blue","purple","yellow","white"]
@@ -31,11 +29,13 @@ def main():
             i.display()
             i.change(random.choice(colors))
         time.sleep(2)
+        manager.apply_next_update()
             
 
 
+ObjectsPool()
 thread = threading.Thread(target=main)
-manager = EagerConversionManager(threads=[thread])
+manager = ThreadedManager(thread)
 manager.start()
 thread.start()
 listener = Listener()

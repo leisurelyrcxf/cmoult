@@ -1,6 +1,6 @@
 #/usr/bin/pypy-dsu
 
-from pymoult.highlevel.managers import LazyConversionManager
+from pymoult.highlevel.managers import ThreadedManager
 from pymoult.highlevel.listener import Listener
 import threading
 import time
@@ -35,7 +35,7 @@ def main():
 
 
 thread = threading.Thread(target=main)
-manager = LazyConversionManager()
+manager = ThreadedManager(thread)
 manager.start()
 thread.start()
 listener = Listener()
