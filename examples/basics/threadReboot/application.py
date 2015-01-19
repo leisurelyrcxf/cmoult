@@ -1,7 +1,7 @@
 #/usr/bin/pypy-dsu
 
 
-from pymoult.highlevel.managers import ThreadRebootManager
+from pymoult.highlevel.managers import ThreadedManager
 from pymoult.threads import DSU_Thread
 from pymoult.highlevel.listener import Listener
 from pymoult.lowlevel.alterability import staticUpdatePoint
@@ -21,7 +21,7 @@ def main():
 thread = DSU_Thread(target=main,name="main")
 thread.start()
 
-manager = ThreadRebootManager()
+manager = ThreadedManager()
 manager.start()
 
 listener = Listener()

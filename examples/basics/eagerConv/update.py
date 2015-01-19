@@ -28,8 +28,7 @@ def transformer(obj):
         obj.commentary = mapping[obj.name]
 
 
-update = EagerConversionUpdate(main.manager,main.Item,ItemV2,transformer)
-update.setup()
-update.apply()
+update = EagerConversionUpdate(main.Item,ItemV2,transformer)
+main.manager.add_update(update)
 
 

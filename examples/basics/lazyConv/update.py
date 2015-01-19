@@ -22,23 +22,13 @@ class ItemV2(object):
         self.commentary = commentary
 
 
-converted = 0
-
 def transformer(obj):
-    global converted
     mapping = {"apple":"tasty","banana":"always bring one to parties","mango":"it's a mango!"}
     if obj.name in mapping.keys():
         obj.commentary = mapping[obj.name]
-    converted +=1
 
-def over():
-    return converted == 3
-    
 
-update = LazyConversionUpdate(main.manager,main.Item,ItemV2,transformer,over)
-update.setup()
-update.apply()
-update.wait_update()
-print("update complete")
+update = LazyConversionUpdate(main.Item,ItemV2,transformer)
+main.manager.add_update(update)
 
 

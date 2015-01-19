@@ -11,10 +11,7 @@ def say_hi():
     print("hi")
 
 
-update = SafeRedefineUpdate(main.manager,{main.say_hello:[main,say_hi]})
+update = SafeRedefineUpdate(main,main.say_hello,say_hi)
+main.manager.add_update(update)
 
-update.setup()
-update.apply()
-update.wait_update()
 
-print("update complete")
