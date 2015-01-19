@@ -44,17 +44,29 @@ Max_queued_connect = 5
 Parsed_header = "#parsed"
 
 
+app_listener = None
+
+def get_app_listener():
+    return app_listener
+
+
 class Listener(threading.Thread):
     """Opens a socket server for users to supply updates."""
     
     def __init__(self,group=None, target=None, name="Pymoult Listener", verbose=None):
         """Constructor using the same parameters as a regular thread object"""
+        global app_listener 
         self.hostname = socket.gethostname()
         self.port = Listener_port 
         self.keep_running = True
         self.update_thread_index = 0
         super(Listener,self).__init__(group=group, target=target, name=name,verbose=verbose)
         self.daemon = True
+        self.applied_updates = []
+        app_listener = self
+
+    def add_completed_update(self,update):
+        self.applied_updates.append(update)
         
     def start_update(self,update_address):
         """Load the update code and runs it in a new thread"""

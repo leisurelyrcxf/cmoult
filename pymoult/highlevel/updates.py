@@ -24,8 +24,12 @@
 
 """
 
+from pymoult.lowlevel.stack import *
+from pymoult.lowlevel.relinking import *
+from pymoult.lowlevel.alterability import *
+from pymoult.lowlevel.data_access import *
 from pymoult.lowlevel.data_update import *
-
+from pymoult.threads import *
 
 class UpdateDefinitionError(Exception):
     """Exception raised when using an Update interface"""
@@ -35,147 +39,132 @@ class UpdateDefinitionError(Exception):
 
 
 class Update(object):
-    """Base Update class. Not to be used! For inheritance only!"""
-    def __init__(self,manager=None):
-        """Constructor. Binds the update to the manager given as argument"""
-        self.manager = manager
+    def __init__(self,name=None):
+        self.applied = False
+        self.manager = None
+        self.name = name
+
+    def requirements(self):
+        raise UpdateDefinitionError("You should define your own Update-based class")
+        
+    def alterability(self):
+        raise UpdateDefinitionError("You should define your own Update-based class")
+
+    def apply(self):
+        raise UpdateDefinitionError("You should define your own Update-based class")
     
-    def setup(self):
-        """Configures the manager for the updates"""
+    def over(self):
         raise UpdateDefinitionError("You should define your own Update-based class")
 
+    
+class SafeRedefineUpdate(Update):
+    def __init__(self,module,function,new_function):
+        self.module = module
+        self.function = function
+        self.new_function = new_function
+        super(SafeRedefineUpdate,self).__init__()
+
+    def requirements(self):
+        return True
+        
+    def alterability(self):
+        for thread in self.manager.threads:
+            if isFunctionInStack(self.function,thread):
+                return False
+        return True
+
     def apply(self):
-        """Invokes the update in the manager"""
-        raise UpdateDefinitionError("You should define your own Update-based class")
+        redefineFunction(self.module,self.function,self.new_function)
 
-
-class ThreadedUpdate(Update):
-    """Update class that works with the ThreadedManager. Not to be used!
-    For Inheritance only!"""
-    def __init__(self,manager):
-        """Constructor"""
-        super(ThreadedUpdate,self).__init__(manager=manager)
-
-    def setup(self):
-        """Configures the manager for updates"""
-        pass
-      
-    def apply(self):
-        """Invokes the update in the manager"""
-        self.manager.invoke()
-
-    def wait_update(self):
-        """Waits for the update to be complete"""
-        self.manager.wait_over() 
-
-
-class SafeRedefineUpdate(ThreadedUpdate):
-    """Update to be used with the SafeRedefineManager"""
-    def __init__(self,manager,functions):
-        """Constructor. Takes a dictionnary associating old functions to their module and 
-        new version in arguments"""
-        self.functions = functions
-        super(SafeRedefineUpdate,self).__init__(manager=manager)
-
-    def setup(self):
-        """Sets up the dictionary of functions to be updated in the manager"""
-        for function in self.functions.keys():
-            f = self.functions[function]
-            self.manager.add_function(f[0],function,f[1])
+    def over(self):
+        return True
     
 class EagerConversionUpdate(Update):
-    """Update to be used with the EagerConversionManager"""
-    def __init__(self,manager,tcls,cls,transformer):
-        """Constructor. Takes the class of the objects to be updated, the new
-        class to which they will be udated and a transformer function
-        in its arguments
-
-        """
-        self.cls=cls
-        self.tcls = tcls
+    def __init__(self,cls,new_cls,transformer):
+        self.cls = cls
+        self.new_cls = new_cls
         self.transformer = transformer
-        super(EagerConversionUpdate,self).__init__(manager=manager)
-    
-    def setup(self):
-        """Sets up the update in the manager"""
-        self.manager.cls = self.cls
-        self.manager.tcls = self.tcls
-        self.manager.transformer = self.transformer
+        super(EagerConversionUpdate,self).__init__()
+
+    def object_update(self,obj):
+        updateToClass(obj,self.new_cls,self.transformer)
+        
+    def requirements(self):
+        return True
+
+    def alterability(self):
+        return True
 
     def apply(self):
-        """Invokes the update in the manager"""
-        self.manager.run()
+        startEagerUpdate(self.cls,self.object_update)
 
-    def wait_update(self):
-        """waits for the update to be complete"""
-        pass
+    def over(self):
+        return True
 
 
-class LazyConversionUpdate(ThreadedUpdate):
-    """Update to be used with the LazyConversionManager"""
-    def __init__(self,manager,tcls,cls,transformer,ending):
-        """Constructor. Takes the class of the objects to be updated, the new
-        class to which they will be updated, a transformer and a
-        function evaluating the ending condition of the update in its
-        arguments.  The ending condition is a function that will
-        return True if the ending conditions are met.
-
-        """
+class LazyConversionUpdate(Update):
+    def __init__(self,cls,new_cls,transformer):
         self.cls=cls
-        self.tcls=tcls
+        self.new_cls=new_cls
         self.transformer = transformer
-        self.ending = ending
-        super(LazyConversionUpdate,self).__init__(manager=manager)
+        super(LazyConversionUpdate,self).__init__()
 
-    def setup(self):
-        """Sets up the update in the manager"""
-        self.manager.cls = self.cls
-        self.manager.tcls = self.tcls
-        self.manager.transformer = self.transformer
-        self.manager.ending = self.ending
+    def object_update(self,obj):
+        updateToClass(obj,self.new_cls,self.transformer)
 
+    def requirements(self):
+        return True
+
+    def alterability(self):
+        return True
+
+    def apply(self):
+        setLazyUpdate(self.cls,self.object_update)
+
+    def over(self):
+        return True
+        
 
 class ThreadRebootUpdate(Update):
-    """Update to be used with ThreadRebootManager"""
-    def __init__(self,manager,units):
-        """Constructor.Takes a list of tuples (thread,new main) in its arguments"""
-        self.units = units
-        super(ThreadRebootUpdate,self).__init__(manager)
+    def __init__(self,thread,new_main,new_args):
 
-    def setup(self):
-        """Sets up the update in the manager"""
-        for unit in self.units:
-            self.manager.units.put(unit)
+        if thread.__class__ is not DSU_Thread and not DSU_Thread in thread.__class__.__bases__:
+            raise TypeError("threads in ThreadRebootManager must be of type or of a subtype of DSU_Thread")
+        self.thread = thread
+        self.new_main = new_main
+        self.new_args = new_args
+        super(ThreadRebootUpdate,self).__init__()
+
+    def requirements(self):
+        return True
+
+    def alterability(self):
+        return True
     
     def apply(self):
-        """Invokes the update in the manager"""
-        self.manager.run()
+        resumeThread(self.thread)
+        switchMain(self.thread,self.new_main,args=self.new_args)
+        resetThread(self.thread)
 
-    def wait_update(self):
-        """Waits for the update to be complete"""
-        pass
+    def over(self):
+        return True
 
 
 class HeapTraversalUpdate(Update):
-    """Update to be used with HeapTraversalManager"""
-
-    def __init__(self,manager,walker,modules=["__main__"]):
-        """Constructor. Takes a heap walker as argument and a list of modules to walk"""
+    def __init__(self,walker,modules=["__main__"]):
         self.walker = walker
         self.modules = modules
-        super(HeapTraversalUpdate,self).__init__(manager)
+        super(HeapTraversalUpdate,self).__init__()
 
-    def setup(self):
-        """Sets up the update in the manager"""
-        self.manager.walker = self.walker
-        self.manager.modules = self.modules
-        
+    def requirements(self):
+        return True
+
+    def alterability(self):
+        return True
 
     def apply(self):
-        """Invokes the update in the manager"""
-        self.manager.run()
-
-    def wait_update(self):
-        """Waits for the update to be complete"""
-        pass
+        traverseHeap(self.walker,self.modules)
+        
+    def over(self):
+        return True
     
