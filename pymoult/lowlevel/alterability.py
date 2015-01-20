@@ -41,10 +41,13 @@ the function is in the stack of the given thread, False either."""
         x = x.f_back
     return False
 
-def isFunctionInAnyStack(func):
-    """Takes a function as argument. Returns True if the function is in teh stack of any thread, False either."""
-    stacks = get_current_frames()
-    for stack in stacks.values():
+def isFunctionInAnyStack(func,threads=None):
+    """Takes a function as argument. Returns True if the function is in the stack of any of the given threads, False either. If threads is None, checks the presence of func in all existing threads"""
+    if threads is not None:
+        stacks = [get_current_frames()[t.ident] for t in threads]
+    else:
+        stacks = get_current_frames().values()
+    for stack in stacks:
         x = stack
         while x is not None:
             if x.f_code is func.func_code:

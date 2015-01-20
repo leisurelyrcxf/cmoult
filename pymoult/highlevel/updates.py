@@ -68,10 +68,8 @@ class SafeRedefineUpdate(Update):
         return True
         
     def alterability(self):
-        for thread in self.manager.threads:
-            if isFunctionInStack(self.function,thread):
-                return False
-        return True
+        return not isFunctionInAnyStack(self.function,threads=self.manager.threads)
+        
 
     def apply(self):
         redefineFunction(self.module,self.function,self.new_function)
