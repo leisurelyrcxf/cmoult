@@ -3,6 +3,7 @@ package lowlevel.data_access;
 import java.util.List;
 
 import model.ReconfUnit;
+import model.UpdateFunction;
 import model.basics.Attribute;
 import model.basics.Module;
 
@@ -12,14 +13,14 @@ public class API {
 	 * the transformer function as argumments.
 	 */
 	public static <T extends ReconfUnit> void startEagerUpdate(Class<T> tclass,
-			Transformer transformer) {
+			UpdateFunction transformer) {
 		Iterable<T> accessor = new DataAccessor<T>(tclass, Strategy.Immediate);
 		for (T obj : accessor)
-			transformer.transform(obj);
+			obj.update(transformer);
 	}
 
 	public static <T extends ReconfUnit> void setLazyUpdate(Class<T> tclass,
-			Transformer transformer) {
+			UpdateFunction transformer) {
 		// TODO
 	}
 	
