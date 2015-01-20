@@ -1,11 +1,13 @@
 #parsed
-from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate
-from pymoult.highlevel.managers import LazyConversionManager
+from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate,Update
 from pymoult.lowlevel.data_access import DataAccessor
 from pymoult.lowlevel.alterability import wait_static_points
 from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
 from pymoult.lowlevel.stack import resumeThread
 import sys
+
+from Cookie import SimpleCookie
+
 
 main = sys.modules["__main__"]
 
@@ -52,21 +54,7 @@ class SessionV2(object):
         c["session_id"] = self.session_id
         return c
 
-
-#Using eager update to update pages
-
-#We need to enable the eager manager when starting the application !!!
-
-pageUpd = EagerConversionUpdate(main.pageManager,main.Page,PageV2,None)
-pageUpd.setup()
-pageUpd.apply()
-pageUpd.wait_update()
-
 #Using Lazy conversion for sessions
-
-#Start the manager 
-sessionManager = LazyConversionManager()
-sessionManager.start()
 
 #Create a transformer
 #Each session opened before the update will be considered as "anonymous" session
@@ -74,9 +62,13 @@ def session_trans(obj):
     obj.login = "anonymous"
 
 #Start the conversion with the Update class
-sessionUpd = LazyConversionUpdate(sessionManager,main.Session,SessionV2,session_trans,None)
-sessionUpd.setup()
-sessionUpd.apply()
+sessionUpd = LazyConversionUpdate(main.Session,SessionV2,session_trans)
+main.manager.add_update(sessionUpd)
 
+#Using eager update to update pages
 
+#We need to enable the eager manager when starting the application !!!
+
+pageUpd = EagerConversionUpdate(main.Page,PageV2,None)
+main.manager.add_update(pageUpd)
 

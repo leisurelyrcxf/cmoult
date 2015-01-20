@@ -1,6 +1,5 @@
 #parsed
-from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate
-from pymoult.highlevel.managers import LazyConversionManager
+from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate,Update
 from pymoult.lowlevel.data_access import DataAccessor
 from pymoult.lowlevel.alterability import wait_static_points
 from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
@@ -55,21 +54,7 @@ class SessionV2(object):
         c["session_id"] = self.session_id
         return c
 
-
-#Using eager update to update pages
-
-#We need to enable the eager manager when starting the application !!!
-
-pageUpd = EagerConversionUpdate(main.pageManager,main.Page,PageV2,None)
-pageUpd.setup()
-pageUpd.apply()
-pageUpd.wait_update()
-
 #Using Lazy conversion for sessions
-
-#Start the manager 
-sessionManager = LazyConversionManager()
-sessionManager.start()
 
 #Create a transformer
 #Each session opened before the update will be considered as "anonymous" session
@@ -77,9 +62,16 @@ def session_trans(obj):
     obj.login = "anonymous"
 
 #Start the conversion with the Update class
-sessionUpd = LazyConversionUpdate(sessionManager,main.Session,SessionV2,session_trans,None)
-sessionUpd.setup()
-sessionUpd.apply()
+sessionUpd = LazyConversionUpdate(main.Session,SessionV2,session_trans)
+main.manager.add_update(sessionUpd)
+
+#Using eager update to update pages
+
+#We need to enable the eager manager when starting the application !!!
+
+pageUpd = EagerConversionUpdate(main.Page,PageV2,None)
+main.manager.add_update(pageUpd)
+
 
 #Step two : updating the webserver
 #We will proceed in 2 substeps : (1) modify its state and (2) modify its methods
@@ -127,23 +119,30 @@ notLogged = StaticPage("nlogged","Login failed","You are not logged in")
 #Remember : using the immediate strategy requires the ObjectPool to be
 #created before creating the webserver !!
 
-#Fortunately, we started a EagerConversionManager that did the work
-#for the step 1 ;)
+class WebServerStateUpdate(Update):
+    def requirements(self):
+        return True
+    def alterability(self):
+        return True
+    def apply(self):
+        da = DataAccessor(main.WebServer,strategy="immediate")
+        #Because we'll need it for the next update,
+        #we store the server in the manager
+        self.manager.server = None
+        for ws in da:
+            self.manager.server = ws
+        #Then, we add the static pages to the webserver
+        self.manager.server.pages['login'] = loginPage
+        self.manager.server.pages['logged'] = loggedPage
+        self.manager.server.pages['nlogged'] = notLogged
+        #We add a users attribute to the server, containing the users
+        #We add a new user "bob" with password "alice"
+        self.manager.server.users = {"bob":User("bob","alice")}
+    def over(self):
+        return True
 
-da = DataAccessor(main.WebServer,strategy="immediate")
-server = None
-for ws in da:
-    server = ws
-
-#Then, we add the static pages to the webserver
-server.pages['login'] = loginPage
-server.pages['logged'] = loggedPage
-server.pages['nlogged'] = notLogged
-    
-#We add a users attribute to the server, containing the users
-#We add a new user "bob" with password "alice"
-server.users = {"bob":User("bob","alice")}
-
+serverUpdate1 = WebServerStateUpdate()
+main.manager.add_update(serverUpdate1)
 
 #Substep 2 :  modifiy the methods of the webserver
 
@@ -231,23 +230,30 @@ def create_new_do_GET(webserver):
 
 #We will wait for the main_thread to reach that update point
 
-wait_static_points([main.main_thread])
-#The static point has been reached !!!
-#Let's continue the update
+class WebServerUpdate(Update):
+    def requirements(self):
+        return True
+    def alterability(self):
+        #The static point has been reached !!!
+        #Let's continue the update
+        wait_static_points([main.main_thread])
+        return True
+    def apply(self):
+        #To update the addSession method of the webserver, we need to update the WebServer class
+        updateToClass(self.manager.server,WebServerV2)
+        #We need to change the do_GET method of the Handler class possesed by the server
+        handler = self.manager.server.Handler
+        #We create a new do_GET method using create_new_do_GET and set it to the handler class
+        addFieldToClass(handler,"do_GET",create_new_do_GET(self.manager.server))
 
-#To update the addSession method of the webserver, we need to update the WebServer class
-updateToClass(server,WebServerV2)
-
-#We need to change the do_GET method of the Handler class possesed by the server
-handler = server.Handler
-#We create a new do_GET method using create_new_do_GET and set it to the handler class
-addFieldToClass(handler,"do_GET",create_new_do_GET(server))
-
-
-#We have finished the update, we need to resume the execution of the Thread
-resumeThread(main.main_thread)
+    def over(self):
+        #We have finished the update, we need to resume the execution of the Thread
+        resumeThread(main.main_thread)
+        #Let's tell we finished the update
+        print("UPDATE COMPLETE")
+        return True
 
 
-print("UPDATE COMPLETE")
-
+webUpdate = WebServerUpdate()
+main.manager.add_update(webUpdate)
 
