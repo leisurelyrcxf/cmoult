@@ -104,10 +104,12 @@ class ThreadedManager(BaseManager,threading.Thread):
     def run(self):
         """Life of the manager"""
         while not self.stop:
+            #We wait until self.updates is not empty
             self.invoked.wait()
             time.sleep(self.sleepTime)
             if self.current_update == None:
                 self.current_update = self.updates.pop(0)
+                #now self.current_update is not None
             self.over.clear()
             if not self.current_update.applied:
                 if self.current_update.requirements() and self.current_update.alterability():

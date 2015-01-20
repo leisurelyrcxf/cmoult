@@ -33,7 +33,7 @@ from pymoult.threads import *
 from pymoult.highlevel.listener import get_app_listener
 
 
-def is_applied(update):
+def isApplied(update):
     listener = get_app_listener()
     return update in listener.applied_updates
 
@@ -64,11 +64,11 @@ class Update(object):
 
     
 class SafeRedefineUpdate(Update):
-    def __init__(self,module,function,new_function):
+    def __init__(self,module,function,new_function,name=None):
         self.module = module
         self.function = function
         self.new_function = new_function
-        super(SafeRedefineUpdate,self).__init__()
+        super(SafeRedefineUpdate,self).__init__(name=name)
 
     def requirements(self):
         return True
@@ -84,11 +84,11 @@ class SafeRedefineUpdate(Update):
         return True
     
 class EagerConversionUpdate(Update):
-    def __init__(self,cls,new_cls,transformer):
+    def __init__(self,cls,new_cls,transformer,name=None):
         self.cls = cls
         self.new_cls = new_cls
         self.transformer = transformer
-        super(EagerConversionUpdate,self).__init__()
+        super(EagerConversionUpdate,self).__init__(name=name)
 
     def object_update(self,obj):
         updateToClass(obj,self.new_cls,self.transformer)
@@ -107,11 +107,11 @@ class EagerConversionUpdate(Update):
 
 
 class LazyConversionUpdate(Update):
-    def __init__(self,cls,new_cls,transformer):
+    def __init__(self,cls,new_cls,transformer,name=None):
         self.cls=cls
         self.new_cls=new_cls
         self.transformer = transformer
-        super(LazyConversionUpdate,self).__init__()
+        super(LazyConversionUpdate,self).__init__(name=name)
 
     def object_update(self,obj):
         updateToClass(obj,self.new_cls,self.transformer)
@@ -130,14 +130,14 @@ class LazyConversionUpdate(Update):
         
 
 class ThreadRebootUpdate(Update):
-    def __init__(self,thread,new_main,new_args):
+    def __init__(self,thread,new_main,new_args,name=None):
 
         if thread.__class__ is not DSU_Thread and not DSU_Thread in thread.__class__.__bases__:
             raise TypeError("threads in ThreadRebootManager must be of type or of a subtype of DSU_Thread")
         self.thread = thread
         self.new_main = new_main
         self.new_args = new_args
-        super(ThreadRebootUpdate,self).__init__()
+        super(ThreadRebootUpdate,self).__init__(name=name)
 
     def requirements(self):
         return True
@@ -155,10 +155,10 @@ class ThreadRebootUpdate(Update):
 
 
 class HeapTraversalUpdate(Update):
-    def __init__(self,walker,modules=["__main__"]):
+    def __init__(self,walker,modules=["__main__"],name=None):
         self.walker = walker
         self.modules = modules
-        super(HeapTraversalUpdate,self).__init__()
+        super(HeapTraversalUpdate,self).__init__(name=name)
 
     def requirements(self):
         return True
