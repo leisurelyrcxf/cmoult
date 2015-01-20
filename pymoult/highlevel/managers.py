@@ -31,7 +31,7 @@ from pymoult.threads import *
 import time
 from pymoult.highlevel.listener import get_app_listener
 
-class Manager(object):
+class BaseManager(object):
     def __init__(self,*threads):
         self.threads=threads
         self.updates = []
@@ -53,6 +53,8 @@ class Manager(object):
         self.updates.append(update)
         update.manager = self
 
+
+class Manager(BaseManager):
     def apply_next_update(self):
         if self.current_update is None and len(self.updates) > 0:
             self.current_update = self.updates.pop(0)
@@ -72,14 +74,14 @@ class Manager(object):
             
 
 
-class ThreadedManager(Manager,threading.Thread):
+class ThreadedManager(BaseManager,threading.Thread):
     def __init__(self,*threads):
         """Constructor. Takes threads controlled by the manager in arguments"""
         self.invoked = threading.Event()
         self.over = threading.Event()
         self.sleepTime=1
         self.stop = False
-        Manager.__init__(self,*threads)
+        BaseManager.__init__(self,*threads)
         threading.Thread.__init__(self)
 
     def set_sleepTime(self,sleepTime):
