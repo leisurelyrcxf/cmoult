@@ -29,7 +29,6 @@ def main():
             i.display()
             i.change(random.choice(colors))
         time.sleep(2)
-        manager.apply_next_update()
             
 
 
