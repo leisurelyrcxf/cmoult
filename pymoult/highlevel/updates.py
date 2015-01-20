@@ -30,6 +30,12 @@ from pymoult.lowlevel.alterability import *
 from pymoult.lowlevel.data_access import *
 from pymoult.lowlevel.data_update import *
 from pymoult.threads import *
+from pymoult.highlevel.listener import get_app_listener
+
+
+def is_applied(update):
+    listener = get_app_listener()
+    return update in listener.applied_updates
 
 class UpdateDefinitionError(Exception):
     """Exception raised when using an Update interface"""
