@@ -1,7 +1,6 @@
 #parsed
 
-from pymoult.highlevel.updates import SafeRedefineUpdate
-from pymoult.lowlevel.stack import suspendThread,resumeThread
+from pymoult.highlevel.updates import SafeRedefineUpdate,Update
 import random
 import sys
 import time
@@ -31,47 +30,65 @@ def interm_reader():
     if update:
         read_shared2()
     else:
-        main.read_shared()
+        main.shared_lock.acquire()
+        time.sleep(1)
+        print("Value of shared : "+str(main.shared))
+        main.shared_lock.release()
+
+
 
 def interm_writer():
     if update:
         write_shared2()
     else:
-        main.write_shared2()
+        main.shared_lock.acquire()
+        time.sleep(1)
+        main.shared = random.randint(0,10)
+        main.shared_lock.release()
+
+
 
 #We change read_shared and write_shared to the intermediary functions
 
-print("Begining Step 1")
+update_reader1 = SafeRedefineUpdate(main,main.read_shared,interm_reader)
+update_writer1 = SafeRedefineUpdate(main,main.write_shared,interm_writer)
 
-update = SafeRedefineUpdate(main.manager,{main.read_shared:[main,interm_reader],main.write_shared:[main,interm_writer]})
-
-update.setup()
-update.apply()
-update.wait_update()
+main.manager.add_update(update_reader1)
+main.manager.add_update(update_writer1)
 
 # Now that all intermediary are in place, we trigger the update
 
-print("Begining Step 2")
-#Suspend threads
-suspendThread(main.reader)
-suspendThread(main.writer)
-#Update the shared variable
-main.shared = ["undefined time",main.shared]
-#trigger the new version of the functions
-update = True
-#resume the threads
-resumeThread(main.reader)
-resumeThread(main.writer)
+class DataUpdate(Update):
+    def requirements(self):
+        return True
 
-print("Begining Step 3")
+    def alterability(self):
+        main.shared_lock.acquire()
+        return True
+
+    def apply(self):
+        global update
+        main.shared = ["undefined time",main.shared]
+        update = True
+
+    def over(self):
+        main.shared_lock.release()
+        return True
+
+
+data_update = DataUpdate()
+main.manager.add_update(data_update)
+    
+
 #Now we go change to the updated version of the functions
-update = SafeRedefineUpdate(main.manager,{main.read_shared:[main,read_shared2],main.write_shared:[main,write_shared2]})
 
-update.setup()
-update.apply()
-update.wait_update()
+update_reader2 = SafeRedefineUpdate(main,main.read_shared,read_shared2)
+update_writer2 = SafeRedefineUpdate(main,main.write_shared,write_shared2)
 
-print("END OF UPDATE")
+
+main.manager.add_update(update_reader2)
+main.manager.add_update(update_writer2)
+
 
 
 

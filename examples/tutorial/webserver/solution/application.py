@@ -1,8 +1,9 @@
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from Cookie import SimpleCookie
 from pymoult.highlevel.listener import Listener
-from pymoult.highlevel.managers import EagerConversionManager
+from pymoult.highlevel.managers import ThreadedManager
 from pymoult.lowlevel.alterability import staticUpdatePoint
+from pymoult.lowlevel.data_access import ObjectsPool
 from pymoult.threads import DSU_Thread
 
 class Page(object):
@@ -128,8 +129,9 @@ listener.start()
 #Setup the main thread
 main_thread = DSU_Thread(target=main)
 
+ObjectsPool()
 #Eager update manager for the Page class
-pageManager = EagerConversionManager(threads=[main_thread])
-pageManager.start()
+manager = ThreadedManager(main_thread)
+manager.start()
 
 main_thread.start()

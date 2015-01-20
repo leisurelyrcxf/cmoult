@@ -15,20 +15,15 @@ def bar():
     print("bar")
 
 
-update = SafeRedefineUpdate(main.manager,{main.say_hello:[main,foo]})
+class CustomUpdate(SafeRedefineUpdate):
+    def alterability(self):
+        time.sleep(3)
+        return super(CustomUpdate,self).alterability()
 
-update.setup()
-update.apply()
-update.wait_update()
+    
+update1 = SafeRedefineUpdate(main,main.say_hello,foo)
+update2 = CustomUpdate(main,main.say_hello,bar)
 
-print("update step 1 complete")
+main.manager.add_update(update1)
+main.manager.add_update(update2)
 
-time.sleep(3)
-
-update = SafeRedefineUpdate(main.manager,{main.say_hello:[main,bar]})
-
-update.setup()
-update.apply()
-update.wait_update()
-
-print("update step 2 complete")

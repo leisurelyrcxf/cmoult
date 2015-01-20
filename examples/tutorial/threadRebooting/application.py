@@ -1,7 +1,7 @@
 #/usr/bin/pypy-dsu
 
 
-from pymoult.highlevel.managers import SafeRedefineManager
+from pymoult.highlevel.managers import ThreadedManager
 from pymoult.highlevel.listener import Listener
 import time
 import threading
@@ -20,7 +20,7 @@ def main():
 thread = threading.Thread(target=main)
 thread.start()
 
-manager = SafeRedefineManager([thread])
+manager = ThreadedManager(thread)
 manager.start()
 
 listener = Listener()
