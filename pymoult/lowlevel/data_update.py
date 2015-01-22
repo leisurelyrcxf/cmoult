@@ -24,6 +24,7 @@
 """
 
 import sys
+import types
 
 def updateToClass(obj,nclass,transformer=None):
     """Updates a given object to a given class. If a trasformer is given
@@ -49,6 +50,12 @@ def applyMixinToObject(obj,*mixins):
 def addFieldToClass(cls,name,field):
     """Adds the given field to the given class under the given name"""
     setattr(cls,name,field)
+
+def addMethodToClass(cls,name,method):
+    """Adds a method to the given class and binds it to the class"""
+    setattr(cls,name,types.MethodType(method,cls))
+
+    
 
 def redefineClass(module,tclass,nclass):
     """redfefines a given class from a given module so it is equals to a new class""" 
