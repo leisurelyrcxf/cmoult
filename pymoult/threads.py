@@ -44,7 +44,7 @@ class DSU_Thread(threading.Thread):
     def __init__(self,active=False,group=None, target=None, name=None, args=(), kwargs={}):
         """Constructor. Takes classic thread arguments"""
         super(DSU_Thread,self).__init__(group=group,name=name,args=args,kwargs=kwargs)
-        self.main = target
+        self.__main = target
         self.stoped = False
         self.sleeping_continuation = None
         self.sleeping_continuation_fonction = None
@@ -103,7 +103,11 @@ class DSU_Thread(threading.Thread):
                 self.static_point_event.set()
                 self.pause_event.wait()
 
-
+    def main(self):
+        if self.__main:
+            self.__main()
+                
+                
 def set_active_update_function(function,thread):
     """This function sets the active update function of a given thread"""
     thread.active_update_function = function
