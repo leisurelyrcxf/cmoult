@@ -4,7 +4,7 @@
 import socket
 from pymoult.highlevel.listener import Listener
 from pymoult.threads import DSU_Thread
-from pymoult.highlevel.managers import HeapTraversalManager,ThreadRebootManager
+from pymoult.highlevel.managers import ThreadedManager
 from pymoult.lowlevel.alterability import staticUpdatePoint
 
 
@@ -158,12 +158,5 @@ if __name__ == "__main__":
     main_thread = DSU_Thread(name="main thread",target=main_loop)
     print("Starting server")
     main_thread.start()
-    thread_manager = ThreadRebootManager()
-    thread_manager.start()
-    heap_manager = HeapTraversalManager(main_thread)
-    heap_manager.start()
-    
-
-
-
-
+    manager = ThreadedManager(main_thread)
+    manager.start()

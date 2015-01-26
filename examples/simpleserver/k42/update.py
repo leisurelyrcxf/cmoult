@@ -2,8 +2,8 @@
 
 
 
-from pymoult.highlevel.managers import LazyConversionManager,SafeRedefineManager
-from pymoult.highlevel.updates import LazyConversionUpdate,SafeRedefineUpdate
+from pymoult.highlevel.managers import ThreadedManager
+from pymoult.highlevel.updates import LazyConversionUpdate,SafeRedefineUpdate,Update
 from pymoult.lowlevel.data_update import redefineClass
 import sys
 main = sys.modules["__main__"]
@@ -116,10 +116,14 @@ def do_showV2(comm):
                 print(site.get_page(l[2]))
 
 
-account_manager = LazyConversionManager()
+#Start the managers
+account_manager = ThreadedManager(main.main_thread)
 account_manager.start()
-site_manager = LazyConversionManager()
+site_manager = ThreadedManager(main.main_thread)
 site_manager.start()
+functions_manager = ThreadedManager(main.main_thread)
+functions_manager.start()
+
 
 def transformer_site(site):
     site.owner = None
@@ -127,28 +131,43 @@ def transformer_site(site):
 def transformer_account(account):
     account.friends=[]
 
+site_update = LazyConversionUpdate(main.Site,SiteV2,transformer_site,None)
+account_update = LazyConversionUpdate(main.Account,AccountV2,transformer_account,None)
+account_manager.add_update(account_update)
+site_manager.add_update(site_update)
 
-site_update = LazyConversionUpdate(account_manager,main.Site,SiteV2,transformer_site,None)
-account_update = LazyConversionUpdate(site_manager,main.Account,AccountV2,transformer_account,None)
-site_update.setup()
-site_update.apply()
-site_update.wait_update()
-account_update.setup()
-account_update.apply()
-account_update.wait_update()
+class ClassUpdate(Update):
+    def requirements(self):
+        return True
+    def alterability(self):
+        return True
+    def apply(self):
+        redefineClass(main,main.Site,SiteV2)
+        redefineClass(main,main.Account,AccountV2)
+    def over(self):
+        return True
 
-redefineClass(main,main.Site,SiteV2)
-redefineClass(main,main.Account,AccountV2)
+clsupdate = ClassUpdate()
+functions_manager.add_update(clsupdate)
+    
+do_command_update = SafeRedefineUpdate(main,main.do_command,do_commandV2)
+functions_manager.add_update(do_command_update)
+do_create_update = SafeRedefineUpdate(main,main.do_create,do_createV2)
+functions_manager.add_update(do_create_update)
+do_delete_update = SafeRedefineUpdate(main,main.do_delete,do_deleteV2)
+functions_manager.add_update(do_delete_update)
+do_show_update = SafeRedefineUpdate(main,main.do_show,do_showV2)
+functions_manager.add_update(do_show_update)
 
+class EmptyUpdate(Update):
+    def requirements(self):
+        return True
+    def alterability(self):
+        return True
+    def apply(self):
+        pass
+    def over(self):
+        print("Update finished")
+        return True
 
-functions = {main.do_command:[main,do_commandV2],main.do_create:[main,do_createV2],main.do_delete:[main,do_deleteV2],main.do_show:[main,do_showV2]}
-
-functions_manager = SafeRedefineManager([main.main_thread])
-functions_manager.start()
-
-functions_update = SafeRedefineUpdate(functions_manager,functions)
-functions_update.setup()
-functions_update.apply()
-functions_update.wait_update()
-
-print("Updated complete")
+functions_manager.add_update(EmptyUpdate())
