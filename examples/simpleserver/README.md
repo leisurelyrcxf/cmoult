@@ -62,7 +62,7 @@ Commands supplied while no user is logged will be ignored (unless the commands a
 All sites created before the update will be considered public and
 therefore be accessible by everyone.
 
-The file `update.py` contains the code of the update. Keepin mind that
+The file `update.py` contains the code of the update. Keep in mind that
 it is not yet ready to be applied.
 
 
