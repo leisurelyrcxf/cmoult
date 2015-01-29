@@ -1,7 +1,7 @@
 #parsed
 from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate,Update
 from pymoult.lowlevel.data_access import DataAccessor
-from pymoult.lowlevel.alterability import wait_static_points
+from pymoult.lowlevel.alterability import waitStaticPoints
 from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
 from pymoult.lowlevel.stack import resumeThread
 import sys
