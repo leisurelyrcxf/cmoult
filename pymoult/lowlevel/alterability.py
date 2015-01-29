@@ -25,6 +25,7 @@
 from pymoult.lowlevel.stack import resumeThread
 from pymoult.lowlevel.relinking import redefineFunction
 import threading
+import inspect
 import time
 import sys
 
@@ -80,8 +81,12 @@ def forceQuiescence(module,function):
     can_continue = threading.Event()
     can_continue.clear()
     def stub(*args,**kwargs):
+        #We do not want to suspend if we are in a recursive call
+        callers = [x[3] for x in inspect.stack()[1:]] 
+        if function.__name__ in callers:
+            return function(*args,**kwargs)
         can_continue.wait()
-        return function(*args,**kwargs)
+        return getattr(module,function.__name__)(*args,**kwargs)
     def watch():
         while isFunctionInAnyStack(function):
             time.sleep(1)
