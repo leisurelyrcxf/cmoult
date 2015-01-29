@@ -23,7 +23,10 @@
 """
 
 from pymoult.lowlevel.stack import resumeThread
+from pymoult.lowlevel.relinking import redefineFunction
 import threading
+import inspect
+import time
 import sys
 
 def get_current_frames():
@@ -61,7 +64,7 @@ def staticUpdatePoint(name=None):
     #if name is not None and thread.last_update_point == name:
     thread.start_update()
 
-def wait_static_points(threads):
+def waitStaticPoints(threads):
     """Takes a list of threads as arguments. wait for each of them to reach a static point"""
     for thread in threads:
         thread.pause_event = threading.Event()
@@ -72,5 +75,25 @@ def wait_static_points(threads):
         thread.static_point_event.wait()
         delattr(thread,"static_point_event")
 
-
-
+def forceQuiescence(module,function):
+    quiescent = threading.Event()
+    quiescent.clear()
+    can_continue = threading.Event()
+    can_continue.clear()
+    def stub(*args,**kwargs):
+        #We do not want to suspend if we are in a recursive call
+        callers = [x[3] for x in inspect.stack()[1:]] 
+        if function.__name__ in callers:
+            return function(*args,**kwargs)
+        can_continue.wait()
+        return getattr(module,function.__name__)(*args,**kwargs)
+    def watch():
+        while isFunctionInAnyStack(function):
+            time.sleep(1)
+        quiescent.set()
+    watcher = threading.Thread(name=function.__name__+" watcher",target=watch)
+    redefineFunction(module,function,stub)
+    watcher.start()
+    quiescent.wait()
+    return can_continue
+    

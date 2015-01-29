@@ -4,7 +4,7 @@
 from pymoult.highlevel.updates import ThreadRebootUpdate,HeapTraversalUpdate,Update
 from pymoult.lowlevel.data_access import HeapWalker
 from pymoult.lowlevel.data_update import updateToClass
-from pymoult.lowlevel.alterability import get_current_frames,wait_static_points,staticUpdatePoint
+from pymoult.lowlevel.alterability import get_current_frames,waitStaticPoints,staticUpdatePoint
 from pymoult.lowlevel.stack import resumeThread
 import sys
 import socket
@@ -168,7 +168,7 @@ class KitsuneUpdate(Update):
     def requirements(self):
         return True
     def alterability(self):
-        wait_static_points([main.main_thread])
+        waitStaticPoints([main.main_thread])
         print("Static Update point reached")
         return True
     def apply(self):
