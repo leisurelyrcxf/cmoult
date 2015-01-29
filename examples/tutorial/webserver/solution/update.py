@@ -1,7 +1,7 @@
 #parsed
 from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate,Update
 from pymoult.lowlevel.data_access import DataAccessor
-from pymoult.lowlevel.alterability import wait_static_points
+from pymoult.lowlevel.alterability import waitStaticPoints
 from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
 from pymoult.lowlevel.stack import resumeThread
 import sys
@@ -236,7 +236,7 @@ class WebServerUpdate(Update):
     def alterability(self):
         #The static point has been reached !!!
         #Let's continue the update
-        wait_static_points([main.main_thread])
+        waitStaticPoints([main.main_thread])
         return True
     def apply(self):
         #To update the addSession method of the webserver, we need to update the WebServer class
