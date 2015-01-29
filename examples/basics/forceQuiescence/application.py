@@ -12,7 +12,7 @@ def say_hello():
 
 def main():
     while True:
-        time.sleep(2)
+        time.sleep(0.5)
         say_hello()
 
 

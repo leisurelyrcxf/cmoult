@@ -5,7 +5,7 @@ hostname=$(hostname)
 pypy-dsu application.py &
 app=$! 
 
-sleep 7
+sleep 2
 echo "BEGINING UPDATE"
 echo "update update.py" | netcat $hostname 4242 
 

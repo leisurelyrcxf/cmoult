@@ -23,6 +23,7 @@ class ForcedRedefinition(Update):
     def apply(self):
         redefineFunction(main,main.say_hello,say_hi)
     def over(self):
+        self.continu.set()
         return True
 
     
