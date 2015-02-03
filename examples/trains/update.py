@@ -1,15 +1,17 @@
 #parsed
 
-from pymoult.highlevel.managers import Manager,SafeRedefineManager
-from pymoult.highlevel.updates import SafeRedefineUpdate
+from pymoult.highlevel.managers import ThreadedManager
+from pymoult.highlevel.updates import Update
+from pymoult.lowlevel.alterability import isFunctionInAnyStack
+from pymoult.lowlevel.data_update import addMethodToClass
 import threading
 import sys
 import math
 import time
 import Queue
 
-print("BEGIN STEP 1 OF UPDATE")
 
+main = sys.modules["__main__"]
 
 def newTrainInit(self,speed,color,position,direction):
     train.color = color
@@ -35,66 +37,43 @@ def getTrainThreads():
     #We can get all the train through the enumerate method
     threads = filter(f,threading.enumerate())
     return threads
-#The following class is specific for this update, therefore it comes with the code for the update, it also plays the role of an Update class
-#
-class TrainManager(Manager):
-    def __init__(self):
-        train_threads = getTrainThreads()
-        super(TrainManager,self).__init__(threads=train_threads)
 
-    
-    def start(self):
-        #Adding a direction field for each train
-        for train in self.threads:
+
+manager = ThreadedManager(*getTrainThreads())
+manager.start()
+
+class TrainUpdate(Update):
+    def requirements(self):
+        return True
+    def alterability(self):
+        return True
+    def apply(self):
+        for train in self.manager.threads:
             train.direction = "right"
-        #Updating the constructor and adding a method
-        sys.modules["__main__"].Train.__init__ = newTrainInit
-        sys.modules["__main__"].Train.switch_direction = switch_direction
+        addMethodToClass(main.Train,"__int__",newTrainInit)
+        addMethodToClass(main.Train,"switch_direction",switch_direction)
+    def over(self):
+        print("Trains sucessfully updated")
+        return True
 
+manager.add_update(TrainUpdate())
 
-manager1 = TrainManager()
-manager1.start()
-
-print("STEP 1 OF UPDATE OK")
-print("BEGIN STEP 2 OF UPDATE") 
-
-
-#We use a SafeRedefineUpdate-like to update stations and rails
-class SafeRedefMethod(SafeRedefineManager):
-    
-    def add_function(self,method):
-        self.functions.put(method)
-
-    def thread_main(self):
-        while not self.stop:
-            self.invoked.wait()
-            self.begin()
-            while True:
-                try:
-                    method = self.functions.get(False)
-                except Queue.Empty:
-                    self.finish()
-                    break
-                method_updated = False
-                while not method_updated:
-                    if self.is_alterable(method[1]):
-                        self.pause_threads()
-                        tname= method[1].__name__
-                        setattr(method[0],tname,method[2])
-                        setattr(method[2],"__name__",tname)
-                        method_updated = True
-                        self.resume_threads()
-                    time.sleep(self.sleepTime)
-
-class SafeRedefMethodUpdate(SafeRedefineUpdate):
-    def setup(self):
-        for method in self.functions:
-            self.manager.add_function(method)
-
-
-
-station_and_rail_manager = SafeRedefMethod(getTrainThreads(),sleepTime=1)
-station_and_rail_manager.start()
+class SafeMethodUpdate(Update):
+    def __init__(self,cls,method,nmethod,name=None):
+        self.cls = cls
+        self.method = method
+        self.nmethod = nmethod
+        super(SafeMethodUpdate,self).__init__(name=name)
+    def requirements(self):
+        return True
+    def alterability(self):
+        return not isFunctionInAnyStack(self.method)
+    def apply(self):
+        addMethodToClass(self.cls,self.method.__name__,self.nmethod)
+    def over(self):
+        print("Method "+self.method.__name__+" of class "+self.cls.__name__+" updated")
+        print(getattr(self.cls,self.method.__name__))
+        return True
 
 railClass = sys.modules["__main__"].Rail
 elementClass = sys.modules["__main__"].Element
@@ -179,27 +158,16 @@ def new_Station_move_next(self,train):
 
 #We need to update Rail.can_enter before allowing for trains to switch direction
 #If we don't, the old version of Rail.can_enter may be executed and allow an accident!!
-function_updates=[[railClass,railClass.can_enter,new_Rail_can_enter]]
 
-print("BEGIN SUBSTEP1")
-update1 = SafeRedefMethodUpdate(station_and_rail_manager,function_updates)
-update1.setup()
-update1.apply()
-update1.wait_update()
-print("SUBSTEP1 OF STEP 2 OK")
+railUpdate = SafeMethodUpdate(railClass,railClass.can_enter,new_Rail_can_enter)
+manager.add_update(railUpdate)
 
+elementUpdate1 = SafeMethodUpdate(elementClass,elementClass.next,new_Element_next)
+manager.add_update(elementUpdate1)
+elementUpdate2 = SafeMethodUpdate(elementClass,elementClass.previous,new_Element_previous)
+manager.add_update(elementUpdate2)
+stationUpdate = SafeMethodUpdate(stationClass,stationClass.move_next,new_Station_move_next)
+manager.add_update(stationUpdate)
 
-function_updates = [[elementClass,elementClass.next,new_Element_next],[elementClass,elementClass.previous,new_Element_previous],[stationClass,stationClass.move_next,new_Station_move_next]]
-
-
-print("BEGIN SUBSTEP2")
-update2 = SafeRedefMethodUpdate(station_and_rail_manager,function_updates)
-update2.setup()
-update2.apply()
-update2.wait_update()
-print("SUBSTEP2 OF STEP 2 OK")
-
-print("STEP 2 of UPDATE OK")
-print("UPDATE COMPLETE")
 
         
