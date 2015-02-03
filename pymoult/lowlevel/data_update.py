@@ -53,7 +53,7 @@ def addFieldToClass(cls,name,field):
 
 def addMethodToClass(cls,name,method):
     """Adds a method to the given class and binds it to the class"""
-    setattr(cls,name,types.MethodType(method,cls))
+    setattr(cls,name,method)
 
     
 
