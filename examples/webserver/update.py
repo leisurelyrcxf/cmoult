@@ -44,13 +44,10 @@ class User(object):
     def log_in(self,passwd):
         return passwd == self.passwd
 
+    
 #Using eager update to update pages
-pageUpd = EagerConversionUpdate(main.pageManager,main.Page,PageV2,None)
-pageUpd.setup()
-pageUpd.apply()
-pageUpd.wait_update()
-
-
+pageUpd = EagerConversionUpdate(main.Page,PageV2,None)
+main.manager.add_update(pageUpd)
 
 #Using Lazy update for sessions
 
@@ -58,9 +55,8 @@ def session_trans(obj):
     if not hasattr(obj,"login"):
         obj.login = "anonymous"
 
-sessionUpd = LazyConversionUpdate(main.sessionManager,main.Session,SessionV2,session_trans,None)
-sessionUpd.setup()
-sessionUpd.apply()
+sessionUpd = LazyConversionUpdate(main.Session,SessionV2,session_trans,None)
+main.manager.add_update(sessionUpd)
 
 
 #The login page 
@@ -98,20 +94,12 @@ class StaticPage(main.Page):
         s+= "<p>"+self.content+"</p>"
         return s
 
-loginPage = StaticPage("login","You are not logged in!","""
-<form method="get" action="logged">
-Login : <input type="text" name="login">
-Password: <input type="password" name="password">
-<input type="submit" value="Log in">
-</form>
-""")
 
-loggedPage = StaticPage("logged","Logged in!","You are logged in!")
-notLogged = StaticPage("nlogged","Login failed","You are not logged in")
 
 
 def create_new_do_GET(webserver):
     def new_do_GET(handler):
+        print("coucou")
         path = handler.path.lstrip("/")
         session = handler.getSession()
         print(session.login)
@@ -153,35 +141,40 @@ def create_new_do_GET(webserver):
 
 
 
-class WebManager(ThreadedManager):
+class WebUpdate(Update):
     def __init__(self):
         #Get the instance of webserver using immediate access strategy
         da = DataAccessor(main.WebServer,strategy="immediate")
         self.server = None
         for ws in da:
             self.server = ws
-        super(WebManager,self).__init__()
-
-    def is_alterable(self):
+        super(WebUpdate,self).__init__()
+    
+    def requirements(self):
+        return True
+    def alterability(self):
         return not isFunctionInAnyStack(self.server.Handler.do_GET)
-
-    def update_function(self):
+    
+    def apply(self):
+        loginPage = StaticPage("login","You are not logged in!","""
+        <form method="get" action="logged">
+        Login : <input type="text" name="login">
+        Password: <input type="password" name="password">
+        <input type="submit" value="Log in">
+        </form>
+        """)
+        loggedPage = StaticPage("logged","Logged in!","You are logged in!")
+        notLogged = StaticPage("nlogged","Login failed","You are not logged in")
         self.server.pages["login"] = loginPage
         self.server.pages["logged"] = loggedPage
         self.server.pages["nlogged"] = notLogged
         self.server.users = {"bob":User("bob","alice")}
         updateToClass(self.server,WebServerV2)
         self.server.Handler.do_GET = create_new_do_GET(self.server)
-    
-    def is_over(self):
+    def over(self):
         return True
 
-webManager = WebManager()
-webManager.start()
-
-webUpdate = ThreadedUpdate(webManager)
-webUpdate.apply()
-webUpdate.wait_update()
+main.manager.add_update(WebUpdate())
 
 
 
