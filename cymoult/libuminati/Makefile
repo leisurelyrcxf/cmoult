@@ -1,5 +1,5 @@
 export ELFUTILS_INCLUDES = /usr/include/elfutils
-export ELFUTILS_LIBS = /usr/lib
+export ELFUTILS_LIBS = /usr/lib/x86_64-linux-gnu
 export CFLAGS = -Wall -Wextra -std=c99 -I$(ELFUTILS_INCLUDES)
 
 all: static dynamic testmanager prog
