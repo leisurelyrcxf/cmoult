@@ -33,6 +33,8 @@ typedef struct ama_program_infos {
 typedef struct ama_update_infos {
 	char *update_directory;//TODO: To be changed to update_checking --> opaque type ? Cases : directory/socket
 	//TODO : update_triggering automatic/manual
+	char **update_functions_list;
+	int update_functions_list_size;
 	int update_state;
 } ama_update_infos;
 
@@ -48,6 +50,7 @@ int ama_get_program_directory_from_pid_name(char **program_directory, pid_t pid,
 /* Get/Set update infos */
 int ama_init_update_infos_from_program_infos(ama_update_infos *ui, ama_program_infos *pi);
 void ama_get_update_directory_from_program_directory_udirname(char **update_directory, char **program_directory, char *udirname);
+void ama_set_update_functions_list(ama_update_infos *ui, char **functions_list, int list_size);
 
 /* Get/Set update file */
 int ama_check_updates_from_repository(ama_program_infos *pi, ama_update_infos *ui);

@@ -6,6 +6,9 @@ pid_t pid;
 ama_program_infos pi;
 ama_update_infos ui;
 
+//Functions to update
+char *functions_to_update[1] = {"not_in_stack"};
+
 int main (int argc, char **argv){
 	//Args checking
 	if(argc < 2){
@@ -40,7 +43,8 @@ int main (int argc, char **argv){
 		//Infos init
 		ama_init_program_infos_from_pid(&pi,pid);
 		ama_init_update_infos_from_program_infos(&ui,&pi);
-
+		ama_set_update_functions_list(&ui,functions_to_update,1);	
+		
 		while(1){
 			sleep(5);
 			if (ama_check_updates_from_repository(&pi,&ui)>0)

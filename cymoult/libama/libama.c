@@ -86,6 +86,15 @@ void ama_get_update_directory_from_program_directory_udirname(char **update_dire
 	//dsu repository
 	sprintf(*update_directory,"%s/%s",*program_directory,udirname);
 }
+
+void ama_set_update_functions_list(ama_update_infos *ui, char **functions_list,int list_size){
+	ui->update_functions_list_size = list_size;
+	ui->update_functions_list = malloc(list_size*sizeof(char*));
+	for(int i=0;i<list_size;i++){
+		ui->update_functions_list[i]=functions_list[i];
+	}
+}
+
 /* Get/Set update file */
 int ama_check_updates_from_repository(ama_program_infos *pi, ama_update_infos *ui){
 	if(ui->update_state != 1){
@@ -152,10 +161,11 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 	um_unwind (dbg, NULL, &stack);
 	/***** CHECKING FOR FUNCTIONS IN STACK AND REDEFINITION *****/
 
-	/* TODO: Get a way to get functions names and which ones to replace --> list to init before*/
 	int upd_fail;
-	if ( (upd_fail=ama_update_function(dbg,stack,"not_in_stack",pi,ui)) > 0 )
-		return upd_fail;
+	for(int i=0;i<ui->update_functions_list_size;i++){
+		if ( (upd_fail=ama_update_function(dbg,stack,ui->update_functions_list[i],pi,ui)) > 0 )
+			return upd_fail;
+	}
 
 	/***** EXITING *****/
 	um_destroy_stack(stack);
