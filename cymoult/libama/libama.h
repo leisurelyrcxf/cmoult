@@ -17,7 +17,7 @@
 #define PROGRAM_PROC_MAXLENGTH 24
 #define PROGRAM_NAME_MAXLENGTH 128
 #define PROGRAM_DIRECTORY_MAXLENGTH 512
-
+#define FUNCTION_NAME_MAXLENGTH 128
 /**
 Structures
 **/
@@ -31,7 +31,7 @@ typedef struct ama_program_infos {
 
 /* Update infos */
 typedef struct ama_update_infos {
-	char *program_update_directory;//TODO: To be changed to update_checking --> opaque type ? Cases : directory/socket
+	char *update_directory;//TODO: To be changed to update_checking --> opaque type ? Cases : directory/socket
 	//TODO : update_triggering automatic/manual
 	int update_state;
 } ama_update_infos;
@@ -41,22 +41,25 @@ Data access
 **/
 
 /* Get/Set program infos */
-int set_program_infos_from_pid(ama_program_infos *pi, pid_t pid);
-int get_program_name_from_pid(char **program_name, pid_t pid);
-int get_program_directory_from_pid_name(char **program_directory, pid_t pid,char **name);
+int ama_init_program_infos_from_pid(ama_program_infos *pi, pid_t pid);
+int ama_get_program_name_from_pid(char **program_name, pid_t pid);
+int ama_get_program_directory_from_pid_name(char **program_directory, pid_t pid,char **name);
 
 /* Get/Set update infos */
+int ama_init_update_infos_from_program_infos(ama_update_infos *ui, ama_program_infos *pi);
+void ama_get_update_directory_from_program_directory_udirname(char **update_directory, char **program_directory, char *udirname);
 
 /* Get/Set update file */
+int ama_check_updates_from_repository(ama_program_infos *pi, ama_update_infos *ui);
 
 /**
 DSU functions
 **/
 
 /* Start update */
+int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_update_infos *ui);
 
 /* Update a function */
-
-/* Manual triggering */
+int ama_update_function(um_data* dbg,um_frame* stack,char* fname,ama_program_infos *pi, ama_update_infos *ui);
 
 #endif
