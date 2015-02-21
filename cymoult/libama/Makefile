@@ -18,6 +18,7 @@ libama:
 	gcc -c libama.c $(TESTLDFLAGS) $(TESTCFLAGS)
 	gcc -o libtest libtest.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
 	gcc -o lamanager lamanager.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -o lamanager2 lamanager2.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
 
 .c.o:
 	gcc -c $(TESTCFLAGS) $<

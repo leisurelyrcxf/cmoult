@@ -48,3 +48,4 @@ You have to create new update files in the dynamic_updates folder because update
 2) ./libtest pid (again you can take "prog" as an example)
 This is just a test file of the lib.
 3) lamanager works as manager (cf previous part A])
+4) lamanager2 works as manager2 (cv previous part B])

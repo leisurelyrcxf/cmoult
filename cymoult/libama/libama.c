@@ -45,6 +45,7 @@ int ama_get_program_directory_from_pid_name(char **program_directory, pid_t pid,
 	}
 	size_t program_cmd_read;
 	char* program_cmd_dir = malloc(PROGRAM_DIRECTORY_MAXLENGTH*sizeof(char));
+	//TODO : FIX READLINK IMPLICIT DECLARATION
 	program_cmd_read = readlink(program_info_file,program_cmd_dir,PROGRAM_DIRECTORY_MAXLENGTH);
 	if(!program_cmd_read){
 		printf("Error while reading the file working directory\n");
