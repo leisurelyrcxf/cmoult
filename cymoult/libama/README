@@ -9,7 +9,7 @@ In addition, you need to be sure to have access to elfutils files (mine has been
 
 
 /***********************************
-*	       EXECUTE		   *
+*	  FIRST TRIES 		   *
 ***********************************/
 
 A] First Manager
@@ -45,5 +45,6 @@ You have to create new update files in the dynamic_updates folder because update
 ***********************************/
 
 1) make libama
-2) ./main pid (again you can take "prog" as an example)
+2) ./libtest pid (again you can take "prog" as an example)
 This is just a test file of the lib.
+3) lamanager works as manager (cf previous part A])

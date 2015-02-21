@@ -6,7 +6,7 @@ SRCARNAUD = ../libuminati
 TESTCFLAGS = $(CFLAGS) -I$(SRCARNAUD)/lib/include
 TESTLDFLAGS = -L$(SRCARNAUD)/bin -L$(ELFUTILS_LIBS) -luminati -ldw -lelf
 
-all: manager manager2
+all: manager manager2 libama
 
 manager: manager.o
 	gcc -o manager manager.o $(TESTLDFLAGS)
@@ -16,7 +16,8 @@ manager2: manager2.o
 
 libama: 
 	gcc -c libama.c $(TESTLDFLAGS) $(TESTCFLAGS)
-	gcc -o main main.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -o libtest libtest.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -o lamanager lamanager.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
 
 .c.o:
 	gcc -c $(TESTCFLAGS) $<
