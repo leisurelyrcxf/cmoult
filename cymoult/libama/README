@@ -2,14 +2,14 @@
 * 	       COMPILE	 	   *
 ***********************************/
 
-1. Get stages/asaric-2014/code project compiled.
-2. Set LD_LIBRARY_PATH to have access to .so file (brittany-dsu/stages/asaric-2014/code/bin (or code/lib/bin)).
+1. Get libuminati/code project compiled.
+2. Set LD_LIBRARY_PATH to have access to .so file (libuminati/code/bin (or code/lib/bin)).
 In addition, you need to be sure to have access to elfutils files (mine has been installed in /usr/local/lib).
 3. make.
 
 
 /***********************************
-*	       EXECUTE		   *
+*	  FIRST TRIES 		   *
 ***********************************/
 
 A] First Manager
@@ -37,5 +37,15 @@ It is checking for updates every 5 seconds.
 General Notes:
 On update, managers are checking if there are files in the dynamic_updates folder which has to be present in the program exection folder.
 Current update is done without using external update files : update is already present in prog (it is not using the test.o file which is empty).
-prog file is taken from asaric-2014 project.
+prog file is taken from libuminati project.
 You have to create new update files in the dynamic_updates folder because update files are removed after use.
+
+/***********************************
+*	       LIBAMA		   *
+***********************************/
+
+1) make libama
+2) ./libtest pid (again you can take "prog" as an example)
+This is just a test file of the lib.
+3) lamanager works as manager (cf previous part A])
+4) lamanager2 works as manager2 (cv previous part B])
