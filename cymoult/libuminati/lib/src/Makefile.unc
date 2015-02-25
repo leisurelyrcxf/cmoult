@@ -1,6 +1,6 @@
-LEVEL1 = add_memory.o destroy.o get_next_frame.o init.o insert_jump.o parse.o rwutils.o
+LEVEL1 = add_breakpoint.o add_memory.o destroy.o get_next_frame.o init.o insert_jump.o parse.o rwutils.o
 LEVEL2 = compute_location.o dwarf_ops.o get_frame_info.o get_function_addr.o get_function.o get_var_size.o load_code.o
-LEVEL3 = get_local_var_addr.o safe_redefine.o set_variable.o unwind.o
+LEVEL3 = get_local_var_addr.o redefine.o set_variable.o unwind.o wait_out_of_stack.o 
 LIBFILES = $(LEVEL1) $(LEVEL2) $(LEVEL3)
 LIBCFLAGS = $(CFLAGS) -I../include
 LIBLDFLAGS = -L$(ELFUTILS_LIBS) -ldw -lelf -lbfd -liberty

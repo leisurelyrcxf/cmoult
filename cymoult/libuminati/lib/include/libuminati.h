@@ -70,6 +70,10 @@
 #define REG_FCW 65
 #define REG_FSW 66
 
+/*****Flags*****/
+#define UM_UNWIND_STOPWHENFOUND 1
+#define UM_UNWIND_RETURNLAST 2
+
 /*****Opaque data types*****/
 typedef struct um_frame um_frame;
 
@@ -101,7 +105,7 @@ int um_read_registers(um_data* dbg, struct user_regs_struct* regs);
  * If target is NULL or cannot be found, um_unwind returns NULL.
  * If target is found, um_unwind returns the corresponding um_frame.
  * um_unwind sets cache to the full stack.*/
-um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache);
+um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags);
 /* Get the frame that is further down in the stack*/
 um_frame* um_get_next_frame (um_frame* cur);
 /* Get the function "owning" a frame*/
@@ -148,8 +152,10 @@ uint64_t um_get_local_var_addr(um_data* dbg, const char* name, const char* scope
 size_t um_get_var_size (um_data *dbg, const char* var_name, const char* scope_name);
 
 /*****High-level helpers*****/
-/* Safe redefinition of a function by another*/
-int um_safe_redefine(um_data* dbg, char* name1, char* name2);
+/* Wait until function is out of stack*/
+int um_wait_out_of_stack(um_data* dbg, char* name);
+/* Redefinition of a function by another*/
+int um_redefine(um_data* dbg, char* name1, char* name2);
 /*Set a variable of a given size to a given value*/
 int um_set_variable (um_data* dbg, char* name, bool is_local, char* scope, uint64_t val, size_t size);
 

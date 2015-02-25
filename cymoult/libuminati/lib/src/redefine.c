@@ -1,6 +1,6 @@
-#include "safe_redefine.h"
+#include "redefine.h"
 
-int um_safe_redefine(um_data* dbg, char* name1, char* name2)
+int um_redefine(um_data* dbg, char* name1, char* name2)
   {
     uint64_t f1, f2;
     f1 = um_get_function_addr(dbg, name1);

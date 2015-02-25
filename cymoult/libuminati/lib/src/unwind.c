@@ -1,9 +1,16 @@
 #include "unwind.h"
 
-um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache)
-  {
+um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
+
     if (!cache)
         return NULL;
+
+    //Flag processing
+    bool stop_when_found = flags & 01;
+    bool return_last = flags & 02;
+
+    um_frame* res = NULL;
+
     //Getting registers
     struct user_regs_struct regs = {0};
     _um_read_registers(dbg->pid, &regs);
@@ -20,8 +27,7 @@ um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache)
     get_register_from_frame(REG_RA, current_stack_pointer, dbg);
 
     //Iterating
-    while (1)
-      {
+    while (1) {
         //Actualizing pointers
         um_frame* previous_stack_pointer = current_stack_pointer;
         current_stack_pointer->next = (um_frame*) malloc (sizeof(um_frame));
@@ -38,38 +44,35 @@ um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache)
             break;
 
         current_stack_pointer->regs[REG_RSP] = previous_stack_pointer->cfa;
-        if (get_cfa_from_frame(current_stack_pointer, dbg) == 0)
-          {
+        if (get_cfa_from_frame(current_stack_pointer, dbg) == 0) {
             if (get_register_from_frame(REG_RBP, current_stack_pointer, dbg) > 0)
                 current_stack_pointer->regs[REG_RBP] = _um_read_addr(dbg->pid, previous_stack_pointer->regs[REG_RBP], 8);
-          }
-        else
-          {
+        }
+        else {
             current_stack_pointer->regs[REG_RBP] = _um_read_addr(dbg->pid, previous_stack_pointer->regs[REG_RBP], 8);
             if (get_cfa_from_frame(current_stack_pointer, dbg) != 0)
                 break;
-          }
+        }
         if (get_register_from_frame(REG_RA, current_stack_pointer, dbg) != 0)
             break;
 
-        //if this um_frame corresponds to the wanted scope, we stop
-        if (target)
-          {
+        //if this um_frame corresponds to the wanted scope, we set res
+        if (target) {
             const char* function = um_get_function(dbg, current_stack_pointer);
-            if (function)
-              {
-                if (strcmp(target, function) == 0)
-                  {
-                    *cache = stack;
-                    return current_stack_pointer;
-                  }
-              }
-          }
-      }
+            if (function) {
+                if (strcmp(target, function) == 0) {
+                    if (!res || return_last)
+                        res = current_stack_pointer;
+                    if (stop_when_found)
+                        break;
+                }
+            }
+        }
+    }
 
     //Terminating
     current_stack_pointer->next = NULL;
 
     *cache = stack;
-    return NULL;
-  }
+    return res;
+}

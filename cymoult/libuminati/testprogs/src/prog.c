@@ -13,6 +13,11 @@ void sleep_and_print(int* i) {
 		printf("i = %d\n", *i);
 }
 
+void sleep_and_print_2(int* i) {
+    sleep(1);
+		printf("i is %d\n", *i);
+}
+
 void ancien_main(int n){
 	int i=0;
 	while(1){

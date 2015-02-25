@@ -40,7 +40,7 @@ int main(int argc, const char* argv[])
     /***** STACK UNWINDING *****/
 
     um_frame* stack = NULL;
-    um_unwind (dbg, NULL, &stack);
+    um_unwind (dbg, NULL, &stack, 0);
 
     /***** VARIABLE PRINTING *****/
 
@@ -49,11 +49,11 @@ int main(int argc, const char* argv[])
 
     /***** CHECKING FOR FUNCTIONS IN STACK *****/
 
-    if (um_unwind (dbg, "ancien_main", &stack))
+    if (um_unwind (dbg, "ancien_main", &stack, UM_UNWIND_STOPWHENFOUND))
         printf("Found ancien_main on the stack!\n");
     else
         printf("Did not find ancien_main on the stack!\n");
-    if (um_unwind (dbg, "lol", &stack))
+    if (um_unwind (dbg, "lol", &stack, UM_UNWIND_STOPWHENFOUND | UM_UNWIND_RETURNLAST))
         printf("Found lol on the stack!\n");
     else
         printf("Did not find lol on the stack!\n");
@@ -72,7 +72,9 @@ int main(int argc, const char* argv[])
     printf("Loading returned %d\n", um_load_code(dbg, "bin/update.so"));
 
     /***** SAFE REDEFINITION *****/
-    um_safe_redefine(dbg, "not_in_stack", "not_in_stack_v2");
+    um_redefine(dbg, "not_in_stack", "not_in_stack_v2");
+    if (um_wait_out_of_stack(dbg, "sleep_and_print") == 0)
+        um_redefine(dbg, "sleep_and_print", "sleep_and_print_2");
 
     /***** EXITING *****/
 

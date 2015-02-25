@@ -28,7 +28,7 @@ uint64_t um_get_local_var_addr(um_data* dbg, const char* name, const char* scope
 
         //um_unwind until we find scope
         um_frame* scope_um_frame;
-        scope_um_frame = um_unwind(dbg, scope, &scope_um_frame);
+        scope_um_frame = um_unwind(dbg, scope, &scope_um_frame, UM_UNWIND_STOPWHENFOUND);
 
         //if the scope function is not there, neither is the variable
         if (!scope_um_frame)
@@ -40,7 +40,7 @@ uint64_t um_get_local_var_addr(um_data* dbg, const char* name, const char* scope
       {
         //um_unwind all the stack
         um_frame* stack;
-        um_unwind(dbg, NULL, &stack);
+        um_unwind(dbg, NULL, &stack, 0);
 
         um_frame* current_stack_pointer = stack;
 

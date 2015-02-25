@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 100
+
 #include "rwutils.h"
 
 int um_attach (pid_t pid) {
@@ -76,6 +78,10 @@ int um_read_registers(um_data* dbg, struct user_regs_struct* regs) {
 
 int um_cont (pid_t pid) {
     return ptrace(PTRACE_CONT, pid, NULL, NULL);
+}
+
+int um_stop (pid_t pid) {
+    return kill(pid, 3);
 }
 
 int um_detach (pid_t pid) {
