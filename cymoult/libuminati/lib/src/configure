@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ "$1" == "dynamic" ]
+then
+    sed "s/\$</-fPIC &/" Makefile.unc > Makefile
+else
+    cp Makefile.unc Makefile
+fi
