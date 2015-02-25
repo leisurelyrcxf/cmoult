@@ -163,10 +163,22 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 	um_unwind (dbg, NULL, &stack);
 
 	/***** MODIFYING VARIABLES *****/
-	//TODO: ask Arnaud about binary files ?!
+	//TODO: understand why working on arch and not ubuntu
+	/*char test[4]="n=3";
+        char* buf = strtok(test, "=");
+	printf("var %s\n",buf);
+        uint64_t val;
+        val = strtoul(strtok(NULL, "="), NULL, 10);
+	char *fun = malloc(12*sizeof(char));
+	sprintf(fun,"ancien_main");
+        printf("changing %s by %d in %s\n",buf,val,fun);
+	if(um_set_variable(dbg, buf, true, fun , val, 4)<0){
+		printf("Could not change variable\n");
+		return 4;
+	}*/
 
 	/***** LOAD UPDATE *****/
-	//TODO: ask Arnaud about code injection examples
+	//TODO: use code injection
 	//printf("Loading returned %d\n", um_load_code(dbg, "./testprogs/update.so"));
 
 	/***** CHECKING FOR FUNCTIONS IN STACK AND REDEFINITION *****/
