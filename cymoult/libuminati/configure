@@ -1,0 +1,16 @@
+#!/bin/bash
+
+LIBDW_H=`find /usr/include/ -name libdw.h | head -n 1`
+if [ -z "$LIBDW_H" ]
+then
+    LIBDW_H=`find /usr/local/include/ -name libdw.h | head -n 1`
+fi
+LIBDW_LIB=`find /usr/lib/ -name libdw.* | head -n 1`
+if [ -z "$LIBDW_LIB" ]
+then
+    LIBDW_LIB=`find /usr/local/lib/ -name libdw.* | head -n 1`
+fi
+INC_DIR=${LIBDW_H%/*}
+LIB_DIR=${LIBDW_LIB%/*}
+sed -i "s/export ELFUTILS_INCLUDES = .*$/export ELFUTILS_INCLUDES = ${INC_DIR//\//\\\/}/" Makefile
+sed -i "s/export ELFUTILS_LIBS = .*$/export ELFUTILS_LIBS = ${LIB_DIR//\//\\\/}/" Makefile

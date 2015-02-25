@@ -1,0 +1,33 @@
+LEVEL1 = add_breakpoint.o add_memory.o destroy.o get_next_frame.o init.o insert_jump.o parse.o rwutils.o
+LEVEL2 = compute_location.o dwarf_ops.o get_frame_info.o get_function_addr.o get_function.o get_var_size.o load_code.o
+LEVEL3 = get_local_var_addr.o redefine.o set_variable.o unwind.o wait_out_of_stack.o 
+LIBFILES = $(LEVEL1) $(LEVEL2) $(LEVEL3)
+LIBCFLAGS = $(CFLAGS) -I../include
+LIBLDFLAGS = -L$(ELFUTILS_LIBS) -ldw -lelf -lbfd -liberty
+
+all: dynamic static
+
+dynamic: $(LIBFILES)
+	gcc -shared -o libuminati.so $(LIBFILES) $(LIBLDFLAGS)
+	mkdir -p ../bin
+	mv libuminati.so ../bin
+
+static: $(LIBFILES)
+	ar rcs libuminati.a $(LIBFILES)
+	mkdir -p ../bin
+	mv libuminati.a ../bin
+
+.c.o:
+	gcc -c $(LIBCFLAGS) $<
+
+cleanlight:
+	rm -f *.o
+
+clean:
+	rm -f *.o
+	rm -f Makefile
+
+cleanall:
+	rm -f *.o
+	rm -rf ../bin
+	rm -f Makefile
