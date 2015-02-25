@@ -2,8 +2,8 @@
 * 	       COMPILE	 	   *
 ***********************************/
 
-1. Get libuminati/code project compiled.
-2. Set LD_LIBRARY_PATH to have access to .so file (libuminati/code/bin (or code/lib/bin)).
+1. Get libuminati project compiled.
+2. Set LD_LIBRARY_PATH to have access to .so file (libuminati/bin (or libuminati/lib/bin)).
 In addition, you need to be sure to have access to elfutils files (mine has been installed in /usr/local/lib).
 3. make.
 
