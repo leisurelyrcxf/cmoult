@@ -1,0 +1,27 @@
+/***********************************
+*  	     EXECUTION 		   *
+***********************************/
+
+Get libuminati project compiled
+Get LIBAMA part of libama project compiled ("make libama" in libama/)
+
+/***********************************
+*  	     EXECUTION 		   *
+***********************************/
+
+1. In a first terminal, launch "./demo1 [starting int]". It can be launched from any repository.
+2.a. In a second terminal, use "pgrep demo1" to find the pid of the program.
+2.b. Change ptrace permissions : "echo 0 > /proc/sys/kernel/yama/ptrace_scope" (might need to be done as root)
+2.c. Launch manager1 ("./manager1 pid").
+3.a. In a third terminal, use "pgrep manager1" to find the pid of the manager1.
+3.b. Use "kill -SIGUSR1 manager1pid" to start the update.
+4.a. Exit manager1 (Ctrl-C)
+4.b. Place a new file in dynamic_updates/ (e.g. "touch dynamic_updates/test")
+4.c. Start again from 2.c. but with manager2.
+5. Start again from 4.a. but with manager".
+
+Notes:
+Respect the order of manager1 then manager2 then manager3.
+Don't forget to put again a file in dynamic_updates/ before launching an update.
+
+TODO: Want to find a way to see a function in stack when updating.

@@ -1,12 +1,12 @@
-#include "libama.h"
+#include "../../libama/libama.h"
 
 //Infos structures
 ama_program_infos pi;
 ama_update_infos ui;
 
 //Functions to update
-char *functions_to_update[1] = {"not_in_stack"};
-char *new_functions_to_update[1] = {"not_in_stack_v2"};
+char *functions_to_update[1] = {"first"};
+char *new_functions_to_update[1] = {"second"};
 
 void update_signal_handler(int signum){
 	if (ama_check_updates_from_repository(&pi,&ui))
