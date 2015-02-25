@@ -223,7 +223,10 @@ int ama_update_function(um_data* dbg,um_frame* stack,int l,ama_program_infos *pi
 	}
 	else{
 		printf("Did not find %s on the stack!\n",ui->update_functions_list[l]);
-		um_safe_redefine(dbg, ui->update_functions_list[l], ui->update_new_functions_list[l]);
+		if(um_safe_redefine(dbg, ui->update_functions_list[l], ui->update_new_functions_list[l])){
+			printf("Could not replace %s by %s\n",ui->update_functions_list[l],ui->update_new_functions_list[l]);
+			return 2;
+		}
 	}
 	return 0;
 }
