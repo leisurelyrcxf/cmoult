@@ -87,11 +87,13 @@ void ama_get_update_directory_from_program_directory_udirname(char **update_dire
 	sprintf(*update_directory,"%s/%s",*program_directory,udirname);
 }
 
-void ama_set_update_functions_list(ama_update_infos *ui, char **functions_list,int list_size){
+void ama_set_update_functions_list(ama_update_infos *ui, char **functions_list, char **new_functions_list, int list_size){
 	ui->update_functions_list_size = list_size;
 	ui->update_functions_list = malloc(list_size*sizeof(char*));
+	ui->update_new_functions_list = malloc(list_size*sizeof(char*));
 	for(int i=0;i<list_size;i++){
 		ui->update_functions_list[i]=functions_list[i];
+		ui->update_new_functions_list[i]=new_functions_list[i];
 	}
 }
 
@@ -159,11 +161,30 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 	/***** STACK UNWINDING *****/
 	um_frame* stack;
 	um_unwind (dbg, NULL, &stack);
-	/***** CHECKING FOR FUNCTIONS IN STACK AND REDEFINITION *****/
 
+	/***** MODIFYING VARIABLES *****/
+	//TODO: understand why working on arch and not ubuntu
+	/*char test[4]="n=3";
+        char* buf = strtok(test, "=");
+	printf("var %s\n",buf);
+        uint64_t val;
+        val = strtoul(strtok(NULL, "="), NULL, 10);
+	char *fun = malloc(12*sizeof(char));
+	sprintf(fun,"ancien_main");
+        printf("changing %s by %d in %s\n",buf,val,fun);
+	if(um_set_variable(dbg, buf, true, fun , val, 4)<0){
+		printf("Could not change variable\n");
+		return 4;
+	}*/
+
+	/***** LOAD UPDATE *****/
+	//TODO: use code injection
+	//printf("Loading returned %d\n", um_load_code(dbg, "./testprogs/update.so"));
+
+	/***** CHECKING FOR FUNCTIONS IN STACK AND REDEFINITION *****/
 	int upd_fail;
 	for(int i=0;i<ui->update_functions_list_size;i++){
-		if ( (upd_fail=ama_update_function(dbg,stack,ui->update_functions_list[i],pi,ui)) > 0 )
+		if ( (upd_fail=ama_update_function(dbg,stack,i,pi,ui)) > 0 )
 			return upd_fail;
 	}
 
@@ -190,9 +211,9 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 }
 
 /* Update a function */
-int ama_update_function(um_data* dbg,um_frame* stack,char* fname,ama_program_infos *pi, ama_update_infos *ui){
-	if (um_unwind (dbg, fname, &stack)){
-		printf("Found %s on the stack!\n",fname);
+int ama_update_function(um_data* dbg,um_frame* stack,int l,ama_program_infos *pi, ama_update_infos *ui){
+	if (um_unwind (dbg, ui->update_functions_list[l], &stack)){
+		printf("Found %s on the stack!\n",ui->update_functions_list[l]);
 		//Detach manager
 		um_detach(pi->program_pid);
 		sleep(10);
@@ -210,14 +231,14 @@ int ama_update_function(um_data* dbg,um_frame* stack,char* fname,ama_program_inf
 			return 2;
 		}
 		printf("Attached on %d\n",res);
-		return ama_update_function(dbg,stack,fname,pi,ui);
+		return ama_update_function(dbg,stack,l,pi,ui);
 	}
 	else{
-		printf("Did not find %s on the stack!\n",fname);
-		char* fakename = malloc(FUNCTION_NAME_MAXLENGTH*sizeof(char));
-		//Default update : name by name_v2
-		sprintf(fakename,"%s_v2",fname);
-		um_safe_redefine(dbg, fname, fakename);
+		printf("Did not find %s on the stack!\n",ui->update_functions_list[l]);
+		if(um_safe_redefine(dbg, ui->update_functions_list[l], ui->update_new_functions_list[l])){
+			printf("Could not replace %s by %s\n",ui->update_functions_list[l],ui->update_new_functions_list[l]);
+			return 2;
+		}
 	}
 	return 0;
 }

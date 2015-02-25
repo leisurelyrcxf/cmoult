@@ -8,6 +8,7 @@ ama_update_infos ui;
 
 //Functions to update
 char *functions_to_update[1] = {"not_in_stack"};
+char *new_functions_to_update[1] = {"not_in_stack_v2"};
 
 int main (int argc, char **argv){
 	//Args checking
@@ -43,7 +44,7 @@ int main (int argc, char **argv){
 		//Infos init
 		ama_init_program_infos_from_pid(&pi,pid);
 		ama_init_update_infos_from_program_infos(&ui,&pi);
-		ama_set_update_functions_list(&ui,functions_to_update,1);	
+		ama_set_update_functions_list(&ui,functions_to_update,new_functions_to_update,1);	
 		
 		while(1){
 			sleep(5);
