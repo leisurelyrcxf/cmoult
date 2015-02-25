@@ -37,7 +37,6 @@ char continue_listener = 1;
 
 
 static void * listner_main(void * arg){
-  puts("listener started");
   /*Initiate the socket */
   int conn_fd = 0;
   char buff[LISTENER_BUFF_SIZE];
