@@ -6,6 +6,7 @@ ama_update_infos ui;
 
 //Functions to update
 char *functions_to_update[1] = {"not_in_stack"};
+char *new_functions_to_update[1] = {"not_in_stack_v2"};
 
 void update_signal_handler(int signum){
 	if (ama_check_updates_from_repository(&pi,&ui))
@@ -23,7 +24,7 @@ int main (int argc, char **argv){
 	//Infos init
 	ama_init_program_infos_from_pid(&pi,atoi(argv[1]));
 	ama_init_update_infos_from_program_infos(&ui,&pi);
-	ama_set_update_functions_list(&ui,functions_to_update,1);	
+	ama_set_update_functions_list(&ui,functions_to_update,new_functions_to_update,1);	
 
 	//Register signal to listen while waiting for an update.
 	signal(SIGUSR1, &update_signal_handler);
