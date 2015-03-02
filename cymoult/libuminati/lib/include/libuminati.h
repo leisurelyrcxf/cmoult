@@ -108,8 +108,13 @@ int um_read_registers(um_data* dbg, struct user_regs_struct* regs);
 um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags);
 /* Get the frame that is further down in the stack*/
 um_frame* um_get_next_frame (um_frame* cur);
+/* Get the size of the stack*/
+int um_get_stack_size (um_data* dbg, um_frame* stack);
 /* Get the function "owning" a frame*/
 const char* um_get_function (um_data *dbg, um_frame* context);
+/* Generate a stack trace (list of pairs (function name, address)) from a stack
+ * functions and addresses must be non-null and point to a pre-allocated array of the stack's size*/
+void um_generate_trace (um_data* dbg, um_frame* stack, char** functions, uint64_t* addresses);
 
 /*****Parsing functions*****/
 /*Callbacks for the parsing*/
