@@ -12,9 +12,9 @@ demo1: demo1.o
 	gcc -o demo1 demo1.o $(TESTLDFLAGS) -static
 
 managers: 
-	gcc -o manager1 manager1.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
-	gcc -o manager2 manager2.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
-	gcc -o manager3 manager3.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -g -O0 -o manager1 manager1.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -g -O0 -o manager2 manager2.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -g -O0 -o manager3 manager3.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
 
 .c.o:
 	gcc -c $(TESTCFLAGS) -g $<

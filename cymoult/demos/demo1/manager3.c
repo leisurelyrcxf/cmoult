@@ -5,7 +5,7 @@ ama_program_infos pi;
 ama_update_infos ui;
 
 //Functions to update
-char *functions_to_update[1] = {"first"};
+char *functions_to_update[1] = {"third"};
 char *new_functions_to_update[1] = {"fourth"};
 
 void update_signal_handler(int signum){

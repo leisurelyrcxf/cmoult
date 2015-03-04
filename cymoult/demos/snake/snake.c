@@ -616,6 +616,40 @@ void ProcessKey() {
     }
 }
 
+void ProcessKeyReverse() {
+    switch (keypressed) {
+        case LEFTKEY:
+            snakemovedir = 1;
+            break;
+        case UPKEY:
+            snakemovedir = 2;
+            break;
+        case RIGHTKEY:
+            snakemovedir = 3;
+            break;  
+        case DOWNKEY:
+            snakemovedir = 0;
+            break;  
+        case TESTKEY: /* use for testing conditions */
+            atefood=1;
+            break;
+        case PAUSEKEY: /* use to toggle pause */
+            paused=1-paused;
+            blinktime=SDL_GetTicks();
+            pauseblink=1;
+            SetCaption();
+            break;  
+        case DEBUGKEY: 
+            debug = 1-debug;
+            break;
+        case  TOGGLEFPS:
+            showfps = 1-showfps;
+            SetCaption();
+            keypressed=0;
+            break;
+    }
+}
+
 /* Main function with game loop */
 int main(int argc, char *argv[]) {
     //CheckFruit = &CheckForFruitOrTrap;

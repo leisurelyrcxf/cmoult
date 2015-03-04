@@ -15,6 +15,7 @@ snake: snake.o
 
 managers: 
 	gcc -o manager manager.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -o manager2 manager2.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
 
 .c.o:
 	gcc -c $(TESTCFLAGS) -g $<
