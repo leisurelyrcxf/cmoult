@@ -123,7 +123,6 @@ int ama_check_updates_from_repository(ama_program_infos *pi, ama_update_infos *u
 			printf("Error while closing the directory %s\n",ui->update_directory);
 			return 3;
 		}
-		printf("Update successful\n");
 		ui->update_state = 0;
 	}
 	return 0;
@@ -142,7 +141,7 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 		perror("ptrace");
 		return 1;
 	}
-	printf("Attaching on %d\n", pi->program_pid);	
+	printf("Attaching on %d\n", pi->program_pid);
 	res = waitpid(pi->program_pid,NULL,0);
 	if(res != pi->program_pid){
 		printf("Unexpected wait result res %d",res);
@@ -159,8 +158,8 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 		return 3;
 	}
 	/***** STACK UNWINDING *****/
-	um_frame* stack;
-	um_unwind (dbg, NULL, &stack);
+	um_frame* stack = NULL;
+	um_unwind (dbg, NULL, &stack,0);
 
 	/***** MODIFYING VARIABLES *****/
 	//TODO: understand why working on arch and not ubuntu
@@ -212,33 +211,10 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 
 /* Update a function */
 int ama_update_function(um_data* dbg,um_frame* stack,int l,ama_program_infos *pi, ama_update_infos *ui){
-	if (um_unwind (dbg, ui->update_functions_list[l], &stack)){
-		printf("Found %s on the stack!\n",ui->update_functions_list[l]);
-		//Detach manager
-		um_detach(pi->program_pid);
-		sleep(10);
-		int res,fail;
-		//Attach manager
-		fail=um_attach(pi->program_pid);
-		if( fail != 0 ){
-			perror("ptrace");
-			return 1;
-		}
-		printf("Attaching on %d\n",pi->program_pid);	
-		res = waitpid(pi->program_pid,NULL,0);
-		if(res != pi->program_pid){
-			printf("Unexpected wait result res %d",res);
-			return 2;
-		}
-		printf("Attached on %d\n",res);
-		return ama_update_function(dbg,stack,l,pi,ui);
-	}
-	else{
-		printf("Did not find %s on the stack!\n",ui->update_functions_list[l]);
-		if(um_safe_redefine(dbg, ui->update_functions_list[l], ui->update_new_functions_list[l])){
-			printf("Could not replace %s by %s\n",ui->update_functions_list[l],ui->update_new_functions_list[l]);
-			return 2;
-		}
+	printf("Lama\n");
+	if (um_wait_out_of_stack(dbg, ui->update_functions_list[l]) == 0){
+		printf("prout\n");
+		um_redefine(dbg, ui->update_functions_list[l],ui->update_new_functions_list[l]);
 	}
 	return 0;
 }

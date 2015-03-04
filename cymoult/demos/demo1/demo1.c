@@ -17,6 +17,7 @@ void second(int *c){
 void third(){
 	printf("I don't want to do anything with a, I just wait 5 seconds\n");
 	sleep(5);
+	printf("I have slept !\n");
 }
 
 void fourth(int *c){
@@ -26,7 +27,7 @@ void fourth(int *c){
 
 void function_call(int *b){
 	sleep(2);
-	first(b);
+	third();
 }
 
 int main(int argc, char **argv){

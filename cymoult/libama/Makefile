@@ -15,7 +15,7 @@ manager2: manager2.o
 	gcc -o manager2 manager2.o $(TESTLDFLAGS)
 
 libama: 
-	gcc -c libama.c $(TESTLDFLAGS) $(TESTCFLAGS)
+	gcc -g -O0 -c libama.c $(TESTLDFLAGS) $(TESTCFLAGS)
 	gcc -o libtest libtest.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
 	gcc -o lamanager lamanager.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
 	gcc -o lamanager2 lamanager2.c libama.o $(TESTLDFLAGS) $(TESTCFLAGS)
