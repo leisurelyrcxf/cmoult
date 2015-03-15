@@ -27,7 +27,7 @@ void fourth(int *c){
 
 void function_call(int *b){
 	sleep(2);
-	third();
+	first(b);
 }
 
 int main(int argc, char **argv){

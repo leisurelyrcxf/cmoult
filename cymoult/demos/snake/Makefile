@@ -11,7 +11,7 @@ SNAKEFLAGS = -lSDL -lSDL_image
 all: snake managers
 
 snake: snake.o
-	gcc -o snake snake.o $(SNAKEFLAGS)
+	gcc -o snake snake.o $(SNAKEFLAGS) -rdynamic
 
 managers: 
 	gcc -o manager manager.c ../../libama/libama.o $(TESTLDFLAGS) $(TESTCFLAGS)

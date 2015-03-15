@@ -171,8 +171,9 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 	char *fun = malloc(12*sizeof(char));
 	sprintf(fun,"ancien_main");
         printf("changing %s by %d in %s\n",buf,val,fun);
-	if(um_set_variable(dbg, buf, true, fun , val, 4)<0){
-		printf("Could not change variable\n");
+	int errorcode;
+	if(errorcode = um_set_variable(dbg, buf, true, fun , val, 4)<0){
+		printf("Could not change variable : Error %d\n",errorcode);
 		return 4;
 	}*/
 
@@ -211,9 +212,7 @@ int ama_start_update_from_file(char * update_file, ama_program_infos *pi, ama_up
 
 /* Update a function */
 int ama_update_function(um_data* dbg,um_frame* stack,int l,ama_program_infos *pi, ama_update_infos *ui){
-	printf("Lama\n");
 	if (um_wait_out_of_stack(dbg, ui->update_functions_list[l]) == 0){
-		printf("prout\n");
 		um_redefine(dbg, ui->update_functions_list[l],ui->update_new_functions_list[l]);
 	}
 	return 0;
