@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <signal.h>
 #include <pthread.h>
+#include <dsuthread.h>
 
-extern pthread_t main_thread;
+
+extern dsuthreadarg * main_dsu_thread;
 
 
 char requirements(){
@@ -20,7 +22,10 @@ char over(){
 }
 void apply(){
   puts("apply!");
-  pthread_kill(main_thread,SIGUSR1);
+  main_dsu_thread->signal = SUSPEND;
+  pthread_kill(*(main_dsu_thread->thread),SIGUSR1);
+  sleep(6);
+  main_dsu_thread->signal = NONE;
   puts("applied!");
 }
 
