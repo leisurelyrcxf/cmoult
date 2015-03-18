@@ -1,5 +1,10 @@
 #include <manager.h>
 #include <stdio.h>
+#include <signal.h>
+#include <pthread.h>
+
+extern pthread_t main_thread;
+
 
 char requirements(){
   puts("requirements");
@@ -15,6 +20,8 @@ char over(){
 }
 void apply(){
   puts("apply!");
+  pthread_kill(main_thread,SIGUSR1);
+  puts("applied!");
 }
 
 __attribute__((__constructor__)) void update_func(){
