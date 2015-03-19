@@ -13,6 +13,7 @@ pthread_t main_thread;
 dsuthreadarg * main_dsu_thread;
 
 void * main_thread_main(void* arg){
+  puts("start main");
   while(1){
     sleep(2);
     puts("hello!");
