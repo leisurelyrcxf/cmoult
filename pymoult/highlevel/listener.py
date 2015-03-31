@@ -15,7 +15,7 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.listener.py
+"""pymoult.highlevel.listener.py
    Published under the GPLv2 license (see LICENSE.txt)
 
    This module supplies the Listener class that opens a socket server,
@@ -33,9 +33,9 @@
 import threading
 import socket
 import inspect
-from _continuation import continulet
 import os
 import imp
+from pymoult.highlevel.finderouter import parseCommand  
 
 Listener_port = 4242
 Max_recieve = 9999
@@ -97,7 +97,9 @@ class Listener(threading.Thread):
             if data.strip()[0:len(Invoke_message)] == Invoke_message:
                 update_address = data.strip()[len(Invoke_message)+1:]
                 self.start_update(update_address)
-                data = ""
-                conn.close()
+            else:
+                parseCommand(data.strip())
+            data = ""
+            conn.close()
 
 
