@@ -25,6 +25,7 @@
 
 import inspect
 import sys
+import types
 
 header = "query"
 
@@ -34,6 +35,24 @@ pymodules = ["__builtin__","__future__","__main__ ","_winreg","abc","aepack","ae
 
 class AppModel(object):
     def __init__(self):
+        self.modules = {}
+
+    def generate(self):
+        all_modules = getModules()
+        for mod in all_modules:
+            self.mdoules[mod] = {'functions':[],'globals':[],'classes':{}}
+            content = getModuleContent(all_modules[mod])
+            for item in content:
+                if type(item) == types.classType:
+                    #The item is a class (not a type)
+                    self.modules[mod]['classes'][item
+                if type(item) == __builtin__.type:
+                    #The item is a Type (not a classType)
+
+
+    def __str__(self):
+        print(self.modules)
+
         #Modules
             #Functions
             #Global variables
@@ -41,6 +60,9 @@ class AppModel(object):
                 #Attributes
                 #Methods
 
+
+#Visiteur pour analyser l'app selon la vue "métier"
+                
 
 def getModules():
     modules = {}
@@ -69,9 +91,6 @@ def getEverything():
     for mod in mods:
         print("Content of mod "+mod)
         print(getModuleContent(mods[mod]))
-
-
-
 
 def parseCommand(command):
     if command.startswith(header):
