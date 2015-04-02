@@ -4,18 +4,7 @@
 #include <pthread.h>
 #include <dsuthread.h>
 
-
-extern dsuthreadarg * main_dsu_thread;
-
-void * new_main(void* arg){
-  puts("lama!");
-  while(1){
-    puts("toto");
-    sleep(2);
-  }
-
-}
-
+extern pthread_t main_thread;
 
 
 char requirements(){
@@ -32,11 +21,7 @@ char over(){
 }
 void apply(){
   puts("apply!");
-  main_dsu_thread->signal = REBOOT;
-  main_dsu_thread->start_routine = &new_main; 
-  pthread_kill(*(main_dsu_thread->thread),SIGUSR1);
-  sleep(6);
-  main_dsu_thread->signal = NONE;
+  pthread_kill(main_thread,SIGUSR1);
   puts("applied!");
 }
 
