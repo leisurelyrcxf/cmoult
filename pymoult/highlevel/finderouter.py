@@ -42,44 +42,75 @@ class AppModel(object):
         
     def generate(self):
         all_modules = getModules(filter = self.filter)
-        for mod in all_modules:
-            self.modules[mod] = {'functions':[],'globals':[],'classes':{}}
-            content = getModuleContent(all_modules[mod])
-            for item in content:
+        for modname in all_modules:
+            mod = sys.modules[modname]
+            self.modules[modname] = {'functions':[],'globals':[],'classes':{},'modules':[]}
+            content = getModuleContent(mod)
+            for itemname in content:
+                item = mod.__dict__[itemname]
                 if type(item) == types.ClassType:
                     #The item is a class (not a type)
-                    self.modules[mod]['classes'][id(item)] = self.parse_class(item)
+                    self.modules[modname]['classes'][itemname] = self.parse_class(item)
                 elif type(item) == __builtin__.type:
                     #The item is a Type (not a classType)
-                    self.modules[mod]['classes'][item.__name__] = self.parse_class(item)
+                    self.modules[modname]['classes'][itemname] = self.parse_class(item)
                 elif type(item) == types.FunctionType:
                     #The item is a function
-                    self.modules[mod]['functions'].append(item.__name__)
+                    self.modules[modname]['functions'].append(itemname)
+                elif type(item) == types.ModuleType:
+                    #The item is a module
+                    self.modules[modname]['modules'].append(itemname)
                 else:
-                    #The item is a global
-                    self.modules[mod]['globals'].append(id(item))
+                    #The item is a global variable
+                    self.modules[modname]['globals'].append(itemname)
 
     def parse_class(self,cls):
         cls_model = {'methods':[],'attributes':[]}
         for item in cls.__dict__:
             if not (item.startswith('__') and item.endswith('__')):
-                if type(cls.getattr(item)) == types.FunctionType:
+                if type(cls.__dict__[item]) == types.FunctionType:
                     #The item is a method
                     cls_model['methods'].append(item)
                 else:
                     #The item is an attribute
                     cls_model['attributes'].append(item)
+        return cls_model
 
                 
     def __str__(self):
-        return str(self.modules)
-
+        string = ""
+        for module in self.modules:
+            string+=module+"\n"+"="*len(module)+"\n"
+            #Add the modules
+            string+="\n\tLoaded Modules\n\t--------------\n"
+            for mod in self.modules[module]['modules']:
+                string+="\t"+mod+"\n"
+            #Add the globals
+            string+="\n\tGloabal Variables\n\t-----------------\n"
+            for var in self.modules[module]['globals']:
+                string+="\t"+var+"\n"
+            #Add the functions
+            string+="\n\tFunctions\n\t----------\n"
+            for fun in self.modules[module]['functions']:
+                string+="\t"+fun+"\n"
+            #Add the classes
+            string+="\n\tClasses\n\t-------\n"
+            for cls in self.modules[module]['classes']:
+                string+="\t"+cls+"\n\t"+"+"*len(cls)+"\n"
+                string+="\t\tAttributes\n\t\t----------\n"
+                for attr in self.modules[module]['classes'][cls]['attributes']:
+                    string+="\t\t"+attr+"\n"
+                string+="\n\t\tMethods\n\t\t-------\n"
+                for method in self.modules[module]['classes'][cls]['methods']:
+                    string+="\t\t"+method+"\n"
+            string+="\n"
+        return string
 
 #Visiteur pour analyser l'app selon la vue "métier"
                 
 
 def getModules(filter="a"):
-    """gets allloaded modules according to the given filter.
+    """gets the names of all loaded modules according to the given filter.
     The filter can be any combination of the given letters:
     a : the application modules
     b : the builtin modules
@@ -88,38 +119,36 @@ def getModules(filter="a"):
     python : gets the application modules plus the loaded Python library modules
     all : gets everything
     """                                                 
-    modules = {}
+    modules = []
     for modname in sys.modules:
         if sys.modules[modname] is not None: 
             firstname = modname.split('.')[0]
             if firstname in sys.builtin_module_names:
                 if "b" in filter:
-                    print("b "+modname)
-                    modules[modname] = sys.modules[modname]
+                    modules.append(modname)
             elif firstname in pymodules:
                 if "l" in filter:
-                    print("l "+modname)
-                    modules[modname] = sys.modules[modname]
+                    modules.append(modname)
             elif firstname == "pymoult":
                 if "m" in filter:
-                    print("m "+modname)
-                    modules[modname] = sys.modules[modname]
+                    modules.append(modname)
             elif "a" in filter:
-                print(modname)
-                modules[modname] = sys.modules[modname]
+                modules.append(modname)
     return modules
 
 def lookupModule(name):
+    """Looks up a module in loaded modules"""
     if name in sys.modules.keys():
         return sys.modules[name]
     else:
         return None
 
 def getModuleContent(module):
-    content = {}
+    """Return the names of every top-level content of the given module"""
+    content = []
     for attr in module.__dict__:
         if not (attr.startswith("__") and attr.endswith("__")):
-            content[attr] = module.__dict__[attr]
+            content.append(attr)
     return content
 
 
