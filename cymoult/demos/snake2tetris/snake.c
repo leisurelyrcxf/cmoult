@@ -38,7 +38,6 @@ int main(int argc, char **argv){
                 //Start Game
                 initGameConfig(&gc);
                 initGameData(&gd,&gc);
-                initTetrisForms(&gc);
                 clearConsole();
                 drawBoard(&gd);
                 drawGamePanel(&gc,&gd);
