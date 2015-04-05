@@ -280,9 +280,33 @@ void moveTetris(gameConfig* gc, gameData* gd){
                 drawGamePanel(gc,gd);
         }
         else{
-                /* Cheating : Should only happen on update */
-                //blockStop(gc,gd);
-        }
+                /* Cheating : Should only happen once on update */
+                /* Init */
+                initTetrisForms(gc);
+                /* Remove fruits */
+                for(int i=0;i<gc->width*gc->height;i++){
+                        if(gd->mapData[i]=='@')
+                                gd->mapData[i]=' ';
+                }
+                /* Down snake */
+                for(int i=0;i<gc->width;i++){
+                        int j=gc->height;
+                        while(j>0){
+                                if(gd->map[j][i]==' '){
+                                        for(int k=j;k>0;k++){
+                                                gd->map[k][i]=gd->map[k-1][i];
+                                        }
+                                }
+                                else
+                                        j++;
+                        }
+                }
+                generateRandomForm(gc,gd);
+                updateMapTetris(gd);
+                clearConsole();
+                drawBoard(gd);
+                drawGamePanel(gc,gd);
+       }
 }
 
 int checkIsInPreviousPosition(gameData *gd, int nextY, int nextX){
@@ -304,7 +328,6 @@ int checkIsInPreviousPosition(gameData *gd, int nextY, int nextX){
 }
 
 void blockStop(gameConfig *gc, gameData *gd){
-        gd->currentBlock = NULL;
         for(int i=0;i<gc->height;i++){
                 int count=0;
                 for(int j=0;j<gc->width;j++){
@@ -541,7 +564,7 @@ void initTetrisForms(gameConfig *gc){
                 { {0,0},{0,1},{-1,0},{-1,1} },
                 { {0,0},{0,1},{-1,0},{-1,1} }
         };
-        /* TODO: temporar */
+        /* Store in gameConfig */
         memcpy((gc->forms[0]).blocksPositions,triangle,sizeof(int[4][4][2]));
         memcpy((gc->forms[1]).blocksPositions,line,sizeof(int[4][4][2]));
         memcpy((gc->forms[2]).blocksPositions,z,sizeof(int[4][4][2]));
