@@ -1,5 +1,6 @@
 #include "functions.h"
 
+
 void initGameConfig(gameConfig* gc){
         gc->height=15;
         gc->width=11;
@@ -28,6 +29,7 @@ void initGameData(gameData* gd,gameConfig* gc){
         gd->snakePositions[0][1]=gc->width/2;
         gd->lost=0;
         createRandomFruit(gc,gd);
+        gd->currentBlock=NULL;
 }
 
 void clearConsole(){
@@ -172,7 +174,7 @@ void drawLost(gameData *gd){
         printf("\n\t\t\tFinal Score: %d\n\n",gd->score);
 }
 
-void getDirection(gameData* gd){
+void getDirection(gameConfig* gc, gameData* gd){
         char input;
         int keyHit;
         if( (keyHit=kbhit()) >0 ){
@@ -194,7 +196,7 @@ void getDirection(gameData* gd){
                                 break;
                 }
                 if(keyHit>1)
-                        getDirection(gd);
+                        getDirection(gc,gd);
         }
 }
 
@@ -230,4 +232,250 @@ int kbhit() {
                 tcsetattr(STDIN_FILENO, TCSANOW, &otty);
         }
         return count;
+}
+
+/* To Tetris functions */
+
+void initGameDataTetris(gameData* gd,gameConfig* gc){
+        gd->score=0;
+        gd->map=(char **) calloc(gc->height,sizeof(char*));
+        gd->mapData= (char *) calloc(gc->width*gc->height,sizeof(char));
+        for(int i=0; i<gc->height*gc->width; i++){
+                gd->mapData[i]=' ';
+        }
+        for(int i=0; i<gc->height; i++){
+                gd->map[i] = &gd->mapData[i*gc->width];
+        }
+        gd->lost=0;
+}
+
+void moveTetris(gameConfig* gc, gameData* gd){
+        if(gd->currentBlock != NULL){
+                /* Find next positions */
+                int next[4][2];
+                next[0][0]=((gd->currentBlock)->SWCoords[0])+1;
+                next[0][1]=((gd->currentBlock)->SWCoords[1]);
+                for(int i=1;i<4;i++){
+                        next[i][0]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][0]+next[0][0];
+                        next[i][1]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][1]+next[0][1];
+                }
+
+                /* Check possible */
+                for(int i=0;i<4;i++){
+                        if(next[i][0]>=gc->height){
+                                blockStop(gc,gd);
+                                return;
+                        }
+                        if((gd->map[next[i][0]][next[i][1]] == '*') && (checkIsInPreviousPosition(gd,next[i][0],next[i][1]) == 0)){
+                                blockStop(gc,gd);
+                                return;
+                        }
+                }
+
+                /* If ok, move block */
+                removeBlockMap(gd);
+                ((gd->currentBlock)->SWCoords[0])=next[0][0];
+                updateMapTetris(gd);
+                clearConsole();
+                drawBoard(gd);
+                drawGamePanel(gc,gd);
+        }
+        else{
+                /* Cheating : Should only happen on update */
+                //blockStop(gc,gd);
+        }
+}
+
+int checkIsInPreviousPosition(gameData *gd, int nextY, int nextX){
+        /* Get positions */
+        int block[4][2];
+        block[0][0]=((gd->currentBlock)->SWCoords[0]);
+        block[0][1]=((gd->currentBlock)->SWCoords[1]);
+        for(int i=1;i<4;i++){
+                block[i][0]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][0]+block[0][0];
+                block[i][1]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][1]+block[0][1];
+        }
+
+        /* Check */
+        for(int i=0;i<4;i++){
+                if((block[i][0]==nextY) && (block[i][1] == nextX))
+                        return 1;
+        }
+        return 0;
+}
+
+void blockStop(gameConfig *gc, gameData *gd){
+        gd->currentBlock = NULL;
+        for(int i=0;i<gc->height;i++){
+                int count=0;
+                for(int j=0;j<gc->width;j++){
+                        if(gd->map[i][j]=='*')
+                                count++;
+                        else
+                                break;
+                }
+                /* Line is full, delete and move all above ones */
+                if(count==gc->width){
+                        if(i==0){
+                                for(int l=0;l<gc->width;l++){
+                                        gd->map[0][l]=' ';
+                                }
+                        }else{
+                                for(int k=i;k>0;k--){
+                                        for(int l=0;l<gc->width;l++){
+                                                gd->map[k][l]=gd->map[k-1][l];
+                                        }
+                                }
+                        }
+                        /* Grant points ! */
+                        gd->score+=10;
+                        /* And increase speed else it is not fun */
+                        if(gc->timeDelay >800){
+                                gc->timeDelay-=50;
+                        }
+                        if(gc->timeDelay >50){
+                                gc->timeDelay-=50;
+                        }
+
+                }
+        }
+        generateRandomForm(gc,gd);
+        /* Get positions */
+        int block[4][2];
+        block[0][0]=((gd->currentBlock)->SWCoords[0]);
+        block[0][1]=((gd->currentBlock)->SWCoords[1]);
+        for(int i=1;i<4;i++){
+                block[i][0]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][0]+block[0][0];
+                block[i][1]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][1]+block[0][1];
+        }
+        /* Check possible */
+        for(int i=0;i<4;i++){
+                if(gd->map[block[i][0]][block[i][1]] == '*'){
+                        gd->lost=1; 
+                        return;
+                }
+        }
+        /* Refresh screen */
+        updateMapTetris(gd);
+        clearConsole();
+        drawBoard(gd);
+        drawGamePanel(gc,gd);
+}
+
+void shiftTetris(gameConfig* gc, gameData *gd, int dir){
+        if(gd->currentBlock == NULL)
+                return;
+
+        /* Find next positions */
+        int next[4][2];
+        next[0][0]=((gd->currentBlock)->SWCoords[0]);
+        if(dir==EAST){
+                next[0][1]=((gd->currentBlock)->SWCoords[1])+1;
+        }
+        else if(dir==WEST){
+                next[0][1]=((gd->currentBlock)->SWCoords[1])-1;
+        }
+        else{
+                exit(EXIT_FAILURE);
+        }
+        for(int i=1;i<4;i++){
+                next[i][0]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][0]+next[0][0];
+                next[i][1]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][1]+next[0][1];
+        }
+
+        /* Check possible */
+        for(int i=0;i<4;i++){
+                if(next[i][0] <0 || next[i][0]>=gc->height || next[i][1]<0 || next[i][1]>= gc->width)
+                        return;
+                if((gd->map[next[i][0]][next[i][1]] == '*') && (checkIsInPreviousPosition(gd,next[i][0],next[i][1]) == 0))
+                        return;
+        }
+
+        /* If ok, move block */
+        removeBlockMap(gd);
+        ((gd->currentBlock)->SWCoords[1])=next[0][1];
+        updateMapTetris(gd);
+        clearConsole();
+        drawBoard(gd);
+        drawGamePanel(gc,gd);
+}
+
+void getDirectionTetris(gameConfig* gc, gameData* gd){
+        char input;
+        int keyHit;
+        if( (keyHit=kbhit()) >0 ){
+                input=getch();
+                switch(input){
+                        case KEY_LEFT:
+                                shiftTetris(gc,gd,WEST);
+                                break;
+                        case KEY_RIGHT:
+                                shiftTetris(gc,gd,EAST);
+                                break;
+                        case KEY_ROT:
+                                rotForm(gc,gd);
+                                break;
+                        default:
+                                break;
+                }
+                if(keyHit>1)
+                        getDirectionTetris(gc,gd);
+        }
+}
+void generateRandomForm(gameConfig* gc, gameData* gd){
+        srand(time(NULL));
+        tetrisBlocks* newBlock = (tetrisBlocks *) malloc(sizeof(tetrisBlocks));
+        newBlock->form=&(gc->forms[rand() % 7]);
+        newBlock->formDirection=0;
+        newBlock->SWCoords[0]=1;
+        newBlock->SWCoords[1]=gc->width/2-1;
+        gd->currentBlock=newBlock;
+}
+void rotForm(gameConfig *gc, gameData *gd){
+
+}
+
+void removeBlockMap(gameData *gd){
+        /* Get positions */
+        int block[4][2];
+        block[0][0]=((gd->currentBlock)->SWCoords[0]);
+        block[0][1]=((gd->currentBlock)->SWCoords[1]);
+        for(int i=1;i<4;i++){
+                block[i][0]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][0]+block[0][0];
+                block[i][1]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][1]+block[0][1];
+        }
+        /* Remove from map */
+        for(int i=0;i<4;i++){
+                gd->map[block[i][0]][block[i][1]]= ' ';
+        }
+}
+
+void updateMapTetris(gameData *gd){
+        /* Get positions */
+        int block[4][2];
+        block[0][0]=((gd->currentBlock)->SWCoords[0]);
+        block[0][1]=((gd->currentBlock)->SWCoords[1]);
+        for(int i=1;i<4;i++){
+                block[i][0]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][0]+block[0][0];
+                block[i][1]=((gd->currentBlock)->form)->blocksPositions[(gd->currentBlock)->formDirection][i][1]+block[0][1];
+        }
+        /* Print on map */
+        for(int i=0;i<4;i++){
+                gd->map[block[i][0]][block[i][1]]= '*';
+        }
+
+}
+
+void initTetrisForms(gameConfig *gc){
+        /* triangle */
+        int triangle[4][4][2] = {
+                { {0,0},{0,1},{0,2},{-1,1} },
+                { {0,0},{-1,0},{-2,0},{-1,1} },
+                { {0,0},{-1,-1},{-1,0},{-1,1} },
+                { {0,0},{-1,0},{-2,0},{-1,-1} }
+        };
+        /* TODO: temporar */
+        for(int i=0;i<7;i++){
+                memcpy((gc->forms[i]).blocksPositions,triangle,sizeof(int[4][4][2]));
+        }
 }
