@@ -3,7 +3,7 @@
 void initGameConfig(gameConfig* gc){
         gc->height=15;
         gc->width=11;
-        gc->timeDelay=1500;
+        gc->timeDelay=1000;
 }
 
 void initGameData(gameData* gd,gameConfig* gc){
@@ -499,8 +499,54 @@ void initTetrisForms(gameConfig *gc){
                 { {0,0},{-1,-1},{-1,0},{-1,1} },
                 { {0,0},{-1,0},{-2,0},{-1,-1} }
         };
+        /* line pizz */
+        int line[4][4][2] = {
+                { {0,0},{0,1},{0,2},{0,3} },
+                { {0,0},{-1,0},{-2,0},{-3,0} },
+                { {0,0},{0,1},{0,2},{0,3} },
+                { {0,0},{-1,0},{-2,0},{-3,0} }
+        };
+        /* z */
+        int z[4][4][2] = {
+                { {0,0},{0,1},{-1,-1},{-1,0} },
+                { {0,0},{-1,0},{-1,1},{-2,1} },
+                { {0,0},{0,1},{-1,-1},{-1,0} },
+                { {0,0},{-1,0},{-1,1},{-2,1} }
+        };
+        /* inversed z */
+        int invz[4][4][2] = {
+                { {0,0},{0,1},{-1,1},{-1,2} },
+                { {0,0},{-1,0},{-1,-1},{-2,-1} },
+                { {0,0},{0,1},{-1,1},{-1,2} },
+                { {0,0},{-1,0},{-1,-1},{-2,-1} }
+        };
+        /* L */
+        int L[4][4][2] = {
+                { {0,0},{0,1},{0,2},{-1,2} },
+                { {0,0},{0,1},{-1,0},{-2,0} },
+                { {0,0},{-1,0},{-1,1},{-1,2} },
+                { {0,0},{-1,0},{-2,0},{-2,-1} }
+        };
+        /* inversed L */
+        int invL[4][4][2] = {
+                { {0,0},{-1,0},{-1,-1},{-1,-2} },
+                { {0,0},{0,1},{-1,1},{-2,1} },
+                { {0,0},{0,1},{0,2},{-1,0} },
+                { {0,0},{-1,0},{-2,0},{-2,1} }
+        };
+        /* square */
+        int square[4][4][2] = {
+                { {0,0},{0,1},{-1,0},{-1,1} },
+                { {0,0},{0,1},{-1,0},{-1,1} },
+                { {0,0},{0,1},{-1,0},{-1,1} },
+                { {0,0},{0,1},{-1,0},{-1,1} }
+        };
         /* TODO: temporar */
-        for(int i=0;i<7;i++){
-                memcpy((gc->forms[i]).blocksPositions,triangle,sizeof(int[4][4][2]));
-        }
+        memcpy((gc->forms[0]).blocksPositions,triangle,sizeof(int[4][4][2]));
+        memcpy((gc->forms[1]).blocksPositions,line,sizeof(int[4][4][2]));
+        memcpy((gc->forms[2]).blocksPositions,z,sizeof(int[4][4][2]));
+        memcpy((gc->forms[3]).blocksPositions,invz,sizeof(int[4][4][2]));
+        memcpy((gc->forms[4]).blocksPositions,L,sizeof(int[4][4][2]));
+        memcpy((gc->forms[5]).blocksPositions,invL,sizeof(int[4][4][2]));
+        memcpy((gc->forms[6]).blocksPositions,square,sizeof(int[4][4][2]));
 }
