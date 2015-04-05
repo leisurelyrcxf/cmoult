@@ -1,6 +1,5 @@
 #include "functions.h"
 
-
 void initGameConfig(gameConfig* gc){
         gc->height=15;
         gc->width=11;
@@ -432,7 +431,33 @@ void generateRandomForm(gameConfig* gc, gameData* gd){
         gd->currentBlock=newBlock;
 }
 void rotForm(gameConfig *gc, gameData *gd){
+        if(gd->currentBlock == NULL)
+                return;
 
+        /* Find next positions */
+        int next[4][2];
+        next[0][0]=((gd->currentBlock)->SWCoords[0]);
+        next[0][1]=((gd->currentBlock)->SWCoords[1]);
+        for(int i=1;i<4;i++){
+                next[i][0]=((gd->currentBlock)->form)->blocksPositions[((((gd->currentBlock)->formDirection)+1)%4)][i][0]+next[0][0];
+                next[i][1]=((gd->currentBlock)->form)->blocksPositions[((((gd->currentBlock)->formDirection)+1)%4)][i][1]+next[0][1];
+        }
+
+        /* Check possible */
+        for(int i=0;i<4;i++){
+                if(next[i][0] <0 || next[i][0]>=gc->height || next[i][1]<0 || next[i][1]>= gc->width)
+                        return;
+                if((gd->map[next[i][0]][next[i][1]] == '*') && (checkIsInPreviousPosition(gd,next[i][0],next[i][1]) == 0))
+                        return;
+        }
+
+        /* If ok, move block */
+        removeBlockMap(gd);
+        (gd->currentBlock)->formDirection=((((gd->currentBlock)->formDirection)+1)%4);
+        updateMapTetris(gd);
+        clearConsole();
+        drawBoard(gd);
+        drawGamePanel(gc,gd);
 }
 
 void removeBlockMap(gameData *gd){
