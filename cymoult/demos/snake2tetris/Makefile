@@ -6,7 +6,7 @@ SRCARNAUD = ../../libuminati
 TESTCFLAGS = $(CFLAGS) -I$(SRCARNAUD)/lib/include
 TESTLDFLAGS = -L$(SRCARNAUD)/bin -L$(ELFUTILS_LIBS) -luminati -ldw -lelf
 
-all: snake 
+all: snake managers
 
 snake:
 	gcc -c functions.c -rdynamic -g $(TESTCFLAGS)
