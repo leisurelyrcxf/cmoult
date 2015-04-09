@@ -1,5 +1,5 @@
 PROGCFLAGS = -g
-PROGLDFLAGS = -static
+PROGLDFLAGS = #-static
 PROGFILES = prog
 
 all: testprogs update
