@@ -3,7 +3,7 @@
 int _write_section_at_addr (pid_t pid, asection* sect, bfd_byte* sect_content, uint64_t base_addr) {
     for (unsigned int i = 0; i < sect->size/4; i++) {
         uint32_t value = 0;
-        for (int j = 0; j < 8; j++)
+        for (int j = 0; j < 4; j++)
             value += (((uint32_t)sect_content[4*i+j]) << (8*j));
         if (_um_write_addr(pid, base_addr + 4*i, value, 4) == -1)
             return -1;
@@ -84,7 +84,7 @@ int um_load_code (um_data* dbg, const char* file_name) {
         }
         func->name = function_name;
         func->lowpc = address_in_so - text->vma + plt->size + base_address;
-        printf("DEBUG: %s at 0x%lx", func->name, func->lowpc);
+        printf("DEBUG: %s at 0x%lx\n", func->name, func->lowpc);
         if (prev) {
             prev->highpc = func->lowpc;
             prev->next = func;
