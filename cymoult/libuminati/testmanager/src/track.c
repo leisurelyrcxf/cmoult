@@ -76,6 +76,20 @@ int main(int argc, const char* argv[])
     if (um_wait_out_of_stack(dbg, "sleep_and_print") == 0)
         um_redefine(dbg, "sleep_and_print", "sleep_and_print_2");
 
+    /***** DEBUG *****/
+    um_cont(pid);
+    int status;
+    waitpid(pid, &status, 0);
+    if (WIFSIGNALED(status)) {
+        struct user_regs_struct regs = {0};
+        um_read_registers(dbg, &regs);
+        printf("Killed by sig %d at 0x%lx\n", WTERMSIG(status), regs.rip);
+    } else if (WIFSTOPPED(status)) {
+        struct user_regs_struct regs = {0};
+        um_read_registers(dbg, &regs);
+        printf("Killed by sig %d at 0x%lx\n", WSTOPSIG(status), regs.rip);
+    }
+
     /***** EXITING *****/
 
     um_destroy_stack(stack);
