@@ -32,12 +32,12 @@ dummy:
 	true
 
 clean:
-	cd lib/src; $(MAKE) $(MFLAGS) $@
+	cd lib/src; ./configure static && $(MAKE) $(MFLAGS) $@
 	cd testmanager/src; $(MAKE) $(MFLAGS) $@
 	cd testprogs/src; $(MAKE) $(MFLAGS) $@
 
 cleanall: 
-	cd lib/src; $(MAKE) $(MFLAGS) $@
+	cd lib/src; ./configure static && $(MAKE) $(MFLAGS) $@
 	cd testmanager/src; $(MAKE) $(MFLAGS) $@
 	cd testprogs/src; $(MAKE) $(MFLAGS) $@
 	rm -rf bin
