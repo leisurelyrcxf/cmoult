@@ -15,10 +15,13 @@ int um_count (Dwarf_Die* die, const char* parent_name, void* vargs, Dwarf_Addr b
       }
     if (args->parent_name)
       {
-        if(!parent_name)
-            return -1;
-        if (strcmp(args->parent_name, parent_name) != 0)
-            return -1;
+        if (strcmp("*", args->parent_name) != 0)
+          {
+            if(!parent_name)
+                return -1;
+            if (strcmp(args->parent_name, parent_name) != 0)
+                return -1;
+          }
       }
     if (args->address)
         if (dwarf_haspc(die, args->address - bias) != 1)
