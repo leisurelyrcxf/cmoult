@@ -27,3 +27,5 @@ clean:
 
 cleanall: 
 	rm -f *.o
+	rm -f snake
+	rm -f manager

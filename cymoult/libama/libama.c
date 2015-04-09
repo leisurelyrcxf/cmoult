@@ -66,7 +66,10 @@ int ama_get_program_directory_from_pid_name(char **program_directory, pid_t pid,
 	}
 	fclose(program_fp);	
 	//file repository
-	sprintf(*program_directory,"%s/%s",program_cmd_dir,program_cmd);
+    if(program_cmd[0] == '/')
+            sprintf(*program_directory,"%s",program_cmd);
+    else
+    	sprintf(*program_directory,"%s/%s",program_cmd_dir,program_cmd);
 	int name_len = strlen(*name);
 	int dir_len = strlen(*program_directory);
 	(*program_directory)[dir_len-name_len-1]='\0';

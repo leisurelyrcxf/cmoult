@@ -31,3 +31,6 @@ clean:
 
 cleanall: 
 	rm -f *.o
+	rm -f libtest
+	rm -f lamanager
+	rm -f lamanager2
