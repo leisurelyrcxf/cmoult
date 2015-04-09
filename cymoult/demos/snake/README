@@ -1,0 +1,26 @@
+/***********************************
+*  	     EXECUTION 		   *
+***********************************/
+
+Get libuminati project compiled
+Get LIBAMA part of libama project compiled ("make libama" in libama/)
+
+/***********************************
+*  	     EXECUTION 		   *
+***********************************/
+
+1. In a first terminal, launch "./snake". It can be launched from any repository.
+2.a. In a second terminal, use "pgrep snake" to find the pid of the program.
+2.b. Change ptrace permissions : "echo 0 > /proc/sys/kernel/yama/ptrace_scope" (might need to be done as root)
+2.c. Launch manager ("./manager pid").
+3.a. In a third terminal, use "pgrep manager" to find the pid of the manager.
+3.b. Use "kill -SIGUSR1 managerpid" to start the update.
+
+Notes:
+Don't forget to put again a file in dynamic_updates/ before launching an update.
+
+Changes:
+Before: taking fruit implies score +50 and increasing speed.
+After: taking fruit implies score -5 and decreasing speed.
+
+TODO: Want to find a way to see a function in stack when updating.
