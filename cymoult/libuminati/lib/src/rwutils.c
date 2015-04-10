@@ -50,11 +50,17 @@ int um_write_addr (um_data* dbg, uint64_t addr, uint64_t value, size_t size) {
 }
 
 int _um_write_registers(pid_t pid, struct user_regs_struct* regs) {
-    return ptrace(PTRACE_SETREGS, pid, NULL, regs);
+    struct iovec iov;
+    iov.iov_len = sizeof(*regs);
+    iov.iov_base = regs;
+    return ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, regs);
 }
 
 int um_write_registers(um_data* dbg, struct user_regs_struct* regs) {
-    return ptrace(PTRACE_SETREGS, dbg->pid, NULL, regs);
+    struct iovec iov;
+    iov.iov_len = sizeof(*regs);
+    iov.iov_base = regs;
+    return ptrace(PTRACE_SETREGSET, dbg->pid, NT_PRSTATUS, regs);
 }
 
 uint64_t _um_read_addr (pid_t pid, uint64_t addr, size_t size) {
@@ -69,11 +75,17 @@ uint64_t um_read_addr (um_data* dbg, uint64_t addr, size_t size) {
 }
 
 int _um_read_registers(pid_t pid, struct user_regs_struct* regs) {
-    return ptrace(PTRACE_GETREGS, pid, NULL, regs);
+    struct iovec iov;
+    iov.iov_len = sizeof(*regs);
+    iov.iov_base = regs;
+    return ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov);
 }
 
 int um_read_registers(um_data* dbg, struct user_regs_struct* regs) {
-    return ptrace(PTRACE_GETREGS, dbg->pid, NULL, regs);
+    struct iovec iov;
+    iov.iov_len = sizeof(*regs);
+    iov.iov_base = regs;
+    return ptrace(PTRACE_GETREGSET, dbg->pid, NT_PRSTATUS, &iov);
 }
 
 int um_cont (pid_t pid) {
