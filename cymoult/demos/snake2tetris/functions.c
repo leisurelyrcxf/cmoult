@@ -53,6 +53,7 @@ void drawGamePanel(gameConfig* gc, gameData* gd){
                 printf(" |\n");
         }
         printf("\t\t\t%s\n",hBorder);
+        free(hBorder);
 }
 
 void moveSnake(gameConfig* gc, gameData* gd){
