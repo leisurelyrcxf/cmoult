@@ -13,7 +13,8 @@ um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int fla
 
     //Getting registers
     struct user_regs_struct regs = {0};
-    _um_read_registers(dbg->pid, &regs);
+    if (_um_read_registers(dbg->pid, &regs) != 0)
+        return NULL;
 
     //Creating useful variables
     um_frame* stack = (um_frame*) malloc (sizeof(um_frame));
