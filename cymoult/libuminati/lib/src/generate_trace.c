@@ -8,5 +8,5 @@ void um_generate_trace (um_data* dbg, um_frame* stack, char** functions, uint64_
         *addresses = stack->rip;
         functions++;
         addresses++;
-    } while ((stack = um_get_next_frame(stack)))
+    } while ((stack = um_get_next_frame(stack)));
 }
