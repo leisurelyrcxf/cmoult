@@ -10,6 +10,7 @@
 #include <string.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
