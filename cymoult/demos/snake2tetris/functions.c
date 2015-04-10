@@ -3,7 +3,7 @@
 void initGameConfig(gameConfig* gc){
         gc->height=15;
         gc->width=11;
-        gc->timeDelay=1000;
+        gc->timeDelay=10000;
 }
 
 void initGameData(gameData* gd,gameConfig* gc){
@@ -291,15 +291,15 @@ void moveTetris(gameConfig* gc, gameData* gd){
                 }
                 /* Down snake */
                 for(int i=0;i<gc->width;i++){
-                        int j=gc->height;
+                        int j=(gc->height)-1;
                         while(j>0){
                                 if(gd->map[j][i]==' '){
-                                        for(int k=j;k>0;k++){
+                                        for(int k=j;k>0;k--){
                                                 gd->map[k][i]=gd->map[k-1][i];
                                         }
                                 }
                                 else
-                                        j++;
+                                        j--;
                         }
                 }
                 generateRandomForm(gc,gd);
