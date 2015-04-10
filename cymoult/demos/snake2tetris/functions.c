@@ -3,7 +3,7 @@
 void initGameConfig(gameConfig* gc){
         gc->height=15;
         gc->width=11;
-        gc->timeDelay=1000;
+        gc->timeDelay=2000;
 }
 
 void initGameData(gameData* gd,gameConfig* gc){
@@ -53,6 +53,7 @@ void drawGamePanel(gameConfig* gc, gameData* gd){
                 printf(" |\n");
         }
         printf("\t\t\t%s\n",hBorder);
+        free(hBorder);
 }
 
 void moveSnake(gameConfig* gc, gameData* gd){
@@ -290,15 +291,19 @@ void moveTetris(gameConfig* gc, gameData* gd){
                 }
                 /* Down snake */
                 for(int i=0;i<gc->width;i++){
-                        int j=gc->height;
+                        int j=(gc->height)-1;
+                        int count=0;
                         while(j>0){
-                                if(gd->map[j][i]==' '){
-                                        for(int k=j;k>0;k++){
+                                if(gd->map[j][i]==' ' && count<j){
+                                        for(int k=j;k>0;k--){
                                                 gd->map[k][i]=gd->map[k-1][i];
                                         }
+                                        count++;
                                 }
-                                else
-                                        j++;
+                                else{
+                                        count=0;
+                                        j--;
+                                }
                         }
                 }
                 generateRandomForm(gc,gd);
