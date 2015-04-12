@@ -27,3 +27,7 @@ clean:
 
 cleanall: 
 	rm -f *.o
+	rm -f demo1
+	rm -f manager1
+	rm -f manager2
+	rm -f manager3

@@ -23,5 +23,3 @@ Get LIBAMA part of libama project compiled ("make libama" in libama/)
 Notes:
 Respect the order of manager1 then manager2 then manager3.
 Don't forget to put again a file in dynamic_updates/ before launching an update.
-
-TODO: Want to find a way to see a function in stack when updating.
