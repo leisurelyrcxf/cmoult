@@ -53,14 +53,14 @@ int _um_write_registers(pid_t pid, struct user_regs_struct* regs) {
     struct iovec iov;
     iov.iov_len = sizeof(*regs);
     iov.iov_base = regs;
-    return ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, regs);
+    return ptrace(PTRACE_SETREGSET, pid, NT_PRSTATUS, &iov);
 }
 
 int um_write_registers(um_data* dbg, struct user_regs_struct* regs) {
     struct iovec iov;
     iov.iov_len = sizeof(*regs);
     iov.iov_base = regs;
-    return ptrace(PTRACE_SETREGSET, dbg->pid, NT_PRSTATUS, regs);
+    return ptrace(PTRACE_SETREGSET, dbg->pid, NT_PRSTATUS, &iov);
 }
 
 uint64_t _um_read_addr (pid_t pid, uint64_t addr, size_t size) {
