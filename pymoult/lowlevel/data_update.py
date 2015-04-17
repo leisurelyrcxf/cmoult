@@ -26,10 +26,11 @@
 import sys
 import types
 
-def updateToClass(obj,nclass,transformer=None):
+def updateToClass(obj,nclass,transformer=None,cls=None):
     """Updates a given object to a given class. If a trasformer is given
-    in argument, applies it to the object""" 
-    obj.__class__ = nclass 
+    in argument, applies it to the object"""
+    if cls == None or obj.__class__ == cls:
+        obj.__class__ = nclass
     if transformer != None:
         transformer(obj)
 

@@ -91,7 +91,7 @@ class EagerConversionUpdate(Update):
         super(EagerConversionUpdate,self).__init__(name=name)
 
     def object_update(self,obj):
-        updateToClass(obj,self.new_cls,self.transformer)
+        updateToClass(obj,self.new_cls,self.transformer,self.cls)
         
     def requirements(self):
         return True
@@ -114,7 +114,7 @@ class LazyConversionUpdate(Update):
         super(LazyConversionUpdate,self).__init__(name=name)
 
     def object_update(self,obj):
-        updateToClass(obj,self.new_cls,self.transformer)
+        updateToClass(obj,self.new_cls,self.transformer,self.cls)
 
     def requirements(self):
         return True
