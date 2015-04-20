@@ -26,13 +26,6 @@
 import sys
 import types
 
-def updateToClass(obj,nclass,transformer=None):
-    """Updates a given object to a given class. If a trasformer is given
-    in argument, applies it to the object""" 
-    obj.__class__ = nclass 
-    if transformer != None:
-        transformer(obj)
-
 def generateMixinUser(class1,*mixins):
     """Creates a class based on the given class and the given mixins"""
     class MixinUser(class1):
@@ -40,6 +33,11 @@ def generateMixinUser(class1,*mixins):
     MixinUser.__bases__ = mixins+(class1,)
     return MixinUser
 
+########################
+# Low level mechanisms #
+########################
+
+#Update.apply
 def applyMixinToObject(obj,*mixins):
     """Applies the given mixins to the given object"""
     class NewClass(type(obj)):
@@ -47,16 +45,26 @@ def applyMixinToObject(obj,*mixins):
     NewClass.__bases__ = mixins+(type(obj),)
     obj.__class__ = NewClass
 
+#Update.apply
+def updateToClass(obj,cls,nclass,transformer=None):
+    """Updates a given object to a given class. If a trasformer is given
+    in argument, applies it to the object"""
+    if cls == None or obj.__class__ == cls:
+        obj.__class__ = nclass
+    if transformer != None:
+        transformer(obj)
+
+#Update.apply
 def addFieldToClass(cls,name,field):
     """Adds the given field to the given class under the given name"""
     setattr(cls,name,field)
 
+#Update.apply
 def addMethodToClass(cls,name,method):
     """Adds a method to the given class and binds it to the class"""
     setattr(cls,name,method)
 
-    
-
+#Update.apply
 def redefineClass(module,tclass,nclass):
     """redfefines a given class from a given module so it is equals to a new class""" 
     tname = tclass.__name__
