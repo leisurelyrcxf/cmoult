@@ -45,22 +45,66 @@ class UpdateDefinitionError(Exception):
 
 
 class Update(object):
-    def __init__(self,name=None):
-        self.applied = False
+    def __init__(self,name=None,*threads):
         self.manager = None
         self.name = name
+        self.threads = list(threads)
 
-    def requirements(self):
-        raise UpdateDefinitionError("You should define your own Update-based class")
+    def check_requirements(self):
+        """Function for checking if the requirements for the update are met (must return a bool)"""
+        #By default, no requirement is needed
+        return True
         
-    def alterability(self):
+    def preupdate_setup(self):
+        """Setup step that happens before waiting for alterability"""
+        #By default, no setup needed
+        pass
+        
+    def wait_alterability(self):
+        """Function that returns when we are in alterability state. Used in
+        threaded managers"""
+        raise UpdateDefinitionError("You should define your own Update-based class")
+
+    def check_alterability(self):
+        """Function that can be called to check if the alterability criterion
+        are met (must return a bool). Used in non threaded managers"""
         raise UpdateDefinitionError("You should define your own Update-based class")
 
     def apply(self):
+        """The actual update step, happens when alterabilty is reached"""
         raise UpdateDefinitionError("You should define your own Update-based class")
+
+    def preresume_setup(self):
+        """Setup step that happens after the update was applied, before resuming execution"""
+        #By default, no setup needed
+        pass
     
-    def over(self):
-        raise UpdateDefinitionError("You should define your own Update-based class")
+    def wait_over(self):
+        """function that returns when the update is over. Used in threaded
+        managers."""
+        #In most cases, the update is finished when apply ends
+        pass
+
+    def check_over(self):
+        """Function that can be called to check if the update is over (must
+        return a bool). Used in non-threaded managers."""
+        #In most cases, the update is finished when apply ends
+        return True
+    
+
+    def cleanup(self):
+        """Cleanup step that happens when the update is over"""
+        #By default, no cleanup is needed
+        pass
+
+    def pause_hook(self):
+        """Hook executed when pausing threads"""
+        pass
+
+    def resume_hook(self):
+        """Hook executed when resume threads"""
+        pass
+
 
     
 class SafeRedefineUpdate(Update):
