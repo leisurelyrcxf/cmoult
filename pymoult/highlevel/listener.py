@@ -89,6 +89,7 @@ class Listener(threading.Thread):
     def run(self):
         """Main loop of the thread, opens the socket and parses the commands"""
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((self.hostname,self.port))
         s.listen(Max_queued_connect)
         while self.keep_running:
