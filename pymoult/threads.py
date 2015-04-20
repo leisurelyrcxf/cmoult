@@ -45,9 +45,9 @@ class DSU_Thread(threading.Thread):
         """Constructor. Takes classic thread arguments"""
         super(DSU_Thread,self).__init__(group=group,name=name,args=args,kwargs=kwargs)
         self.__main = target
-        self.stoped = False
+        self.stopped = False
         self.sleeping_continuation = None
-        self.sleeping_continuation_fonction = None
+        self.sleeping_continuation_function = None
         self.active_update_function = None
         self.active = active
         self.last_update_point = None
@@ -65,9 +65,9 @@ class DSU_Thread(threading.Thread):
         """
         #we switch at once to continue with main
         continuation.switch()
-        while not self.stoped:
-            if self.sleeping_continuation_fonction != None:
-                self.sleeping_continuation_fonction()
+        while not self.stopped:
+            if self.sleeping_continuation_function != None:
+                self.sleeping_continuation_function()
             continuation.switch()
 
     def run(self):
@@ -75,7 +75,7 @@ class DSU_Thread(threading.Thread):
         c = continulet(self.execute_sleeping_continuation)
         c.switch()
         self.sleeping_continuation = c
-        while not self.stoped:
+        while not self.stopped:
             try:
                 self.main()
             except RebootException as r:
@@ -84,7 +84,7 @@ class DSU_Thread(threading.Thread):
 	
     def stop(self):
         """Stops the thread (will disable recalling main when rebooted)"""
-        self.stoped = not self.stoped
+        self.stopped = not self.stopped
                 
     def switch(self):
         """Switch to the sleeping continuation"""
@@ -101,7 +101,8 @@ class DSU_Thread(threading.Thread):
         else:
             if hasattr(self,"static_point_event"):
                 self.static_point_event.set()
-                self.pause_event.wait()
+                if hasattr(self,"pause_event"):
+                    self.pause_event.wait()
 
     def main(self):
         if self.__main:
