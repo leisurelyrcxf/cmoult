@@ -37,6 +37,17 @@ def isApplied(update):
     listener = get_app_listener()
     return update in listener.applied_updates
 
+def getUpdateWaitValues():
+    """If the caller is being called from a "wait_alterability" method of
+    an update, returns the values of that update's "max_tries" and
+    "sleep_time" attributes. Else, we return default values"""
+    caller = inspect.getouterframes(inspect.currentframe())[2]
+    if caller[3] == "wait_alterability" or caller[3] == "preupdate_setup":
+        update = inspect.getargvalues(caller[0])[3]['self']
+        if type(update) == Update:
+            return (update.max_tries,update.sleep_time)
+    return (10,2)
+
 class UpdateDefinitionError(Exception):
     """Exception raised when using an Update interface"""
     def __init__(self,message):
@@ -45,10 +56,12 @@ class UpdateDefinitionError(Exception):
 
 
 class Update(object):
-    def __init__(self,name=None,*threads):
+    def __init__(self,name=None,threads=[]):
         self.manager = None
         self.name = name
-        self.threads = list(threads)
+        self.threads = threads
+        self.max_tries = 10 #Number of attempt for detecting alterability
+        self.sleep_time = 2 #Sleep time used between state checks (for alterability, over, ...)
 
     def check_requirements(self):
         """Function for checking if the requirements for the update are met (must return a bool)"""
@@ -62,18 +75,27 @@ class Update(object):
         
     def wait_alterability(self):
         """Function that returns when we are in alterability state. Used in
-        threaded managers"""
+        threaded managers. Must return True if alterability was met,
+        False if it could not be met (aborted alterability
+        detection). This function may suspend threads when alterability is reached."""
         raise UpdateDefinitionError("You should define your own Update-based class")
 
     def check_alterability(self):
         """Function that can be called to check if the alterability criterion
-        are met (must return a bool). Used in non threaded managers"""
+        are met (must return a bool). Used in non threaded
+        managers. This function may suspend threads when alterability
+        is reached."""
         raise UpdateDefinitionError("You should define your own Update-based class")
 
+    def clean_failed_alterability(self):
+        """Function called for cleaning up preupdate_setup when the
+        alterability can not be met and the update is postponed"""
+        pass
+        
     def apply(self):
         """The actual update step, happens when alterabilty is reached"""
         raise UpdateDefinitionError("You should define your own Update-based class")
-
+    
     def preresume_setup(self):
         """Setup step that happens after the update was applied, before resuming execution"""
         #By default, no setup needed
@@ -90,7 +112,6 @@ class Update(object):
         return a bool). Used in non-threaded managers."""
         #In most cases, the update is finished when apply ends
         return True
-    
 
     def cleanup(self):
         """Cleanup step that happens when the update is over"""
@@ -108,25 +129,36 @@ class Update(object):
 
     
 class SafeRedefineUpdate(Update):
-    def __init__(self,module,function,new_function,name=None):
+    def __init__(self,module,function,new_function,name=None,threads=[]):
         self.module = module
         self.function = function
         self.new_function = new_function
-        super(SafeRedefineUpdate,self).__init__(name=name)
+        super(SafeRedefineUpdate,self).__init__(name=name,threads=threads)
 
-    def requirements(self):
-        return True
-        
-    def alterability(self):
-        return not isFunctionInAnyStack(self.function,threads=self.manager.threads)
-        
+    def wait_alterability(self):
+        return waitQuiescenceOfFunction(self.module,self.function)
+
+    def check_alterability(self):
+        if hasattr(self.manager,"threads") and type(self.manager.threads) == list:
+            self.manager.pause_threads()
+            if not isFunctionInAnyStack(self.function,self.manager.threads):
+                return True
+            else:
+                self.manager.resume_threads()
+                return False
+        elif self.threads != []:
+            self.manager.pause_threads()
+            if not isFunctionInAnyStack(self.function,self.threads):
+                return True
+            else:
+                self.manager.resume_threads()
+                return False
+        else:
+            print("Warning, Using safe redefinition when no threads to watch are specified!")
 
     def apply(self):
         redefineFunction(self.module,self.function,self.new_function)
 
-    def over(self):
-        return True
-    
 class EagerConversionUpdate(Update):
     def __init__(self,cls,new_cls,transformer,name=None):
         self.cls = cls
@@ -137,18 +169,14 @@ class EagerConversionUpdate(Update):
     def object_update(self,obj):
         updateToClass(obj,self.cls,self.new_cls,self.transformer)
         
-    def requirements(self):
+    def wait_alterability(self):
         return True
 
-    def alterability(self):
+    def check_alterability(self):
         return True
 
     def apply(self):
         startEagerUpdate(self.cls,self.object_update)
-
-    def over(self):
-        return True
-
 
 class LazyConversionUpdate(Update):
     def __init__(self,cls,new_cls,transformer,name=None):
@@ -160,18 +188,15 @@ class LazyConversionUpdate(Update):
     def object_update(self,obj):
         updateToClass(obj,self.cls,self.new_cls,self.transformer)
 
-    def requirements(self):
+    def wait_alterability(self):
         return True
 
-    def alterability(self):
+    def check_alterability(self):
         return True
 
     def apply(self):
-        setLazyUpdate(self.cls,self.object_update)
+        sartLazyUpdate(self.cls,self.object_update)
 
-    def over(self):
-        return True
-        
 
 class ThreadRebootUpdate(Update):
     def __init__(self,thread,new_main,new_args,name=None):
@@ -183,36 +208,33 @@ class ThreadRebootUpdate(Update):
         self.new_args = new_args
         super(ThreadRebootUpdate,self).__init__(name=name)
 
-    def requirements(self):
+    def wait_alterability(self):
         return True
 
-    def alterability(self):
+    def check_alterability(self):
         return True
     
     def apply(self):
-        resumeThread(self.thread)
+        #First, change the "main" function of the thread
         switchMain(self.thread,self.new_main,args=self.new_args)
+        #Then, resume the thread before restarting it
+        resumeThread(self.thread)
         resetThread(self.thread)
 
-    def over(self):
-        return True
-
-
+        
 class HeapTraversalUpdate(Update):
     def __init__(self,walker,modules=["__main__"],name=None):
         self.walker = walker
         self.modules = modules
         super(HeapTraversalUpdate,self).__init__(name=name)
 
-    def requirements(self):
+    def wait_alterability(self):
         return True
 
-    def alterability(self):
+    def check_alterability(self):
         return True
 
     def apply(self):
         traverseHeap(self.walker,self.modules)
         
-    def over(self):
-        return True
     

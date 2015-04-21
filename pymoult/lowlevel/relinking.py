@@ -58,10 +58,17 @@ def proxify(obj):
     """Returns a proxy to the given object"""
     return ProxyManager(obj).generate()
 
+
+########################
+# Low level mechanisms #
+########################
+
+#Update.apply
 def rerouteProxy(proxy,obj):
     """Reroutes the given proxy so that it targets the given object"""
     return proxy.proxy_controller.reroute(obj)
 
+#Update.apply
 def redefineFunction(module,tfunction,nfunction):
     """Redefines a given function from a given module so that it is eaqual
     to the given new one"""
