@@ -37,16 +37,6 @@ def isApplied(update):
     listener = get_app_listener()
     return update in listener.applied_updates
 
-def getUpdateWaitValues():
-    """If the caller is being called from a "wait_alterability" method of
-    an update, returns the values of that update's "max_tries" and
-    "sleep_time" attributes. Else, we return default values"""
-    caller = inspect.getouterframes(inspect.currentframe())[2]
-    if caller[3] == "wait_alterability" or caller[3] == "preupdate_setup":
-        update = inspect.getargvalues(caller[0])[3]['self']
-        if type(update) == Update:
-            return (update.max_tries,update.sleep_time)
-    return (10,2)
 
 class UpdateDefinitionError(Exception):
     """Exception raised when using an Update interface"""
@@ -136,7 +126,7 @@ class SafeRedefineUpdate(Update):
         super(SafeRedefineUpdate,self).__init__(name=name,threads=threads)
 
     def wait_alterability(self):
-        return waitQuiescenceOfFunction(self.module,self.function)
+        return waitQuiescenceOfFunction(self.function)
 
     def check_alterability(self):
         if hasattr(self.manager,"threads") and type(self.manager.threads) == list:

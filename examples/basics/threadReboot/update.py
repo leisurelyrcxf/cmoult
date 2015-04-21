@@ -1,7 +1,8 @@
+
 #parsed
 
 from pymoult.highlevel.updates import ThreadRebootUpdate
-from pymoult.lowlevel.alterability import waitStaticPoints
+from pymoult.lowlevel.alterability import waitStaticPoints,setupWaitStaticPoints,cleanFailedStaticPoints
 from pymoult.lowlevel.stack import resumeThread
 import sys
 import time
@@ -20,17 +21,16 @@ def new_main():
 
 
 class CustomUpdate(ThreadRebootUpdate):
-
-    def alterability(self):
-        waitStaticPoints([main.thread])
-        return True
-
-    def over(self):
-        resumeThread(self.thread)
-        return True
+    def preupdate_setup(self):
+        setupWaitStaticPoints([main.thread])
 
 
-        
+    def wait_alterability(self):
+        return waitStaticPoints([main.thread])
+
+    def clean_failed_alterability(self):
+        cleanFailedStaticPoints([main.thread])
+
 update = CustomUpdate(main.thread,new_main,[])
 main.manager.add_update(update)
 

@@ -231,13 +231,12 @@ def create_new_do_GET(webserver):
 #We will wait for the main_thread to reach that update point
 
 class WebServerUpdate(Update):
-    def requirements(self):
-        return True
-    def alterability(self):
-        #The static point has been reached !!!
-        #Let's continue the update
-        waitStaticPoints([main.main_thread])
-        return True
+    def preupdate_setup(self):
+        setupWaitStaticPoints([main.main_thread])
+    
+    def wait_alterability(self):
+        return waitStaticPoints([main.main_thread])
+
     def apply(self):
         #To update the addSession method of the webserver, we need to update the WebServer class
         updateToClass(self.manager.server,WebServerV2)
@@ -246,10 +245,10 @@ class WebServerUpdate(Update):
         #We create a new do_GET method using create_new_do_GET and set it to the handler class
         addFieldToClass(handler,"do_GET",create_new_do_GET(self.manager.server))
 
-    def over(self):
-        #We have finished the update, we need to resume the execution of the Thread
-        resumeThread(main.main_thread)
-        #Let's tell we finished the update
+    def clean_failed_alterability(self):
+        cleanFailedStaticPoints([main.main_thread])
+
+    def cleanup(self):
         print("UPDATE COMPLETE")
         return True
 

@@ -34,7 +34,7 @@ from pymoult.highlevel.updates import Update
 
 class BaseManager(object):
     def __init__(self,*threads):
-        self.threads=threads
+        self.threads=list(threads)
         self.updates = []
         self.current_update = None
 
@@ -148,7 +148,7 @@ class ThreadedManager(BaseManager,threading.Thread):
         self.sleepTime = sleepTime
 
     def sleep(self):
-        time.sleepTime(self.sleepTime)
+        time.sleep(self.sleepTime)
         
     def add_update(self,update):
         super(ThreadedManager,self).add_update(update)

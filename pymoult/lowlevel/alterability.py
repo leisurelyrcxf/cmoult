@@ -24,12 +24,24 @@
 
 from pymoult.lowlevel.stack import resumeThread,suspendThread
 from pymoult.lowlevel.relinking import redefineFunction
-from pymoult.highlevel.update import getUpdateWaitValues
 import threading
 import inspect
 import time
 import sys
 import inspect
+
+
+#Getting values form an update object by inspecting the stack
+def getUpdateWaitValues():
+    """If the caller is being called from a "wait_alterability" method of
+    an update, returns the values of that update's "max_tries" and
+    "sleep_time" attributes. Else, we return default values"""
+    caller = inspect.getouterframes(inspect.currentframe())[2]
+    if caller[3] == "wait_alterability" or caller[3] == "preupdate_setup":
+        update = inspect.getargvalues(caller[0])[3]['self']
+        return (update.max_tries,update.sleep_time)
+    return (10,2)
+
 
 ##############################
 # Tools for inspecting stack #
@@ -92,7 +104,7 @@ def waitQuiescenceOfFunction(func,threads=None):
         stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
         for stack in stacks:
-            finstack = alterable or checkFinStack(func,stack)
+            finstack = finstack or checkFinStack(func,stack)
         #If function is not in the stack, we return
         if not finstack:
             return True
@@ -169,7 +181,7 @@ def staticUpdatePoint(name=None):
     thread.start_update()
 
 #Update.preupdate_setup
-def setupWaitStaticPoint(threads):
+def setupWaitStaticPoints(threads):
     max_try,sleep_time = getUpdateWaitValues()
     timeout = max_try*sleep_time
     for thread in threads:
@@ -190,7 +202,7 @@ def waitStaticPoints(threads):
     return reached
 
 #Update.check_alterability
-def CheckStaticPointReached(threads):
+def checkStaticPointsReached(threads):
     for thread in threads:
         if not thread.static_point_event._Event_flag:
             return False
@@ -199,7 +211,7 @@ def CheckStaticPointReached(threads):
     return True
 
 #Update.clean_failed_alterability
-def CleanFailedStaticPoint(threads):
+def cleanFailedStaticPoints(threads):
     #Threads may have been suspended, so we need them to resume.  If
     #the thread had a pause_event be never reached the point,
     #resumeThread will still clean it up
