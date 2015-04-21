@@ -24,13 +24,12 @@
 
 from pymoult.lowlevel.stack import resumeThread,suspendThread
 from pymoult.lowlevel.relinking import redefineFunction
+from pymoult.highlevel.update import getUpdateWaitValues
 import threading
 import inspect
 import time
 import sys
-
-SLEEP_TIME = 5 #Time for sleeping before checking alterabilty again
-WAIT_LIMIT = 10 #Number of alterability check done before failing
+import inspect
 
 ##############################
 # Tools for inspecting stack #
@@ -77,38 +76,41 @@ def waitQuiescenceOfFunction(func,threads=None):
        the stack of any threads (or any of the given threads if the
        threads argument is not None). This function suspends
        threads. Returns True when alterability is reached, returns False if not."""
-    alerable = False
-    for x in range(WAIT_LIMIT):
-        if threads is None:
-            threads = threading.enumerate()
-            #remove the current thread from the list of threads to be suspended
-            threads.remove(threading.currentThread())
-            stacks = get_current_frames().values()
-        else:
-            stacks = [get_current_frames()[t.ident] for t in threads]
+    #If we are called in a wait_alterability method, we get the
+    #max_tries and sleep_times attributes of the update object.
+    max_tries, sleep_time = getUpdateWaitValues()
+    finstack = False
+    if threads is None:
+        threads = threading.enumerate()
+        #remove the current thread from the list of threads to be suspended
+        threads.remove(threading.currentThread())
+    for x in range(max_tries):
         #We suspend all threads
         for t in threads:
             suspendThread(t)
+        #Then we capture the stacks
+        stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
         for stack in stacks:
-            alterable = alterable or checkFinStack(func,stack)
-            alterable = not alterable
-        #If we are alterable, we return
-        if alterable:
+            finstack = alterable or checkFinStack(func,stack)
+        #If function is not in the stack, we return
+        if not finstack:
             return True
         else:
             #We resume the threads
             for t in threads:
                 resumeThread(t)
-        time.sleep(SLEEP_TIME)
+        time.sleep(sleep_time)
     return False
 
 
-#Force Quiescence, the three functions are needed (preupdate,alterability,preresume)
+#Force Quiescence
 
 #Update.preupdate_setup
 def setupForceQuiescence(module,function):
-    quiescent = threading.Event()
+    max_tries,sleep_time = getUpdateWaitValues()
+    timeout = max_tries*sleep_time
+    quiescent = threading.Event(timeout)
     quiescent.clear()
     can_continue = threading.Event()
     can_continue.clear()
@@ -119,18 +121,23 @@ def setupForceQuiescence(module,function):
             return function(*args,**kwargs)
         can_continue.wait()
         return getattr(module,function.__name__)(*args,**kwargs)
-    def watch():
-        while isFunctionInAnyStack(function):
-            time.sleep(SLEEP_TIME)
-        quiescent.set()
-    watcher = threading.Thread(name=function.__name__+" watcher",target=watch)
+    class QuiescenceWatcher(threading.Thread):
+        def __init__(self):
+            self.watching = True
+            super(ForceQuiescenceWatcher,self).__init__(self,name=function.__name__+" watcher")
+
+        def run(self):
+            while self.watching and isFunctionInAnyStack(function):
+                time.sleep(sleep_time)
+            quiescent.set()
+    watcher = QuiescenceWatcher(name=function.__name__+" watcher")
     redefineFunction(module,function,stub)
     watcher.start()
-    return quiescent,can_continue
+    return quiescent,can_continue,watcher
 
 #Update.wait_alterability
 def waitForceQuiescence(quiescent):
-    quiescent.wait()
+    return quiescent.wait()
 
 #Update.check_alterability
 def checkForceQuiescence(quiescent):
@@ -140,6 +147,16 @@ def checkForceQuiescence(quiescent):
 def cleanForceQuiescence(can_continue):
     can_continue.set()
 
+#Update.clean_failed_alterability
+def cleanFailedForceQuiescence(can_continue,watcher,module,function):
+    """cleans up if failed to force quiescence. Function is the original
+    function"""
+    #First we stop the watcher
+    watcher.watching = False
+    #Then we switch back the the function to remove the stub
+    redefineFunction(module,function,function)
+    #Now, we can makeevryone leave the stub
+    can_continue.set()
 
 ########################
 # Static Update Points #
@@ -153,18 +170,24 @@ def staticUpdatePoint(name=None):
 
 #Update.preupdate_setup
 def setupWaitStaticPoint(threads):
+    max_try,sleep_time = getUpdateWaitValues()
+    timeout = max_try*sleep_time
     for thread in threads:
         thread.pause_event = threading.Event()
         thread.pause_event.clear()
-        thread.static_point_event = threading.Event()
+        thread.static_point_event = threading.Event(timeout)
         thread.static_point_event.clear()
     
 #Update.wait_alterability    
 def waitStaticPoints(threads):
     """Takes a list of threads as arguments. wait for each of them to reach a static point"""
+    #boolean that will be true if the static point has been reached,
+    #false if we timed-out
+    reached = True
     for thread in threads:
-        thread.static_point_event.wait()
+        reached = reached and thread.static_point_event.wait()
         delattr(thread,"static_point_event")
+    return reached
 
 #Update.check_alterability
 def CheckStaticPointReached(threads):
@@ -174,4 +197,16 @@ def CheckStaticPointReached(threads):
     for thread in threads:
         delattr(thread,"static_point_event")
     return True
-            
+
+#Update.clean_failed_alterability
+def CleanFailedStaticPoint(threads):
+    #Threads may have been suspended, so we need them to resume.  If
+    #the thread had a pause_event be never reached the point,
+    #resumeThread will still clean it up
+    for t in threads:
+        #First, we delete the static_point_event too
+        delattr(t,"static_point_event")
+        resumeThread(t)
+        
+
+
