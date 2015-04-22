@@ -51,12 +51,21 @@ class Update(object):
         self.name = name
         self.threads = threads
         self.max_tries = 10 #Number of attempt for detecting alterability
-        self.sleep_time = 2 #Sleep time used between state checks (for alterability, over, ...)
+        self.sleep_time = 0.1 #Sleep time used between state checks (for alterability, over, ...)
 
+    def set_max_tries(self,max_tries):
+        self.max_tries = max_tries
+
+    def set_sleep_time(self,sleep_time):
+        self.sleep_time = sleep_time
+        
     def check_requirements(self):
-        """Function for checking if the requirements for the update are met (must return a bool)"""
+        """Function for checking if the requirements for the update are
+        met. Must return either "yes" (the requirementsare met), "no" (the 
+        requirements are never met) or "never" (the requirements will never be
+        met)."""
         #By default, no requirement is needed
-        return True
+        return "yes"
         
     def preupdate_setup(self):
         """Setup step that happens before waiting for alterability"""
@@ -185,7 +194,7 @@ class LazyConversionUpdate(Update):
         return True
 
     def apply(self):
-        sartLazyUpdate(self.cls,self.object_update)
+        startLazyUpdate(self.cls,self.object_update)
 
 
 class ThreadRebootUpdate(Update):

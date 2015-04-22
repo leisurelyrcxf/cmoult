@@ -36,13 +36,16 @@ import inspect
 from _continuation import continulet
 import os
 import imp
+import time
+
 
 Listener_port = 4242
 Max_recieve = 9999
 Invoke_message = "update"
 Max_queued_connect = 5
 Parsed_header = "#parsed"
-
+log_path = "."
+log_level = 0 #0 no log, 1 only error logs, 2 everything
 
 app_listener = None
 
@@ -82,10 +85,29 @@ class Listener(threading.Thread):
                 self.update_thread_index+=1
             else:
                 #Parse the file to get the update function
-                print("Error : the update module supplied does not start with " + Parsed_header)
+                log(1,"Error : the update module supplied does not start with " + Parsed_header)
         else:
-            print("Error : the update module supplied was not found")
-                
+            log(1,"Error : the update module supplied was not found")
+
+    def set_logpath(self,path):
+        global log_path
+        if os.path.exists(path):
+            log_path = path
+        else:
+            log(1, "could not set log path : path "+path+" does not exist")
+        
+    def set_loglevel(self,loglevel):
+        global log_level
+        try :
+            nloglevel = int(loglevel)
+        except ValueError:
+            log(1,"could not set log level to a not-int value")
+        if nloglevel > 2 or nloglevel < 0:
+            log(1, "could not set log level to a value greater than 2 or lower than 0")
+        else:
+            log_level = nloglevel
+            
+            
     def run(self):
         """Main loop of the thread, opens the socket and parses the commands"""
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -98,7 +120,21 @@ class Listener(threading.Thread):
             if data.strip()[0:len(Invoke_message)] == Invoke_message:
                 update_address = data.strip()[len(Invoke_message)+1:]
                 self.start_update(update_address)
-                data = ""
-                conn.close()
+            elif data.strip()[0:11] == "set logpath":
+                logpath = data.strip()[12:]
+                self.set_logpath(logpath)
+            elif data.strip()[0:12] == "set loglevel":
+                loglevel = data.strip()[13:]
+                self.set_loglevel(loglevel)
+            data = ""
+            conn.close()
 
 
+def log(level,message):
+    #TODO : checkout the logging module
+    if level <= log_level:
+        logfile = open(os.path.join(log_path,"pymoult.log"),"a")
+        header = time.strftime("[%m/%d,%Hh%m:%S] ")
+        logfile.write(header+message+"\n")
+        logfile.close()
+    
