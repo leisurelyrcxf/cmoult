@@ -2,7 +2,7 @@
 
 from pymoult.highlevel.managers import ThreadedManager
 from pymoult.highlevel.updates import Update
-from pymoult.lowlevel.alterability import isFunctionInAnyStack
+from pymoult.lowlevel.alterability import waitQuiescenceOfFunction
 from pymoult.lowlevel.data_update import addMethodToClass
 import threading
 import sys
@@ -39,24 +39,21 @@ def getTrainThreads():
     return threads
 
 
-manager = ThreadedManager(*getTrainThreads())
+manager = ThreadedManager(name="GlobalManager",threads=getTrainThreads())
 manager.start()
 
 class TrainUpdate(Update):
-    def requirements(self):
-        return True
-    def alterability(self):
+    def wait_alterability(self):
         return True
     def apply(self):
         for train in self.manager.threads:
             train.direction = "right"
         addMethodToClass(main.Train,"__int__",newTrainInit)
         addMethodToClass(main.Train,"switch_direction",switch_direction)
-    def over(self):
+    def cleanup(self):
         print("Trains sucessfully updated")
-        return True
 
-manager.add_update(TrainUpdate())
+manager.add_update(TrainUpdate(name="Trains"))
 
 class SafeMethodUpdate(Update):
     def __init__(self,cls,method,nmethod,name=None):
@@ -64,15 +61,12 @@ class SafeMethodUpdate(Update):
         self.method = method
         self.nmethod = nmethod
         super(SafeMethodUpdate,self).__init__(name=name)
-    def requirements(self):
-        return True
-    def alterability(self):
-        return not isFunctionInAnyStack(self.method)
+    def wait_alterability(self):
+        return waitQuiescenceOfFunction(self.method)
     def apply(self):
         addMethodToClass(self.cls,self.method.__name__,self.nmethod)
-    def over(self):
+    def cleanup(self):
         print("Method "+self.method.__name__+" of class "+self.cls.__name__+" updated")
-        print(getattr(self.cls,self.method.__name__))
         return True
 
 railClass = sys.modules["__main__"].Rail
@@ -159,14 +153,14 @@ def new_Station_move_next(self,train):
 #We need to update Rail.can_enter before allowing for trains to switch direction
 #If we don't, the old version of Rail.can_enter may be executed and allow an accident!!
 
-railUpdate = SafeMethodUpdate(railClass,railClass.can_enter,new_Rail_can_enter)
+railUpdate = SafeMethodUpdate(railClass,railClass.can_enter,new_Rail_can_enter,name="Rail")
 manager.add_update(railUpdate)
 
-elementUpdate1 = SafeMethodUpdate(elementClass,elementClass.next,new_Element_next)
+elementUpdate1 = SafeMethodUpdate(elementClass,elementClass.next,new_Element_next,name="Element1")
 manager.add_update(elementUpdate1)
-elementUpdate2 = SafeMethodUpdate(elementClass,elementClass.previous,new_Element_previous)
+elementUpdate2 = SafeMethodUpdate(elementClass,elementClass.previous,new_Element_previous,name="Element2")
 manager.add_update(elementUpdate2)
-stationUpdate = SafeMethodUpdate(stationClass,stationClass.move_next,new_Station_move_next)
+stationUpdate = SafeMethodUpdate(stationClass,stationClass.move_next,new_Station_move_next,"Station")
 manager.add_update(stationUpdate)
 
 
