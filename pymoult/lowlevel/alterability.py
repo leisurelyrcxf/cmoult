@@ -127,9 +127,7 @@ def resumeSuspendedThreads(threads=[]):
 
 #Update.preupdate_setup
 def setupForceQuiescence(module,function):
-    max_tries,sleep_time = getUpdateWaitValues()
-    timeout = max_tries*sleep_time
-    quiescent = threading.Event(timeout)
+    quiescent = threading.Event()
     quiescent.clear()
     can_continue = threading.Event()
     can_continue.clear()
@@ -143,20 +141,23 @@ def setupForceQuiescence(module,function):
     class QuiescenceWatcher(threading.Thread):
         def __init__(self):
             self.watching = True
-            super(ForceQuiescenceWatcher,self).__init__(self,name=function.__name_+" watcher")
+            super(QuiescenceWatcher,self).__init__()
+            self.name=function.__name__+" watcher"
 
         def run(self):
             while self.watching and isFunctionInAnyStack(function):
                 time.sleep(sleep_time)
             quiescent.set()
-    watcher = QuiescenceWatcher(name=function.__name__+" watcher")
+    watcher = QuiescenceWatcher()
     redefineFunction(module,function,stub)
     watcher.start()
     return quiescent,can_continue,watcher
 
 #Update.wait_alterability
 def waitForceQuiescence(quiescent):
-    return quiescent.wait()
+    max_tries,sleep_time = getUpdateWaitValues()
+    timeout = max_tries*sleep_time
+    return quiescent.wait(timeout)
 
 #Update.check_alterability
 def checkForceQuiescence(quiescent):
@@ -189,12 +190,10 @@ def staticUpdatePoint(name=None):
 
 #Update.preupdate_setup
 def setupWaitStaticPoints(threads):
-    max_try,sleep_time = getUpdateWaitValues()
-    timeout = max_try*sleep_time
     for thread in threads:
         thread.pause_event = threading.Event()
         thread.pause_event.clear()
-        thread.static_point_event = threading.Event(timeout)
+        thread.static_point_event = threading.Event()
         thread.static_point_event.clear()
     
 #Update.wait_alterability    
@@ -202,11 +201,14 @@ def waitStaticPoints(threads):
     """Takes a list of threads as arguments. wait for each of them to reach a static point"""
     #boolean that will be true if the static point has been reached,
     #false if we timed-out
-    reached = True
+    max_try,sleep_time = getUpdateWaitValues()
+    timeout = max_try*sleep_time
     for thread in threads:
-        reached = reached and thread.static_point_event.wait()
-        delattr(thread,"static_point_event")
-    return reached
+        if thread.static_point_event.wait(timeout):
+            delattr(thread,"static_point_event")
+        else:
+            return False
+    return True
 
 #Update.check_alterability
 def checkStaticPointsReached(threads):
@@ -226,3 +228,11 @@ def cleanFailedStaticPoints(threads):
         #First, we delete the static_point_event too
         delattr(t,"static_point_event")
         resumeThread(t)
+
+#Update.resume_hook
+#resumeSuspendedThreads
+
+#If the threads supplied in setupWaitStaticPoints were not included in
+#the threads handled by the manager or the update, they need to be
+#resumed at that point. So the resumeSuspendedThreads function should
+#be used in Update.resume_hook
