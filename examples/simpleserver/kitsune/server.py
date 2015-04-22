@@ -158,5 +158,5 @@ if __name__ == "__main__":
     main_thread = DSU_Thread(name="main thread",target=main_loop)
     print("Starting server")
     main_thread.start()
-    manager = ThreadedManager(main_thread)
+    manager = ThreadedManager(threads=[main_thread])
     manager.start()
