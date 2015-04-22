@@ -137,7 +137,7 @@ def log(level,message):
     #TODO : checkout the logging module
     if level <= log_level:
         logfile = open(os.path.join(log_path,"pymoult.log"),"a")
-        header = time.strftime("[%m/%d,%Hh%M:%S] ")
+        header = time.strftime("[%m/%d,%Hh%M:%S]\t")
         logfile.write(header+message+"\n")
         logfile.close()
     
