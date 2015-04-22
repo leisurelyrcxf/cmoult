@@ -1,6 +1,7 @@
 #parsed
 
-from pymoult.highlevel.updates import LazyConversionUpdate
+from pymoult.highlevel.updates import EagerConversionUpdate
+from pymoult.highlevel.listener import log
 import sys
 
 main = sys.modules["__main__"]
@@ -12,8 +13,8 @@ class ItemV2(object):
         self.commentary = commentary
 
     def display(self):
-        print("An item named "+self.name+" of color "+self.color)
-        print("Its labels says : "+self.commentary)
+        log(0,"An item named "+self.name+" of color "+self.color)
+        log(0,"Its labels says : "+self.commentary)
     
     def change(self,color):
         self.color = color
@@ -28,7 +29,7 @@ def transformer(obj):
         obj.commentary = mapping[obj.name]
 
 
-update = LazyConversionUpdate(main.Item,ItemV2,transformer)
+update = EagerConversionUpdate(main.Item,ItemV2,transformer,name="items")
 main.manager.add_update(update)
 
 

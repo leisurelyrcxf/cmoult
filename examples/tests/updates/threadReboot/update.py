@@ -1,9 +1,9 @@
-
 #parsed
 
 from pymoult.highlevel.updates import ThreadRebootUpdate
 from pymoult.lowlevel.alterability import waitStaticPoints,setupWaitStaticPoints,cleanFailedStaticPoints
-from pymoult.lowlevel.stack import resumeThread
+from pymoult.highlevel.listener import log
+from threading import current_thread
 import sys
 import time
 
@@ -11,19 +11,21 @@ import time
 main = sys.modules["__main__"]
 
 
-def say_hi():
-    print("hi")
+def func_v2():
+    log(0,"v2")
 
 def new_main():
-    while True:
-        time.sleep(2)
-        say_hi()
+    #We want the thread to run only once.
+    current_thread().stop()
+    for x in range(2):
+        time.sleep(1)
+        func_v2()
+        
 
 
 class CustomUpdate(ThreadRebootUpdate):
     def preupdate_setup(self):
         setupWaitStaticPoints([main.thread])
-
 
     def wait_alterability(self):
         return waitStaticPoints([main.thread])
@@ -31,7 +33,7 @@ class CustomUpdate(ThreadRebootUpdate):
     def clean_failed_alterability(self):
         cleanFailedStaticPoints([main.thread])
 
-update = CustomUpdate(main.thread,new_main,[])
+update = CustomUpdate(main.thread,new_main,[],name="thread")
 main.manager.add_update(update)
 
 
