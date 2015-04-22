@@ -1,7 +1,7 @@
 #parsed
-from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate,Update
+from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate,Update,isApplied
 from pymoult.lowlevel.data_access import DataAccessor
-from pymoult.lowlevel.alterability import waitStaticPoints
+from pymoult.lowlevel.alterability import waitStaticPoints,setupWaitStaticPoints,cleanFailedStaticPoints
 from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
 from pymoult.lowlevel.stack import resumeThread
 import sys
@@ -58,9 +58,7 @@ notLogged = StaticPage("nlogged","Login failed","You are not logged in")
 #created before creating the webserver !!
 
 class WebServerStateUpdate(Update):
-    def requirements(self):
-        return True
-    def alterability(self):
+    def wait_alterability(self):
         return True
     def apply(self):
         da = DataAccessor(main.WebServer,strategy="immediate")
@@ -76,10 +74,8 @@ class WebServerStateUpdate(Update):
         #We add a users attribute to the server, containing the users
         #We add a new user "bob" with password "alice"
         self.manager.server.users = {"bob":User("bob","alice")}
-    def over(self):
-        return True
 
-serverUpdate1 = WebServerStateUpdate()
+serverUpdate1 = WebServerStateUpdate(name="WebServerState")
 main.manager.add_update(serverUpdate1)
 
 #Substep 2 :  modifiy the methods of the webserver
@@ -169,29 +165,35 @@ def create_new_do_GET(webserver):
 #We will wait for the main_thread to reach that update point
 
 class WebServerUpdate(Update):
-    def requirements(self):
-        return True
-    def alterability(self):
-        #The static point has been reached !!!
-        #Let's continue the update
-        waitStaticPoints([main.main_thread])
-        return True
+    def check_requirements(self):
+        #We want to have WebServerState update done
+        if isApplied("WebServerState"):
+            return "yes"
+        else:
+            return "no"
+    
+    def preupdate_setup(self):
+        setupWaitStaticPoints([main.main_thread])
+    
+    def wait_alterability(self):
+        return waitStaticPoints([main.main_thread])
+
     def apply(self):
         #To update the addSession method of the webserver, we need to update the WebServer class
-        updateToClass(self.manager.server,WebServerV2)
+        updateToClass(self.manager.server,main.WebServer,WebServerV2)
         #We need to change the do_GET method of the Handler class possesed by the server
         handler = self.manager.server.Handler
         #We create a new do_GET method using create_new_do_GET and set it to the handler class
         addFieldToClass(handler,"do_GET",create_new_do_GET(self.manager.server))
 
-    def over(self):
-        #We have finished the update, we need to resume the execution of the Thread
-        resumeThread(main.main_thread)
-        #Let's tell we finished the update
+    def clean_failed_alterability(self):
+        cleanFailedStaticPoints([main.main_thread])
+
+    def cleanup(self):
         print("UPDATE COMPLETE")
         return True
 
 
-webUpdate = WebServerUpdate()
+webUpdate = WebServerUpdate(name="WebServer")
 main.manager.add_update(webUpdate)
 
