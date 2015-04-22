@@ -135,7 +135,7 @@ class SafeRedefineUpdate(Update):
         super(SafeRedefineUpdate,self).__init__(name=name,threads=threads)
 
     def wait_alterability(self):
-        return waitQuiescenceOfFunction(self.function)
+        return waitQuiescenceOfFunction(self.function,threads=self.threads)
 
     def check_alterability(self):
         if hasattr(self.manager,"threads") and type(self.manager.threads) == list:
@@ -154,7 +154,10 @@ class SafeRedefineUpdate(Update):
                 return False
         else:
             print("Warning, Using safe redefinition when no threads to watch are specified!")
-
+    
+    def resume_hook(self):
+        resumeSuspendedThreads(threads=self.threads)
+        
     def apply(self):
         redefineFunction(self.module,self.function,self.new_function)
 

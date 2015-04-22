@@ -43,27 +43,27 @@ class BaseManager(object):
     def pause_threads(self):
         self.current_update.pause_hook()
         """suspends all threads managed by the manager"""
-        if hasattr(self,"threads") and type(self.threads) == list:
-            for t in self.threads:
+        if self.current_update.threads != []:
+            for t in self.current_update.threads:
                 suspendThread(t)
                 log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
-        else:
-            for t in self.current_update.threads:
+        elif hasattr(self,"threads") and type(self.threads) == list:
+            for t in self.threads:
                 suspendThread(t)
                 log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
 
     def resume_threads(self):
         self.current_update.resume_hook()
         """resume the execution of suspended managed threads"""
-        if hasattr(self,"threads") and type(self.threads) == list:
-            for t in self.threads:
-                resumeThread(t)
-                log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
-        else:
+        if self.current_update.threads != []:
             for t in self.current_update.threads:
                 resumeThread(t)
                 log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
-
+        elif hasattr(self,"threads") and type(self.threads) == list:
+            for t in self.threads:
+                resumeThread(t)
+                log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
+                
     def finish(self):
         """Adds the current update to the list of applied updates and cleans
         up for the next update"""
@@ -83,8 +83,9 @@ class BaseManager(object):
         log(2,"Adding update "+str(update.name)+" to Manager "+str(self.name)+" queue")
 
     def get_next_update(self):
-        self.current_update = self.updates.pop(0)
-        log(2,"Manager "+str(self.name)+" begining update "+str(self.current_update.name)) 
+        if self.current_update is None and len(self.updates) > 0:
+            self.current_update = self.updates.pop(0)
+            log(2,"Manager "+str(self.name)+" begining update "+str(self.current_update.name)) 
 
     def abort(self):
         """aborts the current update"""
@@ -112,8 +113,7 @@ class Manager(BaseManager):
         self.tried = 0
 
     def apply_next_update(self):
-        if self.current_update is None and len(self.updates) > 0:
-            self.get_next_update()
+        self.get_next_update()
         if self.current_update:
             #If we have not started the update yet, we need to setup
             #for alterabilty
@@ -139,7 +139,7 @@ class Manager(BaseManager):
                     self.current_update.apply()
                     #Setup before resuming threads
                     self.current_update.preresume_setup()
-                    self.resume_threads()
+                    #self.resume_threads()
                     self.current_applied = True
                 else:
                     self.tried+=1
@@ -165,11 +165,15 @@ class ThreadedManager(BaseManager,threading.Thread):
         self.invoked = threading.Event()
         self.current_update_over = threading.Event()
         self.sleepTime=1
-        self.stop = False
+        self.keep_running = True
         threading.Thread.__init__(self)
         BaseManager.__init__(self,name,threads)
 
-
+    def stop(self):
+        self.keep_running = False
+        #If we were waiting invoked,we need to set it
+        self.invoked.set()
+        
     def set_sleepTime(self,sleepTime):
         self.sleepTime = sleepTime
 
@@ -198,50 +202,50 @@ class ThreadedManager(BaseManager,threading.Thread):
         
     def run(self):
         """Life of the manager"""
-        while not self.stop:
+        while self.keep_running:
             #We wait until self.updates is not empty
             self.invoked.wait()
             self.get_next_update()
-            #now self.current_update is not None
-            req = self.current_update.check_requirements()
-            if req == "yes":
-                #If the requirements are met, we apply the update
-                self.current_update_over.clear()
-                #Setup before waiting alterability
-                self.current_update.preupdate_setup()
-                #Wait for alterability
-                if self.current_update.wait_alterability():
-                    log(2,"Alterabilty for update "+str(self.current_update.name)+" reached")
-                    #We have reached the alterability, we suspend the threads and apply
-                    self.pause_threads()
-                    self.current_update.apply()
-                    #Setup before resuming
-                    self.current_update.preresume_setup()
-                    self.resume_threads()
-                    self.current_update.wait_over()
-                    log(2,"Update "+str(self.current_update.name)+" over condition met")
-                    #The update is over, we can cleanup and call finish
-                    self.current_update.cleanup()
-                    self.finish()
-                else:
-                    #The alterability could not be met, so we postpone
-                    #the update after cleaning up
-                    self.current_update.clean_failed_alterability()
-                    log(1,"Alterability for update "+str(self.current_update.name)+" could not be reached. Update postponed")
+            if self.current_update:
+                #now self.current_update is not None
+                req = self.current_update.check_requirements()
+                if req == "yes":
+                    #If the requirements are met, we apply the update
+                    self.current_update_over.clear()
+                    #Setup before waiting alterability
+                    self.current_update.preupdate_setup()
+                    #Wait for alterability
+                    if self.current_update.wait_alterability():
+                        log(2,"Alterabilty for update "+str(self.current_update.name)+" reached")
+                        #We have reached the alterability, we suspend the threads and apply
+                        self.pause_threads()
+                        self.current_update.apply()
+                        #Setup before resuming
+                        self.current_update.preresume_setup()
+                        self.resume_threads()
+                        self.current_update.wait_over()
+                        log(2,"Update "+str(self.current_update.name)+" over condition met")
+                        #The update is over, we can cleanup and call finish
+                        self.current_update.cleanup()
+                        self.finish()
+                    else:
+                        #The alterability could not be met, so we postpone
+                        #the update after cleaning up
+                        self.current_update.clean_failed_alterability()
+                        log(1,"Alterability for update "+str(self.current_update.name)+" could not be reached. Update postponed")
+                        self.postpone()
+                        #Wait before sarting over, in case the
+                        #current_update is the only one in the list
+                        self.sleep()
+                elif req == "no":
+                    #Else, we add the current update back to list and try again
+                    log(1,"Update "+str(self.current_update.name)+" could not meet requirements. Update postponed")
                     self.postpone()
-
-                    #Wait before sarting over, in case the
-                    #current_update is the only one in the list
+                    #Wait before sarting over, in case the current_update is the only one in the list 
                     self.sleep()
-            elif req == "no":
-                #Else, we add the current update back to list and try again
-                log(1,"Update "+str(self.current_update.name)+" could not meet requirements. Update postponed")
-                self.postpone()
-                #Wait before sarting over, in case the current_update is the only one in the list 
-                self.sleep()
-            else:
-                #The requirements will never be met, we abort the update
-                self.abort()
+                else:
+                    #The requirements will never be met, we abort the update
+                    self.abort()
 
 
 def generatePreconfiguredManager(managerClass,updateClass,**attributes):

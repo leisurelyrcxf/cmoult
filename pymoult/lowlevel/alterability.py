@@ -83,7 +83,7 @@ def isFunctionInAnyStack(func,threads=None):
     return result
 
 #Update.wait_alterability
-def waitQuiescenceOfFunction(func,threads=None):
+def waitQuiescenceOfFunction(func,threads=[]):
     """Takes a function as argument. Returns when the function is not in
        the stack of any threads (or any of the given threads if the
        threads argument is not None). This function suspends
@@ -115,6 +115,13 @@ def waitQuiescenceOfFunction(func,threads=None):
         time.sleep(sleep_time)
     return False
 
+#Update.resume_hook
+def resumeSuspendedThreads(threads=[]):
+    """If a empty list of threads was given to waitQuiescenceOfFunction,
+    it will suspend allmost all threads, which may not be handle by
+    the manager. We need to resume these threads during the resume_hook."""
+    for thread in threads:
+        resumeThread(thread)
 
 #Force Quiescence
 
@@ -136,7 +143,7 @@ def setupForceQuiescence(module,function):
     class QuiescenceWatcher(threading.Thread):
         def __init__(self):
             self.watching = True
-            super(ForceQuiescenceWatcher,self).__init__(self,name=function.__name__+" watcher")
+            super(ForceQuiescenceWatcher,self).__init__(self,name=function.__name_+" watcher")
 
         def run(self):
             while self.watching and isFunctionInAnyStack(function):
@@ -219,6 +226,3 @@ def cleanFailedStaticPoints(threads):
         #First, we delete the static_point_event too
         delattr(t,"static_point_event")
         resumeThread(t)
-        
-
-

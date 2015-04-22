@@ -68,6 +68,9 @@ class Listener(threading.Thread):
         self.applied_updates = []
         app_listener = self
 
+    def stop(self):
+        self.keep_running = False
+        
     def add_completed_update(self,update):
         self.applied_updates.append(update)
         
@@ -134,7 +137,7 @@ def log(level,message):
     #TODO : checkout the logging module
     if level <= log_level:
         logfile = open(os.path.join(log_path,"pymoult.log"),"a")
-        header = time.strftime("[%m/%d,%Hh%m:%S] ")
+        header = time.strftime("[%m/%d,%Hh%M:%S] ")
         logfile.write(header+message+"\n")
         logfile.close()
     
