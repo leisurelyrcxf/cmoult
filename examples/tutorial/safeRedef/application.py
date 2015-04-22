@@ -20,7 +20,7 @@ def main():
 thread = threading.Thread(target=main)
 thread.start()
 
-manager = ThreadedManager(thread)
+manager = ThreadedManager(name='Manager',threads=[thread])
 manager.start()
 
 listener = Listener()

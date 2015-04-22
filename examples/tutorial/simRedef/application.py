@@ -5,7 +5,7 @@ import time
 import threading
 import random
 
-shared = None
+shared = 0
 shared_lock = threading.Lock()
 
 def read_shared():
@@ -38,7 +38,7 @@ writer.start()
 reader = threading.Thread(target=reader_f)
 reader.start()
 
-manager = ThreadedManager(reader,writer)
+manager = ThreadedManager(name="Manager",threads=[reader,writer])
 manager.set_sleepTime(0.5)
 manager.start()
 

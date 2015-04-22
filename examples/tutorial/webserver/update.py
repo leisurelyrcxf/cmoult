@@ -54,29 +54,7 @@ class SessionV2(object):
         c["session_id"] = self.session_id
         return c
 
-#Using Lazy conversion for sessions
-
-#Create a transformer
-#Each session opened before the update will be considered as "anonymous" session
-def session_trans(obj):
-    obj.login = "anonymous"
-
-#Start the conversion with the Update class
-sessionUpd = LazyConversionUpdate(main.Session,SessionV2,session_trans)
-main.manager.add_update(sessionUpd)
-
-#Using eager update to update pages
-
-#We need to enable the eager manager when starting the application !!!
-
-pageUpd = EagerConversionUpdate(main.Page,PageV2,None)
-main.manager.add_update(pageUpd)
-
-
 #Step two : updating the webserver
-#We will proceed in 2 substeps : (1) modify its state and (2) modify its methods
-
-#Substep 1 : modifying the state of the webserver
 
 class User(object):
     def __init__(self,login,passwd):
@@ -113,37 +91,7 @@ loggedPage = StaticPage("logged","Logged in!","You are logged in!")
 notLogged = StaticPage("nlogged","Login failed","You are not logged in")
 
 
-#First we need to retrieve the webserver, for this purpose we will use
-#the DataAccessor from the lowlevel API
-
-#Remember : using the immediate strategy requires the ObjectPool to be
-#created before creating the webserver !!
-
-class WebServerStateUpdate(Update):
-    def wait_alterability(self):
-        print("lama!")
-        return True
-    def apply(self):
-        da = DataAccessor(main.WebServer,strategy="immediate")
-        #Because we'll need it for the next update,
-        #we store the server in the manager
-        self.manager.server = None
-        for ws in da:
-            self.manager.server = ws
-        #Then, we add the static pages to the webserver
-        self.manager.server.pages['login'] = loginPage
-        self.manager.server.pages['logged'] = loggedPage
-        self.manager.server.pages['nlogged'] = notLogged
-        #We add a users attribute to the server, containing the users
-        #We add a new user "bob" with password "alice"
-        self.manager.server.users = {"bob":User("bob","alice")}
-
-
-serverUpdate1 = WebServerStateUpdate()
-main.manager.add_update(serverUpdate1)
-
-#Substep 2 :  modifiy the methods of the webserver
-
+#New webserver class
 class WebServerV2(object):
     def __init__(self,pages):
         self.pages = {}
@@ -180,7 +128,7 @@ class WebServerV2(object):
             staticUpdatePoint()
             httpd.handle_request()
     
-
+#New do_get method for the handler
 def create_new_do_GET(webserver):
     def new_do_GET(handler):
         path = handler.path.lstrip("/")
@@ -221,36 +169,4 @@ def create_new_do_GET(webserver):
             handler.send_error(404, "Page not found")
     return new_do_GET
 
-
-# First, we need to consider the alterability of the application.  We
-# will place a staticUpdatePoint in the "run" method of the webserver,
-# at the begining of the while loop.
-
-#We will wait for the main_thread to reach that update point
-
-class WebServerUpdate(Update):
-    def preupdate_setup(self):
-        setupWaitStaticPoints([main.main_thread])
-    
-    def wait_alterability(self):
-        return waitStaticPoints([main.main_thread])
-
-    def apply(self):
-        #To update the addSession method of the webserver, we need to update the WebServer class
-        updateToClass(self.manager.server,WebServerV2)
-        #We need to change the do_GET method of the Handler class possesed by the server
-        handler = self.manager.server.Handler
-        #We create a new do_GET method using create_new_do_GET and set it to the handler class
-        addFieldToClass(handler,"do_GET",create_new_do_GET(self.manager.server))
-
-    def clean_failed_alterability(self):
-        cleanFailedStaticPoints([main.main_thread])
-
-    def cleanup(self):
-        print("UPDATE COMPLETE")
-        return True
-
-
-webUpdate = WebServerUpdate()
-main.manager.add_update(webUpdate)
 
