@@ -1,5 +1,4 @@
 v1
-v1
 Adding update thread to Manager pymoult queue
 Manager pymoult begining update thread
 Alterabilty for update thread reached
@@ -7,5 +6,4 @@ Manager pymoult suspended thread app
 Manager pymoult resumed thread app
 Update thread over condition met
 Update thread was succesfully completed
-v2
 v2

@@ -1,5 +1,4 @@
 v1
-v1
 Adding update None to Manager pymoult queue
 Manager pymoult begining update None
 Alterabilty for update None reached
@@ -7,6 +6,4 @@ Manager pymoult suspended thread app
 Manager pymoult resumed thread app
 Update None over condition met
 Update None was succesfully completed
-v2
-v2
 v2

@@ -1,11 +1,7 @@
 v1
-v1
-Adding update requirements to Manager pymoult queue
-Adding update func to Manager pymoult queue
 Manager pymoult begining update requirements
 Update requirements could not meet requirements. Update postponed
 Adding update requirements to Manager pymoult queue
-v1
 Manager pymoult begining update func
 Alterabilty for update func reached
 Manager pymoult suspended thread app
@@ -18,8 +14,4 @@ Manager pymoult suspended thread app
 Manager pymoult resumed thread app
 Update requirements over condition met
 Update requirements was succesfully completed
-v2
-v2
-v2
-v2
 v2
