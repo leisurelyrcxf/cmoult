@@ -1,7 +1,4 @@
 v1
-v1
-Adding update requirements to Manager pymoult queue
-Adding update func to Manager pymoult queue
 Manager pymoult begining update requirements
 Update requirements could meet its requirements : aborting
 Manager pymoult begining update func
@@ -10,9 +7,4 @@ Manager pymoult suspended thread app
 Manager pymoult resumed thread app
 Update func over condition met
 Update func was succesfully completed
-v2
-v2
-v2
-v2
-v2
 v2

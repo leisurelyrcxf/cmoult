@@ -20,7 +20,7 @@ echo "Testing managers" | tee -a "$testPath/results.txt"
 for folder in $managerTests
 do
     cd "$managersPath/$folder"
-    ./test.sh | tee -a "$testPath/results.txt"
+    ./test.sh "$testPath/oracle.py" | tee -a "$testPath/results.txt"
 done
 
 echo "Testing updates" | tee -a "$testPath/results.txt" 
@@ -28,7 +28,7 @@ echo "Testing updates" | tee -a "$testPath/results.txt"
 for folder in $updateTests
 do
     cd "$updatesPath/$folder"
-    ./test.sh | tee -a "$testPath/results.txt"
+    ./test.sh "$testPath/oracle.py" | tee -a "$testPath/results.txt"
 done
 
 echo "Finished. Results are in $testPath/results.txt"
