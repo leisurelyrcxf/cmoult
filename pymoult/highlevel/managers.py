@@ -132,7 +132,7 @@ class Manager(BaseManager):
                     self.abort()
             #If we are waiting for alterabilty and have not applied
             #the update yet
-            if not self.current_applied:
+            if not self.current_applied and self.waiting_alterability:
                 if self.current_update.check_alterability():
                     log(2,"Alterabilty for update "+str(self.current_update.name)+" reached")
                     self.pause_threads()
@@ -143,7 +143,7 @@ class Manager(BaseManager):
                     self.current_applied = True
                 else:
                     self.tried+=1
-                    if self.tried >= self.current_applied.max_tries:
+                    if self.tried >= self.current_update.max_tries:
                         #We havn't met alterability after
                         #max_tries. We clean everything and postpone the update
                         self.current_update.clean_failed_alterability()
