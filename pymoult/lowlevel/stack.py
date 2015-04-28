@@ -1,3 +1,4 @@
+
 #    collector.py This file is part of Pymoult
 #    Copyright (C) 2013  Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
@@ -40,18 +41,23 @@ def resumeThread(thread):
     if hasattr(thread,"pause_event"):
         thread.pause_event.set()
         delattr(thread,"pause_event")
-        set_thread_trace(thread,None)
+
 
 ########################
 # Low level mechanisms #
 ########################
 
+#Thread rebooting
+
 #Update.apply
 def resetThread(thread):
     """Reboots the given thread"""
+    #enable rebooting for the thread
+    thread.toogle_loop_main()
     def trace(frame,event,arg):
         raise RebootException()
     set_thread_trace(thread,trace)
+    
 
 #Update.apply
 def switchMain(thread,func,args=[]):
@@ -59,4 +65,29 @@ def switchMain(thread,func,args=[]):
     def m():
         return func(*args)
     thread.main = m
+
+#Function rebooting
+
+#Update.apply
+def rebootFunction(thread,function,new_function,capture_state):
+    """Reboots the current running function in given thread, capturing its
+    state and calling a new function with it instead. Because the call
+    to new_function, happens inside a trace, bear in mind that until
+    that function returns, DSU mechanisms won't be usable for that thread."""
+    def trace(frame,event,arg):
+        #We check if the function we entered into was called by the
+        #function to reboot
+        if frame.f_back.f_code == function.func_code:
+            state = capture_state(frame.f_back)
+            res = new_function(state)
+            drop3frames res
+        elif frame.f_code == function.func_code:
+            state = capture_state(frame)
+            res = new_function(state)
+            drop2frames res
+        return trace
+    set_thread_trace(thread,trace)
+
+
+
 

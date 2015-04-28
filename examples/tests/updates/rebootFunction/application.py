@@ -1,22 +1,22 @@
 #/usr/bin/pypy-dsu
 
-#Testing failed alterability
-
 from pymoult.highlevel.managers import ThreadedManager
-from pymoult.threads import DSU_Thread
 from pymoult.highlevel.listener import Listener,log
+from pymoult.lowlevel.alterability import staticUpdatePoint
+from pymoult.threads import DSU_Thread
 import time
 import threading
 import sys
   
-def func_v1():
-    log(0,"v1")
-
 def main():
-    for x in range(8):
-        time.sleep(1)
-        func_v1()
+    r = []
+    for i in range(20):
+        staticUpdatePoint()
+        r.append(i)
+        log(0,"v1 : "+str(i))
+        time.sleep(0.5)
 
+    
 
 thread = DSU_Thread(target=main,name="app")
 thread.start()
