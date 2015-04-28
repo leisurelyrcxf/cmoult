@@ -16,7 +16,6 @@ def func_v2():
 
 def new_main():
     #We want the thread to run only once.
-    current_thread().stop()
     for x in range(2):
         time.sleep(1)
         func_v2()
