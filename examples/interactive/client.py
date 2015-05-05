@@ -20,7 +20,7 @@ try:
     welcome = sock.recv(8192)
     print(welcome.strip())
     while True:
-        command = raw_input()
+        command = raw_input("$ ")
         sock.sendall(command.strip())
         response = sock.recv(8192)
         if response.strip() == "serving":
