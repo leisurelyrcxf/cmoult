@@ -5,19 +5,28 @@ import socket
 import sys
 import os
 import threading
-from pymoult.highlevel.listener import Listener
-
+import tempfile
 
 class Picture(object):
     def __init__(self,path,name):
+        self.basepath = path
         self.path = path
         self.name = name
+        self.commentary = "Witty comment"
 
     def stream(self):
         f = open(self.path,'r')
         stream = f.read()
         f.close()
         return stream
+
+    def comment(self,text):
+        self.commentary = text
+
+    def annotate(self):
+        new_file = os.path.join(tempfile.gettempdir(),os.path.basename(self.basepath)+"_anot.jpg")
+        self.path = new_file
+        os.system("convert "+self.basepath+" -background Plum -font Corsiva -pointsize 24 label:'"+self.commentary+"' -gravity Center -append "+self.path)
 
 files = {}
 
@@ -32,13 +41,14 @@ class ConnThread(threading.Thread):
     def __init__(self,connection):
         self.connection = connection
         self.welcome = "Welcome to the server. Here are the available folders "+" ".join(files.keys())+".\nPlease send the folder you want to download\n"
-        self.help = "help : shows this help\nexit : disconnects\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(files.keys())+")\n"
+        self.help = "help : shows this help\nexit : disconnects\ncomment <folder> <comment>: sets commentary for picturesof folder\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(files.keys())+")\n"
         threading.Thread.__init__(self)
         
     def serve_folder(self,folder):
         self.connection.sendall("serving")
         if self.connection.recv(1024).strip() == "go":
             for pic in files[folder]:
+                pic.annotate()
                 imgstream = pic.stream()
                 self.connection.sendall("<img:"+str(len(imgstream))+">"+pic.name)
                 if self.connection.recv(1024).strip() == "cancel":
@@ -55,7 +65,15 @@ class ConnThread(threading.Thread):
             self.connection.sendall("terminating")
             self.connection.close()
             self.connection = None
+        elif command[0:7] == "comment":
+            args = command.split()
+            if len(args)> 2:
+                if args[1] in files.keys():
+                    for pic in files[args[1]]:
+                        pic.comment(" ".join(args[2:]))
+            self.connection.sendall("Comment '"+" ".join(args[2:])+"' applied to folder "+args[1])
         else:
+            print(command[0:7])
             self.connection.sendall(self.help)
                                     
     def run(self):
@@ -78,8 +96,6 @@ def main():
         ConnThread(conn).start()
 
 if __name__ == "__main__":
-    listener = Listener()
-    listener.start()
     main()
         
 
