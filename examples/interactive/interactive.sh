@@ -5,6 +5,8 @@ TPATH=/tmp/interactive
 TMP=$TPATH/ans
 MANAGER=""
 STATIC=""
+CLASS=""
+ACCESS=""
 
 mkdir $TPATH
 
@@ -90,9 +92,38 @@ dialog --msgbox "$TITLE\n\nReady for a Dynamic Update?\nLet's take a look at it.
 
 dialog --textbox $TPATH/update.py 120 150
 
+#Managers, static points, skeleton of update
 
 
 
+
+dialog --menu "$TITLE\n\nNow, let's update the Picture class.\nHow do we update the class?" 30 80 3 "r" "redefine the class" "i" "just add it along the old one (and relink instances later)" 2>$TMP
+    
+CLASS=$(cat $TMP)
+
+dialog --menu "$TITLE\n\nHow should we access the pictures in order to update them?" 30 80 3 "e" "eagerly" "l" "lazyly" 2>$TMP
+
+ACCESS=$(cat $TMP)
+
+#Modify the update
+
+dialog --textbox $TPATH/update.py 120 150
+
+#Then update the thread
+#- update by redefining class (only new connection will use new version)
+#- Redef the methods with alterability (static points of safe redef)
+
+
+
+
+
+
+echo "update update.py" | netcat localhost 4242
+
+dialog --msgbox "$TITLE\n\nThe update has been started.\nDo you see the new feature?" 10 80
+
+
+dialog --msgbox "$TITLE\n\nThe demo is now finished!\nGood bye!" 10 80
 
 
 kill $app
