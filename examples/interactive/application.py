@@ -19,7 +19,9 @@ class Picture(object):
         f.close()
         return stream
 
+
 files = {}
+helptext = ""
 
 def get_folders():
     for path in sys.argv[1:]:
@@ -32,7 +34,7 @@ class ConnThread(threading.Thread):
     def __init__(self,connection):
         self.connection = connection
         self.welcome = "Welcome to the server. Here are the available folders "+" ".join(files.keys())+".\nPlease send the folder you want to download\n"
-        self.help = "help : shows this help\nexit : disconnects\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(files.keys())+")\n"
+
         threading.Thread.__init__(self)
         
     def serve_folder(self,folder):
@@ -56,18 +58,20 @@ class ConnThread(threading.Thread):
             self.connection.close()
             self.connection = None
         else:
-            self.connection.sendall(self.help)
+            self.connection.sendall(helptext)
                                     
     def run(self):
         self.connection.sendall(self.welcome)
         while self.connection:
+            data = ""
             data = self.connection.recv(1024)
             self.do_command(data.strip())
-            data = ""
             
 def main():
+    global helptext
     #Get all folders
     get_folders()
+    helptext = "help : shows this help\nexit : disconnects\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(files.keys())+")\n"
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((socket.gethostname(),8080))
@@ -77,6 +81,7 @@ def main():
         conn,addr = sock.accept()
         ConnThread(conn).start()
 
+            
 if __name__ == "__main__":
     listener = Listener()
     listener.start()

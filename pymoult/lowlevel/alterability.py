@@ -82,6 +82,31 @@ def isFunctionInAnyStack(func,threads=None):
         result = result or checkFinStack(func,stack)
     return result
 
+#Update.check_alterability
+def checkQuiescenceOfFunction(func,threads=[]):
+    """Takes a function as argument. Returns True if the function is in the stack of any threads (or any of the given threads if the threads argument is not None). This function suspends
+       threads."""
+    if threads == []:
+        threads = threading.enumerate()
+        #remove the current thread from the list of threads to be suspended
+        threads.remove(threading.currentThread())
+    #We suspend all threads
+    for t in threads:
+        suspendThread(t)
+    #Then we capture the stacks
+    stacks = [get_current_frames()[t.ident] for t in threads]
+    #We check if the function is in the stacks
+    finstack = False
+    for stack in stacks:
+        finstack = finstack or checkFinStack(func,stack)
+        #If function is not in the stack, we return
+    if not finstack:
+        return True
+    else:
+        #We resume the threads
+        for t in threads:
+            resumeThread(t)
+
 #Update.wait_alterability
 def waitQuiescenceOfFunction(func,threads=[]):
     """Takes a function as argument. Returns when the function is not in
@@ -92,7 +117,7 @@ def waitQuiescenceOfFunction(func,threads=[]):
     #max_tries and sleep_times attributes of the update object.
     max_tries, sleep_time = getUpdateWaitValues()
     finstack = False
-    if threads is None:
+    if threads == []:
         threads = threading.enumerate()
         #remove the current thread from the list of threads to be suspended
         threads.remove(threading.currentThread())
@@ -120,6 +145,10 @@ def resumeSuspendedThreads(threads=[]):
     """If a empty list of threads was given to waitQuiescenceOfFunction,
     it will suspend allmost all threads, which may not be handle by
     the manager. We need to resume these threads during the resume_hook."""
+    if threads == []:
+        threads = threading.enumerate()
+        #remove the current thread from the list of threads to be resumed
+        threads.remove(threading.currentThread())
     for thread in threads:
         resumeThread(thread)
 

@@ -1,3 +1,4 @@
+
 #    updates.py This file is part of Pymoult
 #    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
@@ -138,22 +139,7 @@ class SafeRedefineUpdate(Update):
         return waitQuiescenceOfFunction(self.function,threads=self.threads)
 
     def check_alterability(self):
-        if hasattr(self.manager,"threads") and type(self.manager.threads) == list:
-            self.manager.pause_threads()
-            if not isFunctionInAnyStack(self.function,self.manager.threads):
-                return True
-            else:
-                self.manager.resume_threads()
-                return False
-        elif self.threads != []:
-            self.manager.pause_threads()
-            if not isFunctionInAnyStack(self.function,self.threads):
-                return True
-            else:
-                self.manager.resume_threads()
-                return False
-        else:
-            print("Warning, Using safe redefinition when no threads to watch are specified!")
+        return checkQuiescenceOfFunction(self.function,threads=self.threads)
     
     def resume_hook(self):
         resumeSuspendedThreads(threads=self.threads)

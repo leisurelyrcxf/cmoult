@@ -1,9 +1,12 @@
-#!/usr/bin/pypy-dsu
-"""Simple server that serves pictures from folders""" 
+#parsed
 
 import sys
 import os
+import threading
 import tempfile
+from pymoult.lowlevel.data_access import ObjectsPool
+
+ObjectsPool()
 
 main = sys.modules["__main__"]
 
@@ -28,14 +31,17 @@ class Picture_V2(object):
         self.path = new_file
         os.system("convert "+self.basepath+" -background Plum -font Corsiva -pointsize 24 label:'"+self.commentary+"' -gravity Center -append "+self.path)
 
-
-help = "help : shows this help\nexit : disconnects\ncomment <folder> <comment>: sets commentary for picturesof folder\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(main.files.keys())+")\n"
+def pic_transformer(pic):
+    pic.basepath = pic.path
+    pic.commentary = "Witty comment"
+        
+helptext = "help : shows this help\nexit : disconnects\ncomment <folder> <comment>: sets commentary for picturesof folder\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(main.files.keys())+")\n"
 
         
 def serve_folder_v2(self,folder):
     self.connection.sendall("serving")
     if self.connection.recv(1024).strip() == "go":
-        for pic in files[folder]:
+        for pic in main.files[folder]:
             pic.annotate()
             imgstream = pic.stream()
             self.connection.sendall("<img:"+str(len(imgstream))+">"+pic.name)
@@ -47,7 +53,7 @@ def serve_folder_v2(self,folder):
         self.connection.sendall("finished")
             
 def do_command_v2(self,command):
-    if command in files.keys():
+    if command in main.files.keys():
         self.serve_folder(command)
     elif command == "exit":
         self.connection.sendall("terminating")
@@ -56,16 +62,16 @@ def do_command_v2(self,command):
     elif command[0:7] == "comment":
         args = command.split()
         if len(args)> 2:
-            if args[1] in files.keys():
-                for pic in files[args[1]]:
+            if args[1] in main.files.keys():
+                for pic in main.files[args[1]]:
                     pic.comment(" ".join(args[2:]))
                 self.connection.sendall("Comment '"+" ".join(args[2:])+"' applied to folder "+args[1])
     else:
         print(command[0:7])
-        self.connection.sendall(self.help)
+        self.connection.sendall(helptext)
                                     
             
-    
+#end of update
         
 
 
