@@ -8,11 +8,9 @@ import tempfile
 main = sys.modules["__main__"]
 
 #Get all connection threads
-def getConnThreads():
-    threads = []
-    for t in threading.enumerate():
-        if isinstance(t,main.ConnThread):
-            threads.append(t)
+def getAllThreads():
+    threads = threading.enumerate()
+    threads.remove(threading.current_thread())
     return threads
 
 

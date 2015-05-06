@@ -141,10 +141,10 @@ fi
 if [ "$MANAGER" == "n" ]
 then
     #Add update to the new manager
-    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getConnThreads())\nmanager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
+    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getAllThreads())\nmanager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
 else
     #Add update to app manager
-    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getConnThreads())\nmain.manager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
+    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getAllThreads())\nmain.manager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
 fi
 
 dialog --textbox $TPATH/update.py 120 150
@@ -185,7 +185,7 @@ then
 else
 
     #static point in threads
-    sed -i 's/#preupdate setup/self.connThreads = getConnThreads()\n        setupWaitStaticPoints(self.connThreads)/' $TPATH/update.py
+    sed -i 's/#preupdate setup/self.connThreads = getAllThreads()\n        setupWaitStaticPoints(self.connThreads)/' $TPATH/update.py
     sed -i 's/#check for alterability/return checkStaticPointsReached(self.connThreads)/' $TPATH/update.py
     sed -i 's/#wait for alterability/return waitStaticPoints(self.connThreads)/' $TPATH/update.py
     sed -i 's/#clean failed alt/cleanFailedStaticPoints(self.connThreads)/' $TPATH/update.py
