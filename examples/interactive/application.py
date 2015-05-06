@@ -6,7 +6,9 @@ import sys
 import os
 import threading
 from pymoult.highlevel.listener import Listener
+from pymoult.lowlevel.data_access import ObjectsPool
 
+ObjectsPool()
 
 class Picture(object):
     def __init__(self,path,name):

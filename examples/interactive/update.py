@@ -4,11 +4,17 @@ import sys
 import os
 import threading
 import tempfile
-from pymoult.lowlevel.data_access import ObjectsPool
-
-ObjectsPool()
 
 main = sys.modules["__main__"]
+
+#Get all connection threads
+def getConnThreads():
+    threads = []
+    for t in threading.enumerate():
+        if isinstance(t,main.ConnThread):
+            threads.append(t)
+    return threads
+
 
 class Picture_V2(object):
     def __init__(self,path,name):
@@ -61,13 +67,13 @@ def do_command_v2(self,command):
         self.connection = None
     elif command[0:7] == "comment":
         args = command.split()
-        if len(args)> 2:
-            if args[1] in main.files.keys():
-                for pic in main.files[args[1]]:
-                    pic.comment(" ".join(args[2:]))
-                self.connection.sendall("Comment '"+" ".join(args[2:])+"' applied to folder "+args[1])
+        if len(args)> 2 and args[1] in main.files.keys():
+            for pic in main.files[args[1]]:
+                pic.comment(" ".join(args[2:]))
+            self.connection.sendall("Comment '"+" ".join(args[2:])+"' applied to folder "+args[1])
+        else:
+            self.connection.sendall(helptext)
     else:
-        print(command[0:7])
         self.connection.sendall(helptext)
                                     
             
