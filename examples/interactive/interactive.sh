@@ -102,7 +102,7 @@ sed -i 's/helptext =/class PictureUpd(Update):\n    def wait_alterability(self):
 
 dialog --textbox $TPATH/update.py 120 150
 
-dialog --menu "$TITLE\n\nFirst, how do we update the class?" 30 80 3 "r" "redefine the class" "i" "just add it along the old one (and relink instances later)" 2>$TMP
+dialog --menu "$TITLE\n\nFirst, how do we update the class?" 30 80 3 "r" "redefine the class" "i" "just add it along the old one" 2>$TMP
     
 CLASS=$(cat $TMP)
 
@@ -110,17 +110,19 @@ dialog --menu "$TITLE\n\nHow should we access the pictures in order to update th
 
 ACCESS=$(cat $TMP)
 
+sed -i 's/helptext =/def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
+
 if [ "$ACCESS" == "e" ]
 then
     #Eager access
-    sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_access import startEagerUpdate' $TPATH/update.py
+    sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_access import startEagerUpdate/' $TPATH/update.py
     if [ "$CLASS" == "i" ]
     then
         sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import updateToClass/' $TPATH/update.py
-        sed -i 's/helptext =/def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
         sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startEagerUpdate(main.Picture,pic_upd)/' $TPATH/update.py
     else
-        sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startEagerUpdate(main.Picture,pic_transformer)\n        redefineClass(main,main.Picture,Picture_V2)/' $TPATH/update.py
+        sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import redefineClass, updateToClass/' $TPATH/update.py
+        sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startEagerUpdate(main.Picture,pic_upd)\n        redefineClass(main,main.Picture,Picture_V2)/' $TPATH/update.py
     fi
 else
     #Lazy access
@@ -131,6 +133,7 @@ else
         sed -i 's/helptext =/def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
         sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startLazyUpdate(main.Picture,pic_upd)/' $TPATH/update.py
     else
+        sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import redefineClass/' $TPATH/update.py
         sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startLazyUpdate(main.Picture,pic_transformer)\n        redefineClass(main,main.Picture,Picture_V2)/' $TPATH/update.py
     fi
 fi
@@ -138,10 +141,10 @@ fi
 if [ "$MANAGER" == "n" ]
 then
     #Add update to the new manager
-    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd")\nmanager.add_update(picture_update)\n\nhelptext =/' $TMP/update.py
+    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getConnThreads())\nmanager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
 else
     #Add update to app manager
-    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd")\nmain.manager.add_update(picture_update)\n\nhelptext =/' $TMP/update.py
+    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getConnThreads())\nmain.manager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
 fi
 
 dialog --textbox $TPATH/update.py 120 150
@@ -151,7 +154,7 @@ dialog --msgbox "$TITLE\n\nNow, let's update the connection handling threads\nFi
 #Skeleton
 
 sed -i 's/import Update/import Update, isApplied/' $TPATH/update.py
-sed -i 's/helptext)/helptext)\n\n\nclass ConnUpd(Update):\ndef __init__(self,old_method,new_method,name=None):\n        self.old_method = old_method\n        self.new_method=new_method\n        super(ConnUpd,self).__init__(name=name,threads=[])\n\n    def check_requirements(self):\n        if isApplied("picupd"):\n            return "yes"\n        return "no"\n\n     def preupdate_setup(self):\n        #preupdate setup\n        pass\n\n    def wait_alterability(self):\n        #wait for alterability\n\n    def check_alterability(self):\n        #check for alterability\n\n    def clean_failed_alterability(self):\n        #clean failed alt\n        pass\n\n    def apply(self):\n        #Updating the connection threads\n\n    def resume_hook(self):\n        #resume hook\n        pass\n/' $TPATH/update.py 
+sed -i 's/#end of update/class ConnUpd(Update):\n    def __init__(self,old_method,new_method,name=None):\n        self.old_method = old_method\n        self.new_method=new_method\n        super(ConnUpd,self).__init__(name=name,threads=[])\n\n    def check_requirements(self):\n        if isApplied("picupd"):\n            return "yes"\n        return "no"\n\n    def preupdate_setup(self):\n        #preupdate setup\n        pass\n\n    def wait_alterability(self):\n        #wait for alterability\n\n    def check_alterability(self):\n        #check for alterability\n\n    def clean_failed_alterability(self):\n        #clean failed alt\n        pass\n\n    def apply(self):\n        #Updating the connection threads\n\n    def resume_hook(self):\n        #resume hook\n        pass\n\n\n#end of update/' $TPATH/update.py 
 
 
 if [ "$STATIC" == "m" ]
@@ -181,7 +184,6 @@ then
     
 else
 
-    sed -i 's/helptext)/helptext)\n\ndef getConnThreads():\n    threads=[]\n    for t in threading.enumerate():\n        if isinstance(t,main.ConnThread):\n             threads.append(t)\n    return threads\n\n/' $TPATH/update.py
     #static point in threads
     sed -i 's/#preupdate setup/self.connThreads = getConnThreads()\n        setupWaitStaticPoints(self.connThreads)/' $TPATH/update.py
     sed -i 's/#check for alterability/return checkStaticPointsReached(self.connThreads)/' $TPATH/update.py
@@ -193,7 +195,7 @@ dialog --textbox $TPATH/update.py 120 150
 
 dialog --msgbox "$TITLE\n\nNow we modify the 'apply' part of the update" 8 80
 
-sed -i 's/from pymoult.lowlevel.data_access import/from pymoult.lowlevel.data_access import addMethodToClass,/' $TPATH/update.py
+sed -i 's/from pymoult.lowlevel.data_update import/from pymoult.lowlevel.data_update import addMethodToClass,/' $TPATH/update.py
 
 sed -i 's/#Updating the connection threads/addMethodToClass(main.ConnThread,self.old_method.__name__,self.new_method)/' $TPATH/update.py
 
@@ -213,7 +215,8 @@ dialog --textbox $TPATH/update.py 120 150
 
 dialog --msgbox "$TITLE\n\nThe update is ready to be applied!" 10 80
 
-echo "update update.py" | netcat $(hostname) 4242
+echo "set loglevel 2" | netcat $(hostname) 4242
+echo "update $TPATH/update.py" | netcat $(hostname) 4242
 
 dialog --msgbox "$TITLE\n\nThe update has been started.\nDo you see the new feature?" 10 80
 
