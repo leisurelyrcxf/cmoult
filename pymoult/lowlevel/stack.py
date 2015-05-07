@@ -27,7 +27,7 @@ import threading
 
 def suspendThread(thread):
     """Suspends the given thread"""
-    if not hasattr(thread,"pause_event"):
+    if thread.is_alive() and not hasattr(thread,"pause_event"):
         thread.pause_event = threading.Event()
         thread.pause_event.clear()
         def trace(frame,event,arg):
