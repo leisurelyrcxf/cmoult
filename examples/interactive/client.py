@@ -21,35 +21,36 @@ try:
     print(welcome.strip())
     while True:
         command = raw_input("$ ")
-        sock.sendall(command.strip())
-        response = sock.recv(8192)
-        if response.strip() == "serving":
-            print("downloading folder")
-            sock.sendall("go")
-            while True:
-                response = sock.recv(1024)
-                catch = imgpattern.match(response.strip())
-                if catch is not None:
-                    length = int(catch.group(1))
-                    pic = catch.group(2)
-                    print("downloading "+pic)
-                    sock.sendall("ok")
-                    stream = sock.recv(length)
-                    f = open(pic,"w")
-                    f.write(stream)
-                    f.close()
-                    sock.sendall("ok")
-                elif response.strip() == "finished":
-                    print("downlad finished")
-                    break
-                else:
-                    sock.sendall("cancel")
-        elif response.strip() == "terminating":
-            sock.close()
-            break
-        else:
-            print(response.strip())
-
+        if command.strip() != "": 
+            sock.sendall(command.strip())
+            response = sock.recv(1024)
+            if response.strip() == "serving":
+                print("downloading folder")
+                sock.sendall("go")
+                while True:
+                    response = sock.recv(1024)
+                    catch = imgpattern.match(response.strip())
+                    if catch is not None:
+                        length = int(catch.group(1))
+                        pic = catch.group(2)
+                        print("downloading "+pic)
+                        sock.sendall("ok")
+                        stream = sock.recv(length)
+                        f = open(pic,"w")
+                        f.write(stream)
+                        f.close()
+                        sock.sendall("ok")
+                    elif response.strip() == "finished":
+                        print("downlad finished")
+                        break
+                    else:
+                        sock.sendall("cancel")
+            elif response.strip() == "terminating":
+                sock.close()
+                break
+            else:
+                print(response.strip())
+                
 except KeyboardInterrupt:
     sock.sendall("exit")
     sock.close()
