@@ -7,10 +7,10 @@ import tempfile
 
 main = sys.modules["__main__"]
 
-#Get all connection threads
+#Get all threads excepted the manager
 def getAllThreads():
     threads = threading.enumerate()
-    threads.remove(threading.current_thread())
+    threads.remove(filter(lambda x : x.name == "pymoult",threads)[0])
     return threads
 
 
