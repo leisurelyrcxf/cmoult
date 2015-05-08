@@ -105,7 +105,7 @@ class DSU_Thread(threading.Thread):
                 self.static_point_event.set()
                 if hasattr(self,"pause_event"):
                     self.pause_event.wait()
-
+                    
     def main(self):
         if self.__main:
             self.__main()

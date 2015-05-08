@@ -187,10 +187,11 @@ then
 else
 
     #static point in threads
-    sed -i 's/#preupdate setup/self.connThreads = getAllThreads()\n        setupWaitStaticPoints(self.connThreads)/' $TPATH/update.py
+    sed -i 's/#preupdate setup/self.connThreads = getAllConnThreads()\n        setupWaitStaticPoints(self.connThreads)/' $TPATH/update.py
     sed -i 's/#check for alterability/return checkStaticPointsReached(self.connThreads)/' $TPATH/update.py
     sed -i 's/#wait for alterability/return waitStaticPoints(self.connThreads)/' $TPATH/update.py
     sed -i 's/#clean failed alt/cleanFailedStaticPoints(self.connThreads)/' $TPATH/update.py
+    sed -i 's/#resume hook/resumeSuspendedThreads(self.connThreads)/' $TPATH/update.py
 fi
 
 $EDITOR $TPATH/update.py
@@ -208,9 +209,9 @@ dialog --msgbox "$TITLE\n\nWe now create the updates for serve_folder ad do_comm
 if [ "$MANAGER" == "n" ]
 then
     #Add update to the new manager
-    sed -i 's/#end of update/serve_update = ConnUpd(main.ConnThread.serve_folder,serve_folder_v2,name="serve_folder")\nmanager.add_update(serve_update)\ncommand_update = ConnUpd(main.ConnThread.do_command,do_command_v2,name="do_command")\nmanager.add_update(command_update)\n/' $TPATH/update.py
+    sed -i 's/#end of update/serve_update = ConnUpd(main.ConnThread.serve_folder,serve_folder_v2,name="serve_folder")\nserve_update.set_sleep_time(0.5)\nmanager.add_update(serve_update)\ncommand_update = ConnUpd(main.ConnThread.do_command,do_command_v2,name="do_command")\ncommand_update.set_sleep_time(0.5)\nmanager.add_update(command_update)\n/' $TPATH/update.py
 else
-    sed -i 's/#end of update/serve_update = ConnUpd(main.ConnThread.serve_folder,serve_folder_v2,name="serve_folder")\nmain.manager.add_update(serve_update)\ncommand_update = ConnUpd(main.ConnThread.do_command,do_command_v2,name="do_command")\nmain.manager.add_update(command_update)\n/' $TPATH/update.py
+    sed -i 's/#end of update/serve_update = ConnUpd(main.ConnThread.serve_folder,serve_folder_v2,name="serve_folder")\nserve_update.set_sleep_time(0.5)\nmain.manager.add_update(serve_update)\ncommand_update = ConnUpd(main.ConnThread.do_command,do_command_v2,name="do_command")\ncommand_update.set_sleep_time(0.5)\nmain.manager.add_update(command_update)\n/' $TPATH/update.py
 fi
 
 $EDITOR $TPATH/update.py
