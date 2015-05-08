@@ -17,7 +17,7 @@ cp $INTERPATH/update.py $TPATH/
 
 dialog --msgbox "$TITLE\n\nHere, you will chose how to update your file server!\n\nLet's take a look at the code!" 10 80 
 
-dialog --textbox $TPATH/application.py 120 150
+$EDITOR $TPATH/application.py
 
 dialog --msgbox "$TITLE\n\nBefore starting the application, we need to decide a few things ..." 10 80
 
@@ -31,8 +31,6 @@ then
     sed -i 's/import os/import os\nfrom pymoult.highlevel.managers import ThreadedManager/' $TPATH/application.py
     sed -i 's/listener.start()/listener.start()\n    manager = ThreadedManager(name="pymoult",threads=[])\n    manager.start()/' $TPATH/application.py
 
-    dialog --textbox $TPATH/application.py 120 150
-    
 elif [ "$MANAGER" == "m" ]
 then
     #We decided to add a non threaded manager
@@ -45,6 +43,8 @@ then
     sed -i 's/while True:/while True:\n        manager.apply_next_update()/' $TPATH/application.py
 
 fi
+
+$EDITOR $TPATH/application.py
 
 dialog --menu "$TITLE\n\nDo we put static update points?" 30 80 3 "m" "put a static point in main's loop" "t" "put a static point in threads loop" "n" "do not put static points" 2>$TMP
     
@@ -66,7 +66,7 @@ then
     sed -i 's/data = ""/staticUpdatePoint()\n            data = ""/' $TPATH/application.py    
 fi
    
-dialog --textbox $TPATH/application.py 120 150
+$EDITOR $TPATH/application.py
 
 dialog --msgbox "$TITLE\n\nWe are now ready to start the application." 8 80
 
@@ -80,7 +80,7 @@ dialog --msgbox "$TITLE\n\nNow, it's time to launch the client." 8 80
 
 dialog --msgbox "$TITLE\n\nReady for a Dynamic Update?\nLet's take a look at it." 10 80
 
-dialog --textbox $TPATH/update.py 120 150
+$EDITOR $TPATH/update.py
 
 if [ "$MANAGER" == "n" ]
 then
@@ -89,7 +89,7 @@ then
     sed -i 's/import tempfile/import tempfile\nfrom pymoult.highlevel.managers import ThreadedManager/' $TPATH/update.py
     sed -i 's/\["__main__"\]/["__main__"]\nmanager = ThreadedManager(name="pymoult")\nmanager.start()/' $TPATH/update.py
 
-    dialog --textbox $TPATH/update.py 120 150
+    $EDITOR $TPATH/update.py
 fi
 
 dialog --msgbox "$TITLE\n\nNow, let's update the Picture class.\nBecause the new version of Picture class is backward compatible, we don't have to mind alterability.\n\nLet's see the skeleton of our update" 12 80
@@ -100,7 +100,7 @@ sed -i 's/import tempfile/import tempfile\nfrom pymoult.highlevel.updates import
 
 sed -i 's/helptext =/class PictureUpd(Update):\n    def wait_alterability(self):\n        return True\n    def check_alterability(self):\n        return True\n    def apply(self):\n        #Updating the Pictures\n\n\nhelptext =/' $TPATH/update.py 
 
-dialog --textbox $TPATH/update.py 120 150
+$EDITOR $TPATH/update.py 
 
 dialog --menu "$TITLE\n\nFirst, how do we update the class?" 30 80 3 "r" "redefine the class" "i" "just add it along the old one" 2>$TMP
     
@@ -110,7 +110,8 @@ dialog --menu "$TITLE\n\nHow should we access the pictures in order to update th
 
 ACCESS=$(cat $TMP)
 
-sed -i 's/helptext =/def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
+sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import updateToClass/' $TPATH/update.py
+
 
 if [ "$ACCESS" == "e" ]
 then
@@ -118,23 +119,24 @@ then
     sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_access import startEagerUpdate/' $TPATH/update.py
     if [ "$CLASS" == "i" ]
     then
-        sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import updateToClass/' $TPATH/update.py
+        sed -i 's/helptext =/def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
         sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startEagerUpdate(main.Picture,pic_upd)/' $TPATH/update.py
     else
-        sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import redefineClass, updateToClass/' $TPATH/update.py
-        sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startEagerUpdate(main.Picture,pic_upd)\n        redefineClass(main,main.Picture,Picture_V2)/' $TPATH/update.py
+        sed -i 's/helptext =/old_Pic = main.Picture\ndef pic_upd(pic):\n    updateToClass(pic,old_Pic,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
+        sed -i 's/import updateToClass/import updateToClass, redefineClass/' $TPATH/update.py
+        sed -i 's/#Updating the Pictures/#Updating the Pictures\n        redefineClass(main,main.Picture,Picture_V2)\n        startEagerUpdate(old_Pic,pic_upd)/' $TPATH/update.py
     fi
 else
     #Lazy access
     sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_access import startLazyUpdate/' $TPATH/update.py
     if [ "$CLASS" == "i" ]
     then
-        sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import updateToClass/' $TPATH/update.py
         sed -i 's/helptext =/def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
         sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startLazyUpdate(main.Picture,pic_upd)/' $TPATH/update.py
     else
-        sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.data_update import redefineClass/' $TPATH/update.py
-        sed -i 's/#Updating the Pictures/#Updating the Pictures\n        startLazyUpdate(main.Picture,pic_transformer)\n        redefineClass(main,main.Picture,Picture_V2)/' $TPATH/update.py
+        sed -i 's/helptext =/old_Pic = main.Picture\ndef pic_upd(pic):\n    updateToClass(pic,old_Pic,Picture_V2,pic_transformer)\n\nhelptext =/' $TPATH/update.py
+        sed -i 's/import updateToClass/import updateToClass, redefineClass/' $TPATH/update.py
+        sed -i 's/#Updating the Pictures/#Updating the Pictures\n        redefineClass(main,main.Picture,Picture_V2)\n        startLazyUpdate(old_Pic,pic_upd)/' $TPATH/update.py
     fi
 fi
 
@@ -147,7 +149,7 @@ else
     sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getAllThreads())\nmain.manager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
 fi
 
-dialog --textbox $TPATH/update.py 120 150
+$EDITOR $TPATH/update.py
 
 dialog --msgbox "$TITLE\n\nNow, let's update the connection handling threads\nFirst, let's consider the alterability criteria" 8 80
 
@@ -191,7 +193,7 @@ else
     sed -i 's/#clean failed alt/cleanFailedStaticPoints(self.connThreads)/' $TPATH/update.py
 fi
 
-dialog --textbox $TPATH/update.py 120 150
+$EDITOR $TPATH/update.py
 
 dialog --msgbox "$TITLE\n\nNow we modify the 'apply' part of the update" 8 80
 
@@ -199,7 +201,7 @@ sed -i 's/from pymoult.lowlevel.data_update import/from pymoult.lowlevel.data_up
 
 sed -i 's/#Updating the connection threads/addMethodToClass(main.ConnThread,self.old_method.__name__,self.new_method)/' $TPATH/update.py
 
-dialog --textbox $TPATH/update.py 120 150
+$EDITOR $TPATH/update.py
 
 dialog --msgbox "$TITLE\n\nWe now create the updates for serve_folder ad do_command" 8 80
 
@@ -211,7 +213,7 @@ else
     sed -i 's/#end of update/serve_update = ConnUpd(main.ConnThread.serve_folder,serve_folder_v2,name="serve_folder")\nmain.manager.add_update(serve_update)\ncommand_update = ConnUpd(main.ConnThread.do_command,do_command_v2,name="do_command")\nmain.manager.add_update(command_update)\n/' $TPATH/update.py
 fi
 
-dialog --textbox $TPATH/update.py 120 150
+$EDITOR $TPATH/update.py
 
 dialog --msgbox "$TITLE\n\nThe update is ready to be applied!" 10 80
 
