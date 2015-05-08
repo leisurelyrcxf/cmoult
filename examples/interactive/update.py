@@ -4,6 +4,7 @@ import sys
 import os
 import threading
 import tempfile
+import re
 
 main = sys.modules["__main__"]
 
@@ -13,6 +14,12 @@ def getAllThreads():
     threads.remove(filter(lambda x : x.name == "pymoult",threads)[0])
     return threads
 
+def getAllConnThreads():
+    threads = []
+    for t in threading.enumerate():
+        if isinstance(t,main.ConnThread):
+            threads.append(t)
+    return threads
 
 class Picture_V2(object):
     def __init__(self,path,name):
@@ -28,7 +35,7 @@ class Picture_V2(object):
         return stream
 
     def comment(self,text):
-        self.commentary = text
+        self.commentary = re.sub("'"," ",text)
 
     def annotate(self):
         new_file = os.path.join(tempfile.gettempdir(),os.path.basename(self.basepath)+"_anot.jpg")
@@ -39,7 +46,7 @@ def pic_transformer(pic):
     pic.basepath = pic.path
     pic.commentary = "Witty comment"
         
-helptext = "help : shows this help\nexit : disconnects\ncomment <folder> <comment>: sets commentary for picturesof folder\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(main.files.keys())+")\n"
+helptext = "help : shows this help\nexit : disconnects\ncomment <folder> <comment>: sets commentary for pictures of folder\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(main.files.keys())+")\n"
 
         
 def serve_folder_v2(self,folder):
