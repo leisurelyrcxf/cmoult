@@ -139,7 +139,7 @@ class Manager(BaseManager):
                     self.current_update.apply()
                     #Setup before resuming threads
                     self.current_update.preresume_setup()
-                    #self.resume_threads()
+                    self.resume_threads()
                     self.current_applied = True
                 else:
                     self.tried+=1
@@ -150,7 +150,7 @@ class Manager(BaseManager):
                         log(1,"Alterability for update "+str(self.current_update.name)+" could not be reached. Update postponed")
                         self.postpone()
                       
-
+                
             #if the update has been applied, we wait for it to be over
             if self.current_applied:
                 if self.current_update.check_over():

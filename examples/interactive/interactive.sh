@@ -55,7 +55,7 @@ then
     sed -i 's/import os/import os\nfrom pymoult.lowlevel.alterability import staticUpdatePoint\nfrom pymoult.threads import DSU_Thread/' $TPATH/application.py
     sed -i 's/  main()/  main_thread = DSU_Thread(target=main)\n    main_thread.start()/' $TPATH/application.py
     #place the point
-    sed -i 's/conn,addr/staticUpdatePoint()\n        conn,addr/' $TPATH/application.py
+    sed -i 's/conn,addr/staticUpdatePoint()\n            conn,addr/' $TPATH/application.py
     
 elif [ "$STATIC" == "t" ]
 then
@@ -63,7 +63,7 @@ then
     sed -i 's/threading.Thread/DSU_Thread/' $TPATH/application.py
     sed -i 's/run/main/' $TPATH/application.py
     #place the point
-    sed -i 's/data = ""/staticUpdatePoint()\n            data = ""/' $TPATH/application.py    
+    sed -i 's/data = ""/staticUpdatePoint()\n                data = ""/' $TPATH/application.py    
 fi
    
 $EDITOR $TPATH/application.py
@@ -98,7 +98,7 @@ dialog --msgbox "$TITLE\n\nNow, let's update the Picture class.\nBecause the new
 
 sed -i 's/import tempfile/import tempfile\nfrom pymoult.highlevel.updates import Update/' $TPATH/update.py
 
-sed -i 's/helptext =/class PictureUpd(Update):\n    def wait_alterability(self):\n        return True\n    def check_alterability(self):\n        return True\n    def apply(self):\n        #Updating the Pictures\n\n\nhelptext =/' $TPATH/update.py 
+sed -i 's/helptext =/class PictureUpd(Update):\n    def preupdate_setup(self):\n        self.threads=getAllThreads()\n    def wait_alterability(self):\n        return True\n    def check_alterability(self):\n        return True\n    def apply(self):\n        #Updating the Pictures\n\n\nhelptext =/' $TPATH/update.py 
 
 $EDITOR $TPATH/update.py 
 
@@ -143,10 +143,10 @@ fi
 if [ "$MANAGER" == "n" ]
 then
     #Add update to the new manager
-    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getAllThreads())\nmanager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
+    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd")\nmanager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
 else
     #Add update to app manager
-    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd",threads=getAllThreads())\nmain.manager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
+    sed -i 's/helptext =/picture_update = PictureUpd(name="picupd")\nmain.manager.add_update(picture_update)\n\nhelptext =/' $TPATH/update.py
 fi
 
 $EDITOR $TPATH/update.py
