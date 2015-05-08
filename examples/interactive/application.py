@@ -40,18 +40,22 @@ class ConnThread(threading.Thread):
         threading.Thread.__init__(self)
         
     def serve_folder(self,folder):
-        self.connection.sendall("serving")
-        if self.connection.recv(1024).strip() == "go":
-            for pic in files[folder]:
-                imgstream = pic.stream()
-                self.connection.sendall("<img:"+str(len(imgstream))+">"+pic.name)
-                if self.connection.recv(1024).strip() == "cancel":
-                    return
-                self.connection.sendall(imgstream)
-                if self.connection.recv(1024).strip() == "cancel":
-                    return
+        try:
+            self.connection.sendall("serving")
+            if self.connection.recv(1024).strip() == "go":
+                for pic in files[folder]:
+                    imgstream = pic.stream()
+                    self.connection.sendall("<img:"+str(len(imgstream))+">"+pic.name)
+                    if self.connection.recv(1024).strip() == "cancel":
+                        return
+                    self.connection.sendall(imgstream)
+                    if self.connection.recv(1024).strip() == "cancel":
+                        return
+                self.connection.sendall("finished")
+        except socket.timeout:
+            #Send finish in the client is waiting for it
             self.connection.sendall("finished")
-        
+            
     def do_command(self,command):
         if command in files.keys():
             self.serve_folder(command)
@@ -65,9 +69,12 @@ class ConnThread(threading.Thread):
     def run(self):
         self.connection.sendall(self.welcome)
         while self.connection:
-            data = ""
-            data = self.connection.recv(1024)
-            self.do_command(data.strip())
+            try:
+                data = ""
+                data = self.connection.recv(1024)
+                self.do_command(data.strip())
+            except socket.timeout:
+                pass
             
 def main():
     global helptext
@@ -77,11 +84,15 @@ def main():
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((socket.gethostname(),8080))
+    sock.settimeout(10)
     #sock.bind(("10.29.229.31",8080))
     sock.listen(5)
     while True:
-        conn,addr = sock.accept()
-        ConnThread(conn).start()
+        try:
+            conn,addr = sock.accept()
+            ConnThread(conn).start()
+        except socket.timeout:
+            pass
 
             
 if __name__ == "__main__":

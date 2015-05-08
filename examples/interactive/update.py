@@ -4,6 +4,7 @@ import sys
 import os
 import threading
 import tempfile
+import socket
 import re
 
 main = sys.modules["__main__"]
@@ -11,7 +12,11 @@ main = sys.modules["__main__"]
 #Get all threads excepted the manager
 def getAllThreads():
     threads = threading.enumerate()
-    threads.remove(filter(lambda x : x.name == "pymoult",threads)[0])
+    pymoult_thread = filter(lambda x : x.name == "pymoult",threads)
+    if len(pymoult_thread) > 0:
+        threads.remove(pymoult_thread[0])
+    else:
+        threads.remove(threading.current_thread())
     return threads
 
 def getAllConnThreads():
@@ -19,6 +24,8 @@ def getAllConnThreads():
     for t in threading.enumerate():
         if isinstance(t,main.ConnThread):
             threads.append(t)
+    if threading.current_thread() in threads:
+        threads.remove(threading.current_thread())
     return threads
 
 class Picture_V2(object):
@@ -50,17 +57,21 @@ helptext = "help : shows this help\nexit : disconnects\ncomment <folder> <commen
 
         
 def serve_folder_v2(self,folder):
-    self.connection.sendall("serving")
-    if self.connection.recv(1024).strip() == "go":
-        for pic in main.files[folder]:
-            pic.annotate()
-            imgstream = pic.stream()
-            self.connection.sendall("<img:"+str(len(imgstream))+">"+pic.name)
-            if self.connection.recv(1024).strip() == "cancel":
-                return
-            self.connection.sendall(imgstream)
-            if self.connection.recv(1024).strip() == "cancel":
-                return
+    try:
+        self.connection.sendall("serving")
+        if self.connection.recv(1024).strip() == "go":
+            for pic in main.files[folder]:
+                pic.annotate()
+                imgstream = pic.stream()
+                self.connection.sendall("<img:"+str(len(imgstream))+">"+pic.name)
+                if self.connection.recv(1024).strip() == "cancel":
+                    return
+                self.connection.sendall(imgstream)
+                if self.connection.recv(1024).strip() == "cancel":
+                    return
+            self.connection.sendall("finished")
+    except socket.timeout:
+        #Send finish in the client is waiting for it
         self.connection.sendall("finished")
             
 def do_command_v2(self,command):
