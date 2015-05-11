@@ -151,12 +151,12 @@ fi
 
 $EDITOR $TPATH/update.py
 
-dialog --msgbox "$TITLE\n\nNow, let's update the connection handling threads\nFirst, let's consider the alterability criteria" 8 80
+dialog --msgbox "$TITLE\n\nNow, let's update the connection handling threads\n\nFor consitency, we want to update both do_command, serve_folder at the same time\nLet's consider the alterability criteria" 13 80
 
 #Skeleton
 
 sed -i 's/import Update/import Update, isApplied/' $TPATH/update.py
-sed -i 's/#end of update/class ConnUpd(Update):\n    def __init__(self,old_method,new_method,name=None):\n        self.old_method = old_method\n        self.new_method=new_method\n        super(ConnUpd,self).__init__(name=name,threads=[])\n\n    def check_requirements(self):\n        if isApplied("picupd"):\n            return "yes"\n        return "no"\n\n    def preupdate_setup(self):\n        #preupdate setup\n        pass\n\n    def wait_alterability(self):\n        #wait for alterability\n\n    def check_alterability(self):\n        #check for alterability\n\n    def clean_failed_alterability(self):\n        #clean failed alt\n        pass\n\n    def apply(self):\n        #Updating the connection threads\n\n    def resume_hook(self):\n        #resume hook\n        pass\n\n\n#end of update/' $TPATH/update.py 
+sed -i 's/#end of update/class ConnUpd(Update):\n\n    def check_requirements(self):\n        if isApplied("picupd"):\n            return "yes"\n        return "no"\n\n    def preupdate_setup(self):\n        #preupdate setup\n        pass\n\n    def wait_alterability(self):\n        #wait for alterability\n\n    def check_alterability(self):\n        #check for alterability\n\n    def clean_failed_alterability(self):\n        #clean failed alt\n        pass\n\n    def apply(self):\n        #Updating the connection threads\n\n    def resume_hook(self):\n        #resume hook\n        pass\n\n\n#end of update/' $TPATH/update.py 
 
 
 if [ "$STATIC" == "m" ]
@@ -180,8 +180,8 @@ sed -i 's/import tempfile/import tempfile\nfrom pymoult.lowlevel.alterability im
 if [ "$ALTER" == "q" ]
 then
     #function quiescence
-    sed -i 's/#wait for alterability/return waitQuiescenceOfFunction(self.old_method)/' $TPATH/update.py
-    sed -i 's/#check for alterability/return checkQuiescenceOfFunction(self.old_method)/' $TPATH/update.py
+    sed -i 's/#wait for alterability/return waitQuiescenceOfFunctions([main.ConnThread.do_command,main.ConnThread.serve_folder])/' $TPATH/update.py
+    sed -i 's/#check for alterability/return checkQuiescenceOfFunctions([main.ConnThread.do_command,main.ConnThread.serve_folder])/' $TPATH/update.py
     sed -i 's/#resume hook/resumeSuspendedThreads()/' $TPATH/update.py
     
 else
@@ -200,18 +200,18 @@ dialog --msgbox "$TITLE\n\nNow we modify the 'apply' part of the update" 8 80
 
 sed -i 's/from pymoult.lowlevel.data_update import/from pymoult.lowlevel.data_update import addMethodToClass,/' $TPATH/update.py
 
-sed -i 's/#Updating the connection threads/addMethodToClass(main.ConnThread,self.old_method.__name__,self.new_method)/' $TPATH/update.py
+sed -i 's/#Updating the connection threads/addMethodToClass(main.ConnThread,"do_command",do_command_v2)\n        addMethodToClass(main.ConnThread,"serve_folder",serve_folder_v2)/' $TPATH/update.py
 
 $EDITOR $TPATH/update.py
 
-dialog --msgbox "$TITLE\n\nWe now create the updates for serve_folder ad do_command" 8 80
+dialog --msgbox "$TITLE\n\nWe now create the update object and send it to the manager" 8 80
 
 if [ "$MANAGER" == "n" ]
 then
     #Add update to the new manager
-    sed -i 's/#end of update/serve_update = ConnUpd(main.ConnThread.serve_folder,serve_folder_v2,name="serve_folder")\nserve_update.set_sleep_time(0.5)\nmanager.add_update(serve_update)\ncommand_update = ConnUpd(main.ConnThread.do_command,do_command_v2,name="do_command")\ncommand_update.set_sleep_time(0.5)\nmanager.add_update(command_update)\n/' $TPATH/update.py
+    sed -i 's/#end of update/conn_update = ConnUpd(name="conn_update")\nconn_update.set_sleep_time(0.5)\nmanager.add_update(conn_update)/' $TPATH/update.py
 else
-    sed -i 's/#end of update/serve_update = ConnUpd(main.ConnThread.serve_folder,serve_folder_v2,name="serve_folder")\nserve_update.set_sleep_time(0.5)\nmain.manager.add_update(serve_update)\ncommand_update = ConnUpd(main.ConnThread.do_command,do_command_v2,name="do_command")\ncommand_update.set_sleep_time(0.5)\nmain.manager.add_update(command_update)\n/' $TPATH/update.py
+    sed -i 's/#end of update/conn_update = ConnUpd(name="conn_update")\nconn_update.set_sleep_time(0.5)\nmain.manager.add_update(conn_update)/' $TPATH/update.py
 fi
 
 $EDITOR $TPATH/update.py

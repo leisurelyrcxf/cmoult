@@ -107,6 +107,33 @@ def checkQuiescenceOfFunction(func,threads=[]):
         for t in threads:
             resumeThread(t)
 
+#Update.check_alterability
+def checkQuiescenceOfFunctions(funcs,threads=[]):
+    """Takes a list of functions as argument. Returns True if none of the functions are in the stack of any threads (or any of the given threads if the threads argument is not None). This function suspends
+       threads."""
+    if threads == []:
+        threads = threading.enumerate()
+        #remove the current thread from the list of threads to be suspended
+        threads.remove(threading.currentThread())
+    #We suspend all threads
+    for t in threads:
+        suspendThread(t)
+    #Then we capture the stacks
+    stacks = [get_current_frames()[t.ident] for t in threads]
+    #We check if the function is in the stacks
+    finstack = False
+    for fun in funcs:
+        for stack in stacks:
+            finstack = finstack or checkFinStack(fun,stack)
+    #If function is not in the stack, we return
+    if not finstack:
+        return True
+    else:
+        #We resume the threads
+        for t in threads:
+            resumeThread(t)
+
+            
 #Update.wait_alterability
 def waitQuiescenceOfFunction(func,threads=[]):
     """Takes a function as argument. Returns when the function is not in
@@ -139,6 +166,43 @@ def waitQuiescenceOfFunction(func,threads=[]):
                 resumeThread(t)
         time.sleep(sleep_time)
     return False
+
+
+#Update.wait_alterability
+def waitQuiescenceOfFunctions(funcs,threads=[]):
+    """Takes a list of functions as argument. Returns when the functions
+       are not in the stack of any threads (or any of the given
+       threads if the threads argument is not None). This function
+       suspends threads. Returns True when alterability is reached,
+       returns False if not."""
+    #If we are called in a wait_alterability method, we get the
+    #max_tries and sleep_times attributes of the update object.
+    max_tries, sleep_time = getUpdateWaitValues()
+    finstack = False
+    if threads == []:
+        threads = threading.enumerate()
+        #remove the current thread from the list of threads to be suspended
+        threads.remove(threading.currentThread())
+    for x in range(max_tries):
+        #We suspend all threads
+        for t in threads:
+            suspendThread(t)
+        #Then we capture the stacks
+        stacks = [get_current_frames()[t.ident] for t in threads]
+        #We check if the function is in the stacks
+        for fun in funcs:
+            for stack in stacks:
+                finstack = finstack or checkFinStack(fun,stack)
+        #If function is not in the stack, we return
+        if not finstack:
+            return True
+        else:
+            #We resume the threads
+            for t in threads:
+                resumeThread(t)
+        time.sleep(sleep_time)
+    return False
+
 
 #Update.resume_hook
 def resumeSuspendedThreads(threads=[]):
