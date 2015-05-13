@@ -2,9 +2,10 @@
 
 
 from pymoult.highlevel.managers import ThreadedManager
+from pymoult.threads import DSU_Thread
 from pymoult.highlevel.listener import Listener
+from pymoult.lowlevel.alterability import staticUpdatePoint
 import time
-import threading
 
   
 def say_hello():
@@ -12,15 +13,15 @@ def say_hello():
 
 def main():
     while True:
+        staticUpdatePoint()
         time.sleep(2)
         say_hello()
 
 
-
-thread = threading.Thread(target=main)
+thread = DSU_Thread(target=main,name="main")
 thread.start()
 
-manager = ThreadedManager(thread)
+manager = ThreadedManager(name="Manager")
 manager.start()
 
 listener = Listener()

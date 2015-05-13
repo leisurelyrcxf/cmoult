@@ -1,4 +1,4 @@
-#    controllers.py This file is part of Pymoult
+#    threads.py This file is part of Pymoult
 #    Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ class DSU_Thread(threading.Thread):
         """Constructor. Takes classic thread arguments"""
         super(DSU_Thread,self).__init__(group=group,name=name,args=args,kwargs=kwargs)
         self.__main = target
-        self.stopped = False
+        self.keep_running = True
         self.sleeping_continuation = None
         self.sleeping_continuation_function = None
         self.active_update_function = None
@@ -65,7 +65,7 @@ class DSU_Thread(threading.Thread):
         """
         #we switch at once to continue with main
         continuation.switch()
-        while not self.stopped:
+        while True:
             if self.sleeping_continuation_function != None:
                 self.sleeping_continuation_function()
             continuation.switch()
@@ -75,17 +75,19 @@ class DSU_Thread(threading.Thread):
         c = continulet(self.execute_sleeping_continuation)
         c.switch()
         self.sleeping_continuation = c
-        while not self.stopped:
+        while self.keep_running:
+            self.toogle_loop_main()
             try:
                 self.main()
             except RebootException as r:
                 #The thread has been rebooted, we just loop again
                 pass
 	
-    def stop(self):
-        """Stops the thread (will disable recalling main when rebooted)"""
-        self.stopped = not self.stopped
-                
+    def toogle_loop_main(self):
+        """Turns on restarting the main function when it finishes (disabled by
+        default)"""
+        self.keep_running = not self.keep_running
+
     def switch(self):
         """Switch to the sleeping continuation"""
         self.sleeping_continuation.switch()
@@ -103,7 +105,7 @@ class DSU_Thread(threading.Thread):
                 self.static_point_event.set()
                 if hasattr(self,"pause_event"):
                     self.pause_event.wait()
-
+                    
     def main(self):
         if self.__main:
             self.__main()
@@ -126,7 +128,4 @@ def set_thread_trace(thread,trace):
     """Sets the given trace to the given thread. Starts the trace
     immediately (does not wait forthe next function return)"""
     sys.settrace_for_thread(thread.ident,trace,True)
-
-
-
 

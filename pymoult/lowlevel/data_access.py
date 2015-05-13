@@ -18,13 +18,40 @@
 """pymoult.lowlevel.data_access.py
    Published under the GPLv2 license (see LICENSE.txt)
 
-   This module provides the low level tools for accessing data
+   This module provides the low level tools for accessing data.
+
+   *Classes*
+   
+   DataAccessor(class,strategy) : creates an iterator over all objects
+   of the given class. Strategy is a string describing how objects are
+   accessed (immediate,progressive).
+
+   HeapWalker : base class for defining heapwalkers. Has walk_<type>
+   methods for each <type> to be walked.
+
+   *Functions for //Update.apply//* 
+
+   traverseHeap(walker,module_names) : walks through the modules of
+   given names using the walker given as first argument.
+
+   startLazyUpdate(class,transformer) : sets up the lazy update
+   (progressive access, instant update) for all objects of the given
+   class. The transformer is a function taking an object as argument.
+
+   startEagerUpdate(class,transformer) : does the eager update
+   (immediate access, instant update) for all objects of the given
+   class. The transformer is a function taking an object as argument
 
 """
+
 import weakref
 from Queue import Queue
 from threading import Lock
 import sys
+
+############################
+# Tools for accessing data #
+############################
 
 class ObjectsPool(object):
     """A Pool of objects, keeping a weak reference to all created
@@ -89,7 +116,6 @@ def instance_hook(obj):
         ObjectsPool.objectsPool.add(obj)
     except:
         pass
-
 
 class WrongStrategy(Exception):
     """Error raised if an unknown strategy has been asked"""
@@ -285,22 +311,11 @@ def add_setter_router(tclass,setter=None,dataAccessor=None,function=None):
     tclass.__setattr__ = lambda o,a,v : router(o,a,v)
     tclass.__setterrouter__ = router
 
-#So far, lazy access does not handle heritage 
-def setLazyUpdate(tclass,transformer):
-    """Uses router to set up lazy updates. Takes the target class and the
-    transformer function as arguments"""
-    add_getter_router(tclass,function=transformer)
-    add_setter_router(tclass,function=transformer)
-
-def startEagerUpdate(tclass,transformer):
-    """Uses a data accessor to run an eager update. Takes the target class
-    and the transformer function as argumments."""
-    accessor = DataAccessor(tclass,strategy="immediate")
-    for obj in accessor:
-        transformer(obj)
 
 
-#Heap Traversal tools
+############################
+# Tools for heap traversal #
+############################
 
 class HeapWalker(object):
     """A base class for applying function on elements of the Heap based on
@@ -326,7 +341,12 @@ class HeapWalker(object):
             if not (attr.startswith("__") and attr.endswith("__")):
                 self.walk(item.__gettattribute__(attr))
 
+                
+########################
+# Low level mechanisms #
+########################
 
+#Update.apply
 def traverseHeap(walker,module_names=["__main__"]):
     """Runs the given walker on the globals of the modules names in the
     module_names parameter. If this parameter is empty, it will
@@ -342,9 +362,20 @@ def traverseHeap(walker,module_names=["__main__"]):
         for var in globs:
             if not (var.startswith('__') and var.endswith('__')):
                 walker.walk(modul.__getattribute__(var))
-            
 
+#Update.apply
+def startLazyUpdate(tclass,transformer):
+    """Uses router to set up lazy updates. Takes the target class and the
+    transformer function as arguments"""
+    add_getter_router(tclass,function=transformer)
+    add_setter_router(tclass,function=transformer)
     
-
+#Update.apply
+def startEagerUpdate(tclass,transformer):
+    """Uses a data accessor to run an eager update. Takes the target class
+    and the transformer function as argumments."""
+    accessor = DataAccessor(tclass,strategy="immediate")
+    for obj in accessor:
+        transformer(obj)
 
 

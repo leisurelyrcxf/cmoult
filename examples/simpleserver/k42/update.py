@@ -117,11 +117,11 @@ def do_showV2(comm):
 
 
 #Start the managers
-account_manager = ThreadedManager(main.main_thread)
+account_manager = ThreadedManager(threads=[main.main_thread])
 account_manager.start()
-site_manager = ThreadedManager(main.main_thread)
+site_manager = ThreadedManager(threads=[main.main_thread])
 site_manager.start()
-functions_manager = ThreadedManager(main.main_thread)
+functions_manager = ThreadedManager(threads=[main.main_thread])
 functions_manager.start()
 
 
@@ -137,15 +137,11 @@ account_manager.add_update(account_update)
 site_manager.add_update(site_update)
 
 class ClassUpdate(Update):
-    def requirements(self):
-        return True
-    def alterability(self):
+    def wait_alterability(self):
         return True
     def apply(self):
         redefineClass(main,main.Site,SiteV2)
         redefineClass(main,main.Account,AccountV2)
-    def over(self):
-        return True
 
 clsupdate = ClassUpdate()
 functions_manager.add_update(clsupdate)
@@ -160,14 +156,11 @@ do_show_update = SafeRedefineUpdate(main,main.do_show,do_showV2)
 functions_manager.add_update(do_show_update)
 
 class EmptyUpdate(Update):
-    def requirements(self):
-        return True
-    def alterability(self):
+    def wait_alterability(self):
         return True
     def apply(self):
         pass
-    def over(self):
+    def cleanup(self):
         print("Update finished")
-        return True
 
 functions_manager.add_update(EmptyUpdate())

@@ -1,0 +1,7 @@
+v1
+Adding update func to Manager pymoult queue
+Manager pymoult begining update func
+Alterabilty for update func reached
+Update func over condition met
+Update func was succesfully completed
+v2

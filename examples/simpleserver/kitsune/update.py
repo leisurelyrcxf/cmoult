@@ -4,7 +4,7 @@
 from pymoult.highlevel.updates import ThreadRebootUpdate,HeapTraversalUpdate,Update
 from pymoult.lowlevel.data_access import HeapWalker
 from pymoult.lowlevel.data_update import updateToClass
-from pymoult.lowlevel.alterability import get_current_frames,waitStaticPoints,staticUpdatePoint
+from pymoult.lowlevel.alterability import get_current_frames,waitStaticPoints,staticUpdatePoint,setupWaitStaticPoints,cleanFailedStaticPoints
 from pymoult.lowlevel.stack import resumeThread
 import sys
 import socket
@@ -165,22 +165,23 @@ heap_update = HeapTraversalUpdate(MyHeapWalker())
 thread_update = ThreadRebootUpdate(main.main_thread,new_main,[sock])
 
 class KitsuneUpdate(Update):
-    def requirements(self):
-        return True
-    def alterability(self):
-        waitStaticPoints([main.main_thread])
-        print("Static Update point reached")
-        return True
+    def preupdate_setup(self):
+        setupWaitStaticPoints([main.main_thread])
+    
+    def wait_alterability(self):
+        return waitStaticPoints([main.main_thread])
+
     def apply(self):
         heap_update.apply()
         print("Heap traveresed and updated")
         thread_update.apply()
         print("Main thread rebooted")
-    def over(self):
-        resumeThread(main.main_thread)
-        print("Update complete")
-        return True
 
+    def clean_failed_alterability(self):
+        cleanFailedStaticPoints([main.main_thread])
+
+    def cleanup(self):
+        print("Update Complete!")
 
 update = KitsuneUpdate()
 main.manager.add_update(update)

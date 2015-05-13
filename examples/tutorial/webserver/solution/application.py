@@ -131,7 +131,7 @@ main_thread = DSU_Thread(target=main)
 
 ObjectsPool()
 #Eager update manager for the Page class
-manager = ThreadedManager(main_thread)
+manager = ThreadedManager(name="global manager",threads=[main_thread])
 manager.start()
 
 main_thread.start()
