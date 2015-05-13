@@ -4,52 +4,53 @@ Pymoult is a Pypy library providing a prototyping platform for dynamic
 software updates (DSU). It provides as many DSU mechanisms from the
 literature as possible through a generic API.
 
-To read more about dynamic software updates and how Pymoult
-contributes to this domain you can read the [wiki page on DSU](http://bitbucket.org/smartinezgd/pymoult/wiki/Dynamic%20Software%20Updates)
-
 To read the manual of Pymoult, please follow [this link](http://bitbucket.org/smartinezgd/pymoult/wiki/Pymoult%20manual)
 
 
-LICENSE
-=======
+##LICENSE
+
 
 Pymoult is published under the GPLv2 license (see LICENSE.txt)
 
 Pypy-Dsu (required by Pymoult) is a fork of Pypy, published under specific licenses.
 
-Installing
-==========
+##Installing
 
 
-Requirements
-------------
+###Installing Pypy-dsu
 
-Pymoult requires Pypy-Dsu, our custom pypy interpreter enhanced with specific DSU functionalists. You can install it by following the instructions [here](http://bitbucket.org/smartinezgd/pymoult/wiki/pypy-dsu)
+Pymoult requires Pypy-Dsu, our custom pypy interpreter providing DSU
+utilities. You can download and compile the source code or install the
+binaries from [the download page](https://bitbucket.org/smartinezgd/pymoult/downloads)
 
-Installing on Linux
--------------------
+ArchLinux users may use the
+[package from AUR](https://aur.archlinux.org/packages/pypy-dsu/) or
+the pre-compiled packages from the
+[the download page](https://bitbucket.org/smartinezgd/pymoult/downloads).
 
-1. Install the _distribute_ module for pypy your favorite way
+To use the latest version of Pymoult, you need to install pypy-dsu-2.4-2.
+
+
+###Installing on Linux
+
+1. Install pypy-dsu your favorit way
 
 2. Install pymoult
 
-	$> pypy setup.py install --prefix=<your_prefix>
+	$> pypy-dsu setup.py install --prefix=<your_prefix>
 
 3. Export your new PYTHONPATH
 	
 	$> export PYTHONPATH=$PYTHONPATH:<your_prefix>/site-packages	 
 
 
-Installing on Archlinux
------------------------
+###Installing on Archlinux
 
-A package is available on AUR here :
-
-http://aur.archlinux.org/packages/pypy-pymoult-hg
+You can install pymoult using the AUR package [pypy-pymoult-hg](https://aur.archlinux.org/packages/pypy-pymoult-hg/)
 
 
-Pydoc
-=====
+##Pydoc
+
 
 The pydoc can be generated with the doc.sh script
 
@@ -58,10 +59,11 @@ The pydoc can be generated with the doc.sh script
 The pydoc will be generated in the doc folder, open doc/pymoult.html to start
 browsing.
 
-Virtual Machine
-===============
+##Virtual Machine
 
-A Virtual machine with the custom pypy-dsu installed as well as Pymoult can be downloaded on the following link.
+Virtaul Machines preconfigured with pypy-dsu and Pymoult.
 
+[Debian VM for Pymoult v3](https://partage.mines-telecom.fr/public.php?service=files&t=29660336d08df1374ee9ade5d2afede9&download) (Remember to update the installation of Pymoult before using it)
 
-[VM download link](https://partage.mines-telecom.fr/public.php?service=files&t=b9ae9bdffe6f9d1c6be2b8e100543ff5&download)
+[Archlinux VM for Pymoult v2](https://partage.mines-telecom.fr/public.php?service=files&t=0ba628d67cf115064c39914f0b57dd08&download)
+
