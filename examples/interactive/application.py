@@ -85,7 +85,6 @@ def main():
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((socket.gethostname(),8080))
     sock.settimeout(10)
-    #sock.bind(("10.29.229.31",8080))
     sock.listen(5)
     while True:
         try:
