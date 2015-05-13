@@ -1,0 +1,16 @@
+An item named apple of color red
+An item named banana of color yellow
+An item named mango of color green
+Adding update items to Manager global queue
+Manager global begining update items
+Alterabilty for update items reached
+Manager global suspended thread app
+Manager global resumed thread app
+Update items over condition met
+Update items was succesfully completed
+An item named apple of color red
+Its labels says : tasty
+An item named banana of color yellow
+Its labels says : always bring one to parties
+An item named mango of color green
+Its labels says : it's a mango!

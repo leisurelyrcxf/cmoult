@@ -1,9 +1,19 @@
 #parsed
-
+from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate,Update
+from pymoult.lowlevel.data_access import DataAccessor
+from pymoult.lowlevel.alterability import waitStaticPoints
+from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
+from pymoult.lowlevel.stack import resumeThread
 import sys
+
+from Cookie import SimpleCookie
+
 
 main = sys.modules["__main__"]
 
+#Step one : Updating the pages and the sessions
+
+#Updating the Page class so it tells the login in use
 class PageV2(object):
     def __init__(self,path,title,content):
         self.path = path
@@ -22,6 +32,7 @@ class PageV2(object):
        s+= "<p>"+self.name+", you saw this page "+str(self.n)+" times</p></body></html>"
        return s
 
+#Class Session with login support
 class SessionV2(object):
     session_id = main.Session.session_id
     def __init__(self,items,login,session_id=None):
@@ -42,6 +53,8 @@ class SessionV2(object):
             c[key] = self.values[key]
         c["session_id"] = self.session_id
         return c
+
+#Step two : updating the webserver
 
 class User(object):
     def __init__(self,login,passwd):
@@ -77,6 +90,8 @@ Password: <input type="password" name="password">
 loggedPage = StaticPage("logged","Logged in!","You are logged in!")
 notLogged = StaticPage("nlogged","Login failed","You are not logged in")
 
+
+#New webserver class
 class WebServerV2(object):
     def __init__(self,pages):
         self.pages = {}
@@ -113,7 +128,7 @@ class WebServerV2(object):
             staticUpdatePoint()
             httpd.handle_request()
     
-
+#New do_get method for the handler
 def create_new_do_GET(webserver):
     def new_do_GET(handler):
         path = handler.path.lstrip("/")

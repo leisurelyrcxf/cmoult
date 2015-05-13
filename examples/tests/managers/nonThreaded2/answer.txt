@@ -1,0 +1,12 @@
+v1
+Manager pymoult begining update requirements
+Update requirements could not meet requirements. Update postponed
+Manager pymoult begining update func
+Alterabilty for update func reached
+Update func over condition met
+Update func was succesfully completed
+Manager pymoult begining update requirements
+Alterabilty for update requirements reached
+Update requirements over condition met
+Update requirements was succesfully completed
+v2

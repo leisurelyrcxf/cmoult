@@ -6,7 +6,6 @@ import sys
 
 main = sys.modules["__main__"]
 
-
 def say_hi():
     print("hi")
 
