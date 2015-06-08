@@ -33,3 +33,75 @@ void push_update(ll_updates **ll,update *upd){
   (*ll) = new;
 }
 
+
+void manager_add_update(manager* man, update* upd){
+  push_update(&(man->updates),upd);
+}
+
+void get_next_update(manager * man){
+  if (man->state == not_updating){
+    update * next_update = pop_update(&(man->updates));
+    if (next_update != NULL){
+      man->current_update = next_update;
+      man->state = checking_requirements;
+    }
+    
+  }
+}
+
+void postpone_update(manager * man){
+  manager_add_update(man,man->current_update);
+  man->current_update = NULL;
+  man->state = not_updating;
+}
+
+void abort_update(manager *man){
+  man->state = not_updating;
+  free(man->current_update);
+  man->current_update = NULL;
+}
+
+void finish_update(manager* man){
+  /* TODO : log the update */
+  man->state = not_updating;
+  free(man->current_update);
+  man->current_update = NULL;
+}
+
+void pause_threads(manager* man){
+  size_t nthreads = man->current_update->nthreads;
+  dsuthread * threads = man->current_update->threads;
+  if (nthreads > 0){
+    for (int i=0;i<nthreads;i++){
+      pause_thread(threads[i]);
+    }
+  }else{
+    nthreads = man->nthreads;
+    threads = man->threads;
+    for (int i=0;i<nthreads;i++){
+      pause_thread(threads[i]);
+    }
+  }
+}
+
+void resume_threads(manager* man){
+  size_t nthreads = man->current_update->nthreads;
+  dsuthread * threads = man->current_update->threads;
+  if (nthreads > 0){
+    for (int i=0;i<nthreads;i++){
+      resume_thread(threads[i]);
+    }
+  }else{
+    nthreads = man->nthreads;
+    threads = man->threads;
+    for (int i=0;i<nthreads;i++){
+      resume_thread(threads[i]);
+    }
+  }
+}
+
+
+
+
+
+

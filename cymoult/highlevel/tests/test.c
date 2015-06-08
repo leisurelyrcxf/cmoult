@@ -6,11 +6,7 @@
 
 
 pthread_t * listener;
-
-
-
-pthread_t main_thread;
-dsuthreadarg * main_dsu_thread;
+dsuthread * main_dsu_thread;
 
 void * main_thread_main(void* arg){
   puts("start main");
@@ -28,7 +24,7 @@ int main(){
   listener = access_threaded_listener();
   puts("starting threaded manager");
   man = start_threaded_manager();
-  main_dsu_thread = dsuthread_create(&main_thread,NULL,&main_thread_main,NULL);
+  main_dsu_thread = dsuthread_create(NULL,&main_thread_main,NULL);
   pthread_join(*listener,NULL);
   return 0;
 }

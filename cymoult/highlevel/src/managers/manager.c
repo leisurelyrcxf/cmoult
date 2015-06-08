@@ -25,48 +25,60 @@ Threaded Manager.
 
 manager * global_manager;
 
-
-
-void call_manager(manager * self){
-  if (self->current_update == NULL){
-    self->current_update = pop_update(&(self->updates));
-  }
+void manager_apply_next_update(manager * self){
+  get_next_update(self);
   if (self->current_update != NULL){
-    /* If the current update has not been applied */
-    if (!(self->current_update->applied)){
-      /*Suspend threads to check requirements and alterability */
-      //TODO Actually suspend
-      if ((*(self->current_update->requirements))()
-          && (*(self->current_update->alterability))()){
-        /*Apply the update*/
-        (*(self->current_update->apply))();
-        self->current_update->applied = 1;
+    if (self->state == checking_requirements){
+      /* First, check requirements */
+      self->tried = 0;
+      req_ans req = self->current_update->check_requirements();
+      if (req == yes){
+        /* requirements are met */
+        self->current_update->preupdate_setup();
+        self->state = waiting_alterability;
+      }else if (req == no){
+        /* requirements are not met but may be met later */
+        postpone_update(self);
+      }else{
+        /* requirements are not met and never will be */
+        abort_update(self);
       }
-      /*Resume the execution*/
-      //TODO Actually resume
-      
-      /* If it the current update has been applied */
-    }else{
-      /* If the update is over */
-      if ((*(self->current_update->over))()){
-        free(self->current_update);
-        self->current_update = NULL;
-        
+    }
+    if (self->state == waiting_alterability){
+      if (self->current_update->check_alterability()){
+        pause_threads(self);
+        self->current_update->apply();
+        self->current_update->preresume_setup();
+        resume_threads(self);
+        self->state = applied;
+      }else{
+        self->tried++;
+        if (self->tried >= self->current_update->max_tries){
+          self->current_update->clean_failed_alterability();
+          postpone_update(self);
+        }
+      }
+    }
+    if (self->state == applied){
+      if (self->current_update->check_over()){
+        self->current_update->cleanup();
+        finish_update(self);
       }
     }
   }
 }
 
 
-manager * start_manager(){
-  manager * ntmanager = malloc(sizeof(manager));
-  ntmanager->updates = NULL;
-  ntmanager->current_update = NULL;
-  return ntmanager;
-}
-
-void add_update_manager(manager * ntmanager, update * upd){
-  push_update(&(ntmanager->updates),upd); 
+manager * start_manager(char * name, dsuthread * threads, int nthreads){
+  manager * man = malloc(sizeof(manager));
+  man->name = name;
+  man->threads = threads;
+  man->nthreads = nthreads;
+  man->updates = NULL;
+  man->current_update = NULL;
+  man->state = not_updating;
+  global_manager = man;
+  return man;
 }
 
 manager * request_manager(){

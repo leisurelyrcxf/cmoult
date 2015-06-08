@@ -25,58 +25,59 @@ Threaded Manager.
 
 threaded_manager * global_threaded_manager;
 
-
-
 static void * manager_main(void * arg){
   threaded_manager * self = (threaded_manager*) arg;
+  manager * base = AS_BASE(self);
   while (self->alive){
-    if (self->current_update == NULL){
-      self->current_update = pop_update(&(self->updates));
-    }else{
-    
-      /* If the current update has not been applied */
-      if (!(self->current_update->applied)){
-        /*Suspend threads to check requirements and alterability */
-        //TODO Actually suspend
-        if ((*(self->current_update->requirements))()
-            && (*(self->current_update->alterability))()){
-          /*Apply the update*/
-          (*(self->current_update->apply))();
-          self->current_update->applied = 1;
+    get_next_update(base);
+    if (base->state = checking_requirements){
+      req_ans req = base->current_update->check_requirements();
+      if (req == yes){
+        /* requirements are met */
+        base->state = waiting_alterability;
+        base->current_update->preupdate_setup();
+        if (base->current_update->wait_alterability()){
+          pause_threads(base);
+          base->current_update->apply();
+          base->state = applied;
+          base->current_update->preresume_setup();
+          resume_threads(base);
+          base->current_update->wait_over();
+          base->current_update->cleanup();
+          finish_update(base);
+        }else{
+          base->current_update->clean_failed_alterability();
+          postpone_update(base);
+          sleep(MANAGER_SLEEP);
         }
-        /*Resume the execution*/
-        //TODO Actually resume
-        
-        /* If it the current update has been applied */
+      }else if (req = no){
+        /* requirements are not met but may be met later */
+        postpone_update(base);
+        sleep(MANAGER_SLEEP);
       }else{
-        /* If the update is over */
-        if ((*(self->current_update->over))()){
-          free(self->current_update);
-          self->current_update = NULL;
-          
-        }
+        /* requirements are not met and never will be */
+        abort_update(base);
       }
-      sleep(MANAGER_SLEEP);
     }
   }
-  return NULL;
 }
 
 
-threaded_manager * start_threaded_manager(){
-  threaded_manager * tmanager = malloc(sizeof(threaded_manager));
+threaded_manager * start_threaded_manager(char * name, dsuthread * threads, int nthreads){
+  threaded_manager * man = malloc(sizeof(threaded_manager));
   pthread_t thread;
-  tmanager->thread = &thread;
-  tmanager->updates = NULL;
-  tmanager->current_update = NULL;
-  tmanager->alive = 1;
-  pthread_create(&thread,NULL,&manager_main,(void*) tmanager);
-  global_threaded_manager = tmanager;
-  return tmanager;
-}
-
-void add_update_threaded_manager(threaded_manager * tmanager, update * upd){
-  push_update(&(tmanager->updates),upd); 
+  manager * base = AS_BASE(man);
+  man->thread = &thread;
+  man->alive = 1;
+  base->name = name;
+  base->threads = threads;
+  base->nthreads = nthreads;
+  base->updates = NULL;
+  base->current_update = NULL;
+  base->state = not_updating;
+  pthread_create(&thread,NULL,&manager_main,(void*) man);
+  global_threaded_manager = man;
+  return man;
 }
 
 threaded_manager * request_threaded_manager(){
