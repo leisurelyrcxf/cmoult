@@ -69,7 +69,7 @@ void manager_apply_next_update(manager * self){
 }
 
 
-manager * start_manager(char * name, dsuthread * threads, int nthreads){
+manager * start_manager(char * name, dsuthread ** threads, int nthreads){
   manager * man = malloc(sizeof(manager));
   man->name = name;
   man->threads = threads;

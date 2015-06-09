@@ -22,49 +22,60 @@ DSU thread
  */
 
 #include "dsuthread.h"
+#include <stdio.h>
 
-
-__thread thread_interupt * tsignal;
-__thread jmp_buf context;
+static thread_interupt * tsignal;
+static pid_t target;
+static __thread jmp_buf context;
 
 static void dsuthread_signal_handler(int signum){
   if (*tsignal == suspend){
     *tsignal = nothing;
-    while (*signal != resume){
-      sleep(DSUTHREAD_SLEEP);
-    }
+    while (*tsignal != resume){
+       sleep(DSUTHREAD_SLEEP);
+     }
+     signal(SIGUSR1,&dsuthread_signal_handler);
   }else if (*tsignal == reboot){
-    longjmp(context,1);
+     longjmp(context,1);
   }
 }
 
 static void * dsu_thread_main(void * arg){
   dsuthread * dthread = (dsuthread *) arg;
   tsignal = &(dthread->tsignal);
+  dthread->pid = syscall(SYS_gettid);
   //set restore point
   setjmp(context);
-  signal(SIGUSR1,dsuthread_signal_handler);
+  signal(SIGUSR1,&dsuthread_signal_handler);
   return dthread->main(dthread->thread_args);
 }
 
-dsuthread * dsuthread_create(const pthread_attr_t *attr, void (*main)(void* targs), void * args){
+dsuthread * dsuthread_create(const pthread_attr_t *attr, void *(*main)(void* targs), void * args){
   dsuthread * dthread = malloc(sizeof(dsuthread));
   pthread_t thread;
   dthread->thread = &thread;
   dthread->thread_args = args;
   dthread->main = main;
-  dthread->signal = nothing;
+  dthread->tsignal = nothing;
   pthread_create(&thread,attr,&dsu_thread_main,(void*) dthread);
   return dthread;
 }
 
-void pause_thread(dsuthread dthread){
+void pause_thread(dsuthread * dthread){
+  int status;
+  puts("pausing thread");
   dthread->tsignal = suspend;
-  pthread_kill(*(dthread->thread),SIGUSR1);
+  errno = 0;
+  long res = ptrace(PTRACE_ATTACH,dthread->pid,NULL,NULL);
+  if (res < 0){
+    perror("ptrace");
+  }
+  waitpid(dthread->pid,(&status),0);
+  puts("attached");
 }
 
 
-void resume_thread(dsuthread thread){
+void resume_thread(dsuthread * dthread){
   dthread->tsignal = resume;
 }
 

@@ -34,7 +34,7 @@ void push_update(ll_updates **ll,update* upd);
 
 typedef struct{
   char * name;
-  dsuthread * threads;
+  dsuthread ** threads;
   size_t nthreads;
   ll_updates * updates;
   update * current_update;
@@ -65,12 +65,12 @@ void resume_threads(manager * man);
 /* threaded manager functions */
 
 
-threaded_manager * start_threaded_manager();
+threaded_manager * start_threaded_manager(char * name, dsuthread ** threads, int nthreads);
 threaded_manager * request_threaded_manager();
 
 /*non threaded manager functions */
 
-manager * start_manager();
+manager * start_manager(char * name, dsuthread ** threads, int nthreads);
 void manager_apply_next_update(manager * ntmanager);
 manager * request_manager();
 

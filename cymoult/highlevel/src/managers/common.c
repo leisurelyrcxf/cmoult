@@ -70,7 +70,7 @@ void finish_update(manager* man){
 
 void pause_threads(manager* man){
   size_t nthreads = man->current_update->nthreads;
-  dsuthread * threads = man->current_update->threads;
+  dsuthread ** threads = man->current_update->threads;
   if (nthreads > 0){
     for (int i=0;i<nthreads;i++){
       pause_thread(threads[i]);
@@ -86,7 +86,7 @@ void pause_threads(manager* man){
 
 void resume_threads(manager* man){
   size_t nthreads = man->current_update->nthreads;
-  dsuthread * threads = man->current_update->threads;
+  dsuthread ** threads = man->current_update->threads;
   if (nthreads > 0){
     for (int i=0;i<nthreads;i++){
       resume_thread(threads[i]);
