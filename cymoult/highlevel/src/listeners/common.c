@@ -8,6 +8,7 @@ static void * spawn_main(void *args){
   ll_spawned * sargs = (ll_spawned*) args;
   if (access(sargs->libpath,F_OK) == 0){
     dlopen(sargs->libpath,RTLD_NOW);
+    printf("error : %s\n",dlerror());
     //When the thread is finished, we tell it
     sargs->finished = 1;
   }else{

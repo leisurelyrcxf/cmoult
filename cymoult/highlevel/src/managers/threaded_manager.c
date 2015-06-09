@@ -22,15 +22,18 @@ Threaded Manager.
  */
 
 #include "manager.h"
+#include <stdio.h>
 
 threaded_manager * global_threaded_manager;
 
 static void * manager_main(void * arg){
+  puts("manager started!");
   threaded_manager * self = (threaded_manager*) arg;
   manager * base = AS_BASE(self);
   while (self->alive){
+    sleep(MANAGER_SLEEP);
     get_next_update(base);
-    if (base->state = checking_requirements){
+    if (base->state == checking_requirements){
       req_ans req = base->current_update->check_requirements();
       if (req == yes){
         /* requirements are met */
@@ -63,7 +66,7 @@ static void * manager_main(void * arg){
 }
 
 
-threaded_manager * start_threaded_manager(char * name, dsuthread * threads, int nthreads){
+threaded_manager * start_threaded_manager(char * name, dsuthread ** threads, int nthreads){
   threaded_manager * man = malloc(sizeof(threaded_manager));
   pthread_t thread;
   manager * base = AS_BASE(man);
