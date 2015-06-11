@@ -101,6 +101,12 @@ void resume_threads(manager* man){
 }
 
 
+void pause_thread(dsuthread * dthread){
+}
+
+void resume_thread(dsuthread * dthread){
+}
+
 
 
 
