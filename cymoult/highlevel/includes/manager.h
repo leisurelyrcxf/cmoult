@@ -60,6 +60,8 @@ void abort_update(manager * man);
 void finish_update(manager * man);
 void pause_threads(manager * man);
 void resume_threads(manager * man);
+void pause_thread(dsuthread * dthread);
+void resume_thread(dsuthread * dthread);
 
 
 /* threaded manager functions */
