@@ -6,6 +6,8 @@ literature as possible through a generic API.
 
 To read the manual of Pymoult, please follow [this link](http://bitbucket.org/smartinezgd/pymoult/wiki/Pymoult%20manual)
 
+A simple tutorial to Pymoult is available [here](http://bitbucket.org/smartinezgd/pymoult/wiki/A%20simple%20Pymoult%20tutorial)
+
 
 ##LICENSE
 
