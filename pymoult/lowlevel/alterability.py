@@ -22,7 +22,6 @@
 
 """
 
-from pymoult.lowlevel.stack import resumeThread,suspendThread
 from pymoult.lowlevel.relinking import redefineFunction
 import threading
 import inspect
@@ -92,7 +91,7 @@ def checkQuiescenceOfFunction(func,threads=[]):
         threads.remove(threading.currentThread())
     #We suspend all threads
     for t in threads:
-        suspendThread(t)
+        t.suspend()
     #Then we capture the stacks
     stacks = [get_current_frames()[t.ident] for t in threads]
     #We check if the function is in the stacks
@@ -105,7 +104,7 @@ def checkQuiescenceOfFunction(func,threads=[]):
     else:
         #We resume the threads
         for t in threads:
-            resumeThread(t)
+            t.resume()
 
 #Update.check_alterability
 def checkQuiescenceOfFunctions(funcs,threads=[]):
@@ -117,7 +116,7 @@ def checkQuiescenceOfFunctions(funcs,threads=[]):
         threads.remove(threading.currentThread())
     #We suspend all threads
     for t in threads:
-        suspendThread(t)
+        t.suspend(t)
     #Then we capture the stacks
     stacks = [get_current_frames()[t.ident] for t in threads]
     #We check if the function is in the stacks
@@ -131,7 +130,7 @@ def checkQuiescenceOfFunctions(funcs,threads=[]):
     else:
         #We resume the threads
         for t in threads:
-            resumeThread(t)
+            t.resume()
 
             
 #Update.wait_alterability
@@ -151,7 +150,7 @@ def waitQuiescenceOfFunction(func,threads=[]):
     for x in range(max_tries):
         #We suspend all threads
         for t in threads:
-            suspendThread(t)
+            t.suspend(t)
         #Then we capture the stacks
         stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
@@ -163,7 +162,7 @@ def waitQuiescenceOfFunction(func,threads=[]):
         else:
             #We resume the threads
             for t in threads:
-                resumeThread(t)
+                t.resume()
         time.sleep(sleep_time)
     return False
 
@@ -186,7 +185,7 @@ def waitQuiescenceOfFunctions(funcs,threads=[]):
     for x in range(max_tries):
         #We suspend all threads
         for t in threads:
-            suspendThread(t)
+            t.suspend()
         #Then we capture the stacks
         stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
@@ -199,7 +198,7 @@ def waitQuiescenceOfFunctions(funcs,threads=[]):
         else:
             #We resume the threads
             for t in threads:
-                resumeThread(t)
+                t.resume()
         time.sleep(sleep_time)
     return False
 
@@ -214,7 +213,7 @@ def resumeSuspendedThreads(threads=[]):
         #remove the current thread from the list of threads to be resumed
         threads.remove(threading.currentThread())
     for thread in threads:
-        resumeThread(thread)
+        t.resume()
 
 #Force Quiescence
 
@@ -320,7 +319,7 @@ def cleanFailedStaticPoints(threads):
     for t in threads:
         #First, we delete the static_point_event too
         delattr(t,"static_point_event")
-        resumeThread(t)
+        t.resume()
 
 #Update.resume_hook
 #resumeSuspendedThreads

@@ -44,78 +44,14 @@
 
 """
 
-import weakref
 from Queue import Queue
 from threading import Lock
 import sys
+import gc
 
 ############################
 # Tools for accessing data #
 ############################
-
-class ObjectsPool(object):
-    """A Pool of objects, keeping a weak reference to all created
-        objects"""
-
-    objectsPool = None
-    @classmethod
-    def getObjectsPool(cls):
-        """Returns the instance of ObjectsPool. Raises an error if no
-        ObjectsPoolinstance was created"""
-        p = cls.objectsPool
-        if not p:
-            raise TypeError("No ObjectsPool was created")
-        return cls.objectsPool
-
-    def __init__(self):
-        """Constructor, sets the instance hook""" 
-        ObjectsPool.objectsPool = self
-        set_instance_hook(instance_hook)
-        self.objects = set()
-        self.buffer = set()
-        self.lock = Lock()
-        self.in_use = False
-
-
-    def add(self,obj):
-        """Adds a weak reference to the object given as argument"""
-        if self.in_use:
-            self.buffer.add(weakref.ref(obj))
-        else:
-            self.objects.add(weakref.ref(obj))
-
-    def merge(self):
-        self.lock.acquire()
-        self.objects.union(self.buffer)
-        self.buffer.clear()
-        self.lock.release()
-
-    def cleanup(self):
-        """Revoves all stale weak references from the pool""" 
-        d = []
-        for ref in self.objects:
-            if ref() == None:
-                d.append(ref)
-        for x in d:
-            self.objects.remove(x)
-                        
-    def pool(self):
-        """Returns the pool of weak references"""
-        return self.objects
-
-    def begin_use(self):
-        self.in_use = True
-
-    def end_use(self):
-        self.in_use = False
-        self.merge()
-
-def instance_hook(obj):
-    """The hook to be set on object instanciation when using the ObjectsPool"""
-    try:
-        ObjectsPool.objectsPool.add(obj)
-    except:
-        pass
 
 class WrongStrategy(Exception):
     """Error raised if an unknown strategy has been asked"""
@@ -154,14 +90,10 @@ class DataAccessor(object):
         """
         #called when begining an iteration called, we can initiate the getter
         if self.strategy == "immediate":
-            pool = ObjectsPool.getObjectsPool()
-            pool.begin_use()
-            opool = pool.pool()
-            for ref in opool:
-                obj = ref()
+            pool = gc.get_objects()
+            for obj in pool:
                 if isinstance(obj,self.tclass):
                     self.put(obj)
-            pool.end_use()
             self.stop()
             
 

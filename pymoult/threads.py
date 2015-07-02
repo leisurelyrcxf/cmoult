@@ -25,7 +25,6 @@
 
 import threading
 import sys
-from _continuation import continulet
 import inspect
 import time
 
@@ -46,8 +45,6 @@ class DSU_Thread(threading.Thread):
         super(DSU_Thread,self).__init__(group=group,name=name,args=args,kwargs=kwargs)
         self.__main = target
         self.keep_running = True
-        self.sleeping_continuation = None
-        self.sleeping_continuation_function = None
         self.active_update_function = None
         self.active = active
         self.last_update_point = None
@@ -58,23 +55,8 @@ class DSU_Thread(threading.Thread):
     def set_passive(self):
         self.active = False
 
-    def execute_sleeping_continuation(self,continuation):
-        """Switches to the continuation associated with the thread. If
-        sleeping_continuation_function is set, calls it.  Called once
-        when bootstraping the thread
-        """
-        #we switch at once to continue with main
-        continuation.switch()
-        while True:
-            if self.sleeping_continuation_function != None:
-                self.sleeping_continuation_function()
-            continuation.switch()
-
-    def run(self):
+     def run(self):
         """Bootstraps the thread"""
-        c = continulet(self.execute_sleeping_continuation)
-        c.switch()
-        self.sleeping_continuation = c
         while self.keep_running:
             self.toogle_loop_main()
             try:
@@ -87,10 +69,6 @@ class DSU_Thread(threading.Thread):
         """Turns on restarting the main function when it finishes (disabled by
         default)"""
         self.keep_running = not self.keep_running
-
-    def switch(self):
-        """Switch to the sleeping continuation"""
-        self.sleeping_continuation.switch()
 
     def start_update(self):
         """Starts active update. If the active is set (active update mode),

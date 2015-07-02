@@ -1,4 +1,4 @@
-#/usr/bin/pypy-dsu
+#/usr/bin/python-dsu
 
 from pymoult.highlevel.managers import ThreadedManager
 from pymoult.threads import DSU_Thread

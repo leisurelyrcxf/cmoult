@@ -1,4 +1,4 @@
-#/usr/bin/pypy-dsu
+#/usr/bin/python-dsu
 
 #Testing failed alterability
 

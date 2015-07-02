@@ -2,7 +2,7 @@
 
 hostname=$(hostname)
 
-pypy-dsu application.py &
+python-dsu application.py &
 app=$! 
 echo "WEB SERVER STARTED"
 echo "HIT ENTER TO START UPDATE"

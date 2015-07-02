@@ -45,11 +45,11 @@ class BaseManager(object):
         """suspends all threads managed by the manager"""
         if self.current_update.threads != []:
             for t in self.current_update.threads:
-                suspendThread(t)
+                t.suspend()
                 log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
         elif hasattr(self,"threads") and type(self.threads) == list:
             for t in self.threads:
-                suspendThread(t)
+                t.suspend()
                 log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
 
     def resume_threads(self):
@@ -57,11 +57,11 @@ class BaseManager(object):
         """resume the execution of suspended managed threads"""
         if self.current_update.threads != []:
             for t in self.current_update.threads:
-                resumeThread(t)
+                t.resume()
                 log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
         elif hasattr(self,"threads") and type(self.threads) == list:
             for t in self.threads:
-                resumeThread(t)
+                t.resume()
                 log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
                 
     def finish(self):
