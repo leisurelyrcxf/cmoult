@@ -24,24 +24,7 @@
 
 from  pymoult.threads import set_thread_trace, RebootException
 import threading
-
-def suspendThread(thread):
-    """Suspends the given thread"""
-    if thread.is_alive() and not hasattr(thread,"pause_event"):
-        thread.pause_event = threading.Event()
-        thread.pause_event.clear()
-        def trace(frame,event,arg):
-            if hasattr(thread,"pause_event"):
-                thread.pause_event.wait()
-            return None
-        set_thread_trace(thread,trace)
-
-def resumeThread(thread):
-    """resumes the execution fo the given thread if it is suspended"""
-    if hasattr(thread,"pause_event"):
-        thread.pause_event.set()
-        delattr(thread,"pause_event")
-        set_thread_trace(thread,None)
+import sys
 
 ########################
 # Low level mechanisms #
@@ -80,11 +63,11 @@ def rebootFunction(thread,function,new_function,capture_state):
         if frame.f_back.f_code == function.func_code:
             state = capture_state(frame.f_back)
             res = new_function(state)
-            drop3frames res
+            sys.drop_frames(3,res)
         elif frame.f_code == function.func_code:
             state = capture_state(frame)
             res = new_function(state)
-            drop2frames res
+            sys.drop_frames(3,res)
         return trace
     set_thread_trace(thread,trace)
 

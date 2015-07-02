@@ -13,7 +13,7 @@ fi
 currentTest="$(basename "$PWD") ... "
 echo -n $currentTest
 
-pypy-dsu application.py &
+python-dsu application.py &
 app=$!
 sleep 1
 echo "set loglevel 2" | netcat $hostname 4242

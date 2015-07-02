@@ -1,4 +1,4 @@
-#/usr/bin/pypy-dsu
+#/usr/bin/python-dsu
 
 from pymoult.highlevel.managers import ThreadedManager
 from pymoult.lowlevel.data_access import ObjectsPool

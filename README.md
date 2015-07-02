@@ -18,8 +18,10 @@ Pypy-Dsu (required by Pymoult) is a fork of Pypy, published under specific licen
 
 ##Installing
 
+Pymoult requires Pypy-dsu or Cpython-dsu, Python interpreters enhanced
+with DSU features.
 
-###Installing Pypy-dsu
+###Installing with CPython-dsu
 
 Pymoult requires Pypy-Dsu, our custom pypy interpreter providing DSU
 utilities. You can download and compile the source code or install the
@@ -32,14 +34,26 @@ the pre-compiled packages from the
 
 To use the latest version of Pymoult, you need to install pypy-dsu-2.4-2.
 
+###Installing with Pypy-dsu
+
+Pymoult requires Pypy-Dsu, our custom pypy interpreter providing DSU
+utilities. You can download and compile the source code or install the
+binaries from [the download page](https://bitbucket.org/smartinezgd/pymoult/downloads)
+
+ArchLinux users may use the
+[package from AUR](https://aur.archlinux.org/packages/pypy-dsu/) or
+the pre-compiled packages from the
+[the download page](https://bitbucket.org/smartinezgd/pymoult/downloads).
+
+To use the latest version of Pymoult, you need to install pypy-dsu-2.4-2.
 
 ###Installing on Linux
 
-1. Install pypy-dsu your favorit way
+1. Install pypy-dsu or python-dsu your favorite way
 
 2. Install pymoult
 
-	$> pypy-dsu setup.py install --prefix=<your_prefix>
+	$> python setup.py install --prefix=<your_prefix>
 
 3. Export your new PYTHONPATH
 	
@@ -52,7 +66,6 @@ You can install pymoult using the AUR package [pypy-pymoult-hg](https://aur.arch
 
 
 ##Pydoc
-
 
 The pydoc can be generated with the doc.sh script
 
