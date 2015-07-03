@@ -51,7 +51,7 @@ class Update(object):
         self.name = name
         self.threads = threads
         self.max_tries = 10 #Number of attempt for detecting alterability
-        self.sleep_time = 0.1 #Sleep time used between state checks (for alterability, over, ...)
+        self.sleep_time = 1 #Sleep time used between state checks (for alterability, over, ...)
 
     def set_max_tries(self,max_tries):
         self.max_tries = max_tries
@@ -205,7 +205,7 @@ class ThreadRebootUpdate(Update):
         #First, change the "main" function of the thread
         switchMain(self.thread,self.new_main,args=self.new_args)
         #Then, resume the thread before restarting it
-        resumeThread(self.thread)
+        self.thread.resume()
         resetThread(self.thread)
 
         

@@ -33,7 +33,6 @@
 import threading
 import socket
 import inspect
-from _continuation import continulet
 import os
 import imp
 import time
@@ -119,7 +118,7 @@ class Listener(threading.Thread):
         s.listen(Max_queued_connect)
         while self.keep_running:
             conn,addr = s.accept()
-            data = conn.recv(Max_recieve)
+            data = conn.recv(Max_recieve).decode()
             if data.strip()[0:len(Invoke_message)] == Invoke_message:
                 update_address = data.strip()[len(Invoke_message)+1:]
                 self.start_update(update_address)

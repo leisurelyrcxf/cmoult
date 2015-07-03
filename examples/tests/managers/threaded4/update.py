@@ -14,9 +14,12 @@ def func_v2():
 class FailedAlterability(Update):
     def preupdate_setup(self):
         setupWaitStaticPoints([main.thread])
+        print("1")
     def wait_alterability(self):
-        return waitStaticPoints([main.thread])        
+        print("2")
+        return waitStaticPoints([main.thread])
     def clean_failed_alterability(self):
+        print("3")
         cleanFailedStaticPoints([main.thread])
     def apply(self):
         pass

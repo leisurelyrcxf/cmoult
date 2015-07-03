@@ -13,12 +13,12 @@ fi
 currentTest="$(basename "$PWD") ... "
 echo -n $currentTest
 
-python-dsu application.py &
+python-dsu3 application.py &
 app=$! 
-sleep 0.5
+sleep 1
 echo "set loglevel 2" | netcat $hostname 4242
 
-sleep 1 
+sleep 2 
 echo "update update.py" | netcat $hostname 4242 
 
 control_c()
@@ -42,7 +42,7 @@ wait $app
 
 $oracle .
 res=$?
-if [ $res ]
+if [ "$res" == "0" ]
 then
     echo " passed"
 else

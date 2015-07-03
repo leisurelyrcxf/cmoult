@@ -36,9 +36,12 @@ import sys
 def resetThread(thread):
     """Reboots the given thread"""
     #enable rebooting for the thread
-    thread.toogle_loop_main()
+    thread.allow_reboot()
+    print("reboot allowed")
     def trace(frame,event,arg):
+        print("trace!")
         raise RebootException()
+    print("setting trace")
     set_thread_trace(thread,trace)
     
 

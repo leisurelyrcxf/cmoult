@@ -2,7 +2,7 @@
 
 hostname=$(hostname)
 
-python-dsu application.py &
+python-dsu3 application.py &
 app=$! 
 
 sleep 10

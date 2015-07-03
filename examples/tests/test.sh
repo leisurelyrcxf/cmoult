@@ -12,8 +12,8 @@ then
     rm "$testPath/results.txt"
 fi
 
-managerTests=$(find "$managersPath" -type d -printf '%P\n')
-updateTests=$(find "$updatesPath" -type d -printf '%P\n')
+managerTests=$(find "$managersPath" -type d -not -name "__pycache__" -printf '%P\n')
+updateTests=$(find "$updatesPath" -type d -not -name "__pycache__" -printf '%P\n')
 
 echo "Testing managers" | tee -a "$testPath/results.txt"
 

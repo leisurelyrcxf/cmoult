@@ -1,8 +1,12 @@
 v1
-Manager pymoult begining update requirements
-Update requirements could meet its requirements : aborting
+Manager pymoult begining update alterability
+Alterability for update alterability could not be reached. Update postponed
 Manager pymoult begining update func
 Alterabilty for update func reached
 Update func over condition met
 Update func was succesfully completed
+Manager pymoult begining update alterability
+Alterabilty for update alterability reached
+Update alterability over condition met
+Update alterability was succesfully completed
 v2

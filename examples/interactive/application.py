@@ -1,4 +1,4 @@
-#!/usr/bin/python-dsu
+#!/usr/bin/python-dsu3
 """Simple server that serves pictures from folders""" 
 
 import socket

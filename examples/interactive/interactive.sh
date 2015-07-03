@@ -73,7 +73,7 @@ dialog --msgbox "$TITLE\n\nWe are now ready to start the application." 8 80
 dialog --inputbox "$TITLE\n\nPlease enter paths of the folders to serve (separated by space)" 12 80 2> $TMP
 folders=$(cat $TMP)
 
-python-dsu $TPATH/application.py $folders &
+python-dsu3 $TPATH/application.py $folders &
 app=$!
 
 dialog --msgbox "$TITLE\n\nNow, it's time to launch the client." 8 80
