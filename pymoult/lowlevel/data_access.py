@@ -109,7 +109,7 @@ class DataAccessor(object):
                     
         return self
         
-    def next(self):
+    def __next__(self):
         """Gets the next item of the data accessor. Stops when it meets a
         DataAccessorNull object"""
         item = self.queue.get()
