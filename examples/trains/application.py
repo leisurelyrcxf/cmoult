@@ -1,4 +1,4 @@
-#!/usr/bin/python-dsu
+#!/usr/bin/python-dsu3
 
 from pymoult.highlevel.listener import Listener
 

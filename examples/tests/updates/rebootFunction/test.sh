@@ -13,8 +13,8 @@ fi
 currentTest="$(basename "$PWD") ... "
 echo -n $currentTest
 
-python-dsu application.py &
-app=$!
+python-dsu3 application.py &
+app=$! 
 sleep 1
 echo "set loglevel 2" | netcat $hostname 4242
 
@@ -42,7 +42,7 @@ wait $app
 
 $oracle .
 res=$?
-if [ $res ]
+if [ "$res" == "0" ]
 then
     echo " passed"
 else

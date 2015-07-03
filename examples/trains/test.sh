@@ -7,7 +7,7 @@ if [ "$typ" == "gui" ];
 then
     python guiserver.py &
     gui=$!
-    python-dsu applicationgui.py &
+    python-dsu3 applicationgui.py &
     app=$!
     
     sleep 15
@@ -24,7 +24,7 @@ then
     wait $app
 
 else
-    python-dsu application.py &
+    python-dsu3 application.py &
     app=$! 
 
     sleep 15

@@ -1,7 +1,6 @@
-#/usr/bin/python-dsu
+#/usr/bin/python-dsu3
 
 from pymoult.highlevel.managers import ThreadedManager
-from pymoult.lowlevel.data_access import ObjectsPool
 from pymoult.highlevel.listener import Listener,log
 import threading
 import time
@@ -28,7 +27,6 @@ def main():
             
 
 
-ObjectsPool()
 thread = threading.Thread(target=main,name="app")
 manager = ThreadedManager(name='global',threads=[thread])
 manager.start()

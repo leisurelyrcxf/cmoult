@@ -55,20 +55,19 @@ class DSU_Thread(threading.Thread):
     def set_passive(self):
         self.active = False
 
-     def run(self):
+    def run(self):
         """Bootstraps the thread"""
         while self.keep_running:
-            self.toogle_loop_main()
+            self.keep_running = False
             try:
                 self.main()
             except RebootException as r:
                 #The thread has been rebooted, we just loop again
                 pass
-	
-    def toogle_loop_main(self):
-        """Turns on restarting the main function when it finishes (disabled by
-        default)"""
-        self.keep_running = not self.keep_running
+
+    def allow_reboot(self):
+        """Activates thread rebooting until next reboot"""
+        self.keep_running = True
 
     def start_update(self):
         """Starts active update. If the active is set (active update mode),

@@ -53,7 +53,7 @@ def get_current_frames():
 def checkFinStack(func,stack):
     x = stack
     while x is not None:
-        if x.f_code is func.func_code:
+        if x.f_code is func.__code__:
             return True
         x = x.f_back
     return False
@@ -116,7 +116,7 @@ def checkQuiescenceOfFunctions(funcs,threads=[]):
         threads.remove(threading.currentThread())
     #We suspend all threads
     for t in threads:
-        t.suspend(t)
+        t.suspend()
     #Then we capture the stacks
     stacks = [get_current_frames()[t.ident] for t in threads]
     #We check if the function is in the stacks
@@ -150,7 +150,7 @@ def waitQuiescenceOfFunction(func,threads=[]):
     for x in range(max_tries):
         #We suspend all threads
         for t in threads:
-            t.suspend(t)
+            t.suspend()
         #Then we capture the stacks
         stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
@@ -213,7 +213,7 @@ def resumeSuspendedThreads(threads=[]):
         #remove the current thread from the list of threads to be resumed
         threads.remove(threading.currentThread())
     for thread in threads:
-        t.resume()
+        thread.resume()
 
 #Force Quiescence
 
