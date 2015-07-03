@@ -11,7 +11,7 @@ def func_v1():
 
 def main():
     for x in range(5):
-        time.sleep(0.5)
+        time.sleep(1)
         func_v1()
 
 

@@ -12,6 +12,7 @@ def new_main(state):
     r = state[0]
     n = state[1]
     for i in range(20-n):
+        print("lama")
         r.append(i+n)
         log(0,"v2 : "+str(i+n))
     log(0,str(r))
