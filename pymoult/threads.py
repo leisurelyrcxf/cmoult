@@ -78,10 +78,11 @@ class DSU_Thread(threading.Thread):
                 self.active_update_function()
                 self.active_update_function = None
         else:
-            if hasattr(self,"static_point_event"):
+            if hasattr(self, "static_point_event"):
                 self.static_point_event.set()
-                if hasattr(self,"pause_event"):
-                    self.pause_event.wait()
+                if hasattr(self, "static_wait"):
+                    self.suspend()
+                    delattr(self, "static_wait")
                     
     def main(self):
         if self.__main:

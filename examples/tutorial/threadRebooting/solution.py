@@ -2,6 +2,7 @@
 
 from pymoult.highlevel.updates import ThreadRebootUpdate
 from pymoult.lowlevel.alterability import waitStaticPoints,setupWaitStaticPoints,cleanFailedStaticPoints
+#from pymoult.lowlevel.stack import resumeThread
 import sys
 import time
 

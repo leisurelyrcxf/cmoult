@@ -60,14 +60,15 @@ def rebootFunction(thread,function,new_function,capture_state):
     def trace(frame,event,arg):
         #We check if the function we entered into was called by the
         #function to reboot
-        if frame.f_back.f_code == function.func_code:
+        '''if frame.f_back.f_code == function.__code__:
             state = capture_state(frame.f_back)
             res = new_function(state)
-            sys.drop_frames(3,res)
-        elif frame.f_code == function.func_code:
+            sys.drop_frames(2,res)
+        el'''
+        if frame.f_code == function.__code__:
             state = capture_state(frame)
             res = new_function(state)
-            sys.drop_frames(3,res)
+            sys.drop_frames(2,res)
         return trace
     set_thread_trace(thread,trace)
 

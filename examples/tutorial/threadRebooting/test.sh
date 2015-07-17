@@ -5,7 +5,7 @@ hostname=$(hostname)
 python-dsu3 application.py &
 app=$! 
 
-sleep 7
+sleep 3
 echo "BEGINING UPDATE"
 
 if [ "$1" == "solution" ];
