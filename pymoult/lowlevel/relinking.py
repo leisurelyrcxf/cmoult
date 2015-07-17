@@ -21,7 +21,6 @@
    This module provides low level tools for relinking new functions
 """
 
-
 ########################
 # Low level mechanisms #
 ########################

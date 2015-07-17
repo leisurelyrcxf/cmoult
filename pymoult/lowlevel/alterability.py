@@ -212,8 +212,8 @@ def resumeSuspendedThreads(threads=[]):
         threads = threading.enumerate()
         #remove the current thread from the list of threads to be resumed
         threads.remove(threading.currentThread())
-    for thread in threads:
-        thread.resume()
+    for t in threads:
+        t.resume()
 
 #Force Quiescence
 
@@ -283,8 +283,7 @@ def staticUpdatePoint(name=None):
 #Update.preupdate_setup
 def setupWaitStaticPoints(threads):
     for thread in threads:
-        thread.pause_event = threading.Event()
-        thread.pause_event.clear()
+        thread.static_wait = True
         thread.static_point_event = threading.Event()
         thread.static_point_event.clear()
     
