@@ -18,7 +18,7 @@ users = []
 current_user = None
 
 def find_name_in_list(name,l):
-    ll = filter(lambda x : x.name == name,l)
+    ll = list(filter(lambda x : x.name == name,l))
     if len(ll) > 0:
         return ll[0]
     else:
@@ -49,7 +49,6 @@ class Page(object):
     number = 0
     def __init__(self,name):
         self.name = name
-        self.number = Page.number
         Page.number+=1
 
     def __str__(self):
@@ -102,7 +101,7 @@ def do_show(comm):
 
 def do_login(comm):
     global current_user
-    ul = filter(lambda x : x.user == comm.strip(),users)
+    ul = list(filter(lambda x : x.user == comm.strip(),users))
     if len(ul) == 1:
         current_user = ul[0]
         print("User "+comm.strip()+" logged in")
@@ -114,7 +113,7 @@ def do_logout(comm):
         current_user = None
     
 def do_register(comm):
-    ul = filter(lambda x : x.user == comm.strip(),users)
+    ul = list(filter(lambda x : x.user == comm.strip(),users))
     if len(ul) == 0:
         users.append(Account(comm.strip()))
     
@@ -128,7 +127,7 @@ def do_command(comm):
         do_show(comm.lstrip("show").strip())
     elif comm.startswith("login "):
         do_login(comm.lstrip("login").strip())
-    elif comm.startswith("logout "):
+    elif comm.startswith("logout"):
         do_logout(comm.lstrip("logout").strip())
     elif comm.startswith("register "):
         do_register(comm.lstrip("register").strip())

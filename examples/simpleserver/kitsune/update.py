@@ -5,7 +5,6 @@ from pymoult.highlevel.updates import ThreadRebootUpdate,HeapTraversalUpdate,Upd
 from pymoult.lowlevel.data_access import HeapWalker
 from pymoult.lowlevel.data_update import updateToClass
 from pymoult.lowlevel.alterability import get_current_frames,waitStaticPoints,staticUpdatePoint,setupWaitStaticPoints,cleanFailedStaticPoints
-from pymoult.lowlevel.stack import resumeThread
 import sys
 import socket
 main = sys.modules["__main__"]
@@ -76,7 +75,7 @@ def check_access(site):
 
 def do_befriend(comm):
     if main.current_user != None:
-        ul = filter(lambda x : x.user == comm.strip(),users)
+        ul = list(filter(lambda x : x.user == comm.strip(),users))
     if len(ul) == 1 and not main.current_user.is_friend_with(ul[0]):
         main.current_user.add_friend(ul[0])
 
@@ -118,7 +117,7 @@ def do_showV2(comm):
                 print(site.get_page(l[2]))
 
 def do_registerV2(comm):
-    ul = filter(lambda x : x.user == comm.strip(),main.users)
+    ul = list(filter(lambda x : x.user == comm.strip(),main.users))
     if len(ul) == 0:
         main.users.append(AccountV2(comm.strip()))
 
@@ -144,9 +143,11 @@ class MyHeapWalker(HeapWalker):
         for item in lst:
             self.walk(item)
     def walk_Account(self,account):
-        updateToClass(account,AccountV2,transform_account)
+        print("account")
+        updateToClass(account,main.Account,AccountV2,transform_account)
     def walk_Site(self,site):
-        updateToClass(site,SiteV2,transform_site)
+        print("site")
+        updateToClass(site,main.Site,SiteV2,transform_site)
     def walk_module(self,mod):
         if mod.__name__ == "__main__":
             for item in dir(mod):
@@ -155,7 +156,7 @@ class MyHeapWalker(HeapWalker):
 def get_socket_fromstack():
     frame = get_current_frames()[main.main_thread.ident]
     while frame:
-        if frame.f_code is main.main_loop.func_code:
+        if frame.f_code is main.main_loop.__code__:
             return frame.f_locals["s"]
         frame = frame.f_back
 

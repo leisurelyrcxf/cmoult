@@ -74,7 +74,7 @@ def check_access(site):
 
 def do_befriend(comm):
     if main.current_user != None:
-        ul = filter(lambda x : x.user == comm.strip(),main.users)
+        ul = list(filter(lambda x : x.user == comm.strip(),main.users))
     if len(ul) == 1 and not main.current_user.is_friend_with(ul[0]):
         main.current_user.add_friend(ul[0])
 
