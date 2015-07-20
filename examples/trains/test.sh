@@ -5,8 +5,6 @@ hostname=$(hostname)
 
 if [ "$typ" == "gui" ];
 then
-    python guiserver.py &
-    gui=$!
     python-dsu3 applicationgui.py &
     app=$!
     
@@ -16,7 +14,6 @@ then
     control_c()
     {
         kill $app
-        kill $gui
         exit 0
     }
 
