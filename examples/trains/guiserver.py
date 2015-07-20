@@ -1,13 +1,8 @@
 #!/usr/bin/python
 
-import socket
 import tkinter
 import PIL
 import threading
-
-hostname = socket.gethostname()
-port = 31415
-
 
 class Window(tkinter.Tk):
     def __init__(self):

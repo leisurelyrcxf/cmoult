@@ -8,7 +8,7 @@ import threading
 import sys
 import math
 import time
-import Queue
+import queue
 
 
 main = sys.modules["__main__"]
@@ -35,7 +35,7 @@ def getTrainThreads():
             return False
            
     #We can get all the train through the enumerate method
-    threads = filter(f,threading.enumerate())
+    threads = list(filter(f,threading.enumerate()))
     return threads
 
 
