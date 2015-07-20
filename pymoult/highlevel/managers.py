@@ -45,24 +45,39 @@ class BaseManager(object):
         """suspends all threads managed by the manager"""
         if self.current_update.threads != []:
             for t in self.current_update.threads:
-                t.suspend()
-                log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                try:
+                    t.suspend()
+                    log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                except ThreadError as e:
+                    log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
+
         elif hasattr(self,"threads") and type(self.threads) == list:
             for t in self.threads:
-                t.suspend()
-                log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                try:
+                    t.suspend()
+                    log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                except ThreadError as e:
+                    log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
 
     def resume_threads(self):
         self.current_update.resume_hook()
         """resume the execution of suspended managed threads"""
         if self.current_update.threads != []:
             for t in self.current_update.threads:
-                t.resume()
-                log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
+                try:
+                    t.resume()
+                    log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
+                except ThreadError as e:
+                    log(1,"Manager "+str(self.name)+" met a ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+                    
         elif hasattr(self,"threads") and type(self.threads) == list:
             for t in self.threads:
-                t.resume()
-                log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
+                try:
+                    t.resume()
+                    log(2,"Manager "+str(self.name)+" resumed thread "+str(t.name))
+                except ThreadError as e:
+                    log(1,"Manager "+str(self.name)+" met a ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+                    
                 
     def finish(self):
         """Adds the current update to the list of applied updates and cleans

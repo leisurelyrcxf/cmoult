@@ -205,8 +205,12 @@ class ThreadRebootUpdate(Update):
         #First, change the "main" function of the thread
         switchMain(self.thread,self.new_main,args=self.new_args)
         #Then, resume the thread before restarting it
-        self.thread.resume()
-        resetThread(self.thread)
+        try:
+            self.thread.resume()
+            resetThread(self.thread)
+        except ThreadError as e:
+            log(1,"When rebooting thread "+str(self.thread.name)+" a ThreadError was met : "+str(e))
+
 
         
 class HeapTraversalUpdate(Update):

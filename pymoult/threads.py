@@ -27,6 +27,7 @@ import threading
 import sys
 import inspect
 import time
+from pymoult.highlevel.listener import log
 
 
 class RebootException(Exception):
@@ -81,7 +82,10 @@ class DSU_Thread(threading.Thread):
             if hasattr(self, "static_point_event"):
                 self.static_point_event.set()
                 if hasattr(self, "static_wait"):
-                    self.suspend()
+                    try:
+                        self.suspend()
+                    except ThreadError as e:
+                        log(1,"At static point, thread "+str(self.name)+" met a ThreadError when suspending : "+str(e))
                     delattr(self, "static_wait")
                     
     def main(self):
@@ -105,5 +109,9 @@ def get_thread_by_name(name):
 def set_thread_trace(thread,trace):
     """Sets the given trace to the given thread. Starts the trace
     immediately (does not wait forthe next function return)"""
-    sys.settrace_for_thread(thread.ident,trace,True)
+    try:
+        sys.settrace_for_thread(thread.ident,trace,True)
+    except ThreadError as e:
+        log(1,"setting trace "+trace.__name__+" on thread "+str(thread.name)+" met a ThreadError : "+str(e))
+        
 
