@@ -23,6 +23,7 @@
 """
 
 from pymoult.lowlevel.relinking import redefineFunction
+from pymoult.highlevel.listener import log
 import threading
 import inspect
 import time
@@ -91,7 +92,10 @@ def checkQuiescenceOfFunction(func,threads=[]):
         threads.remove(threading.currentThread())
     #We suspend all threads
     for t in threads:
-        t.suspend()
+        try:
+            t.suspend()
+        except ThreadError as e:
+            log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
     #Then we capture the stacks
     stacks = [get_current_frames()[t.ident] for t in threads]
     #We check if the function is in the stacks
@@ -104,7 +108,10 @@ def checkQuiescenceOfFunction(func,threads=[]):
     else:
         #We resume the threads
         for t in threads:
-            t.resume()
+            try:
+                t.resume()
+            except ThreadError as e:
+                log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
 
 #Update.check_alterability
 def checkQuiescenceOfFunctions(funcs,threads=[]):
@@ -116,7 +123,10 @@ def checkQuiescenceOfFunctions(funcs,threads=[]):
         threads.remove(threading.currentThread())
     #We suspend all threads
     for t in threads:
-        t.suspend()
+        try:
+            t.suspend()
+        except ThreadError as e:
+            log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
     #Then we capture the stacks
     stacks = [get_current_frames()[t.ident] for t in threads]
     #We check if the function is in the stacks
@@ -130,7 +140,10 @@ def checkQuiescenceOfFunctions(funcs,threads=[]):
     else:
         #We resume the threads
         for t in threads:
-            t.resume()
+            try:
+                t.resume()
+            except ThreadError as e:
+                log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
 
             
 #Update.wait_alterability
@@ -150,7 +163,10 @@ def waitQuiescenceOfFunction(func,threads=[]):
     for x in range(max_tries):
         #We suspend all threads
         for t in threads:
-            t.suspend()
+            try:
+                t.suspend()
+            except ThreadError as e:
+                log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
         #Then we capture the stacks
         stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
@@ -162,7 +178,10 @@ def waitQuiescenceOfFunction(func,threads=[]):
         else:
             #We resume the threads
             for t in threads:
-                t.resume()
+                try:
+                    t.resume()
+                except ThreadError as e:
+                    log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
         time.sleep(sleep_time)
     return False
 
@@ -185,7 +204,10 @@ def waitQuiescenceOfFunctions(funcs,threads=[]):
     for x in range(max_tries):
         #We suspend all threads
         for t in threads:
-            t.suspend()
+            try:
+                t.suspend()
+            except ThreadError as e:
+                log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
         #Then we capture the stacks
         stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
@@ -198,7 +220,10 @@ def waitQuiescenceOfFunctions(funcs,threads=[]):
         else:
             #We resume the threads
             for t in threads:
-                t.resume()
+                try:
+                    t.resume()
+                except ThreadError as e:
+                    log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
         time.sleep(sleep_time)
     return False
 
@@ -213,7 +238,10 @@ def resumeSuspendedThreads(threads=[]):
         #remove the current thread from the list of threads to be resumed
         threads.remove(threading.currentThread())
     for t in threads:
-        t.resume()
+        try:
+            t.resume()
+        except ThreadError as e:
+            log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
 
 #Force Quiescence
 
