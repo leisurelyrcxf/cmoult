@@ -6,7 +6,6 @@ import math
 import time
 import threading
 import tkinter
-import PIL
 import threading
 
 
@@ -95,33 +94,32 @@ class Train(threading.Thread):
         self.stoped = False
         super(Train,self).__init__(name=self.color+"_train")
 
-    def gsend(self,string):
-        global lock
-        lock.acquire()
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((socket.gethostname(), 31415))
-        self.socket.send(encode(string))
-        self.socket.close()    
-        print(string)
-        lock.release()
-
     def move(self):
         if type(self.position) == Station:
             time.sleep(3)
             gprint("The "+self.color+" train wants to leave the "+self.position.name+" station")
+            oldpos = self.position.name
             self.position = self.position.move_next(self)
             gprint("The "+self.color+" train entered on the "+self.position.name+" rail")
             if isinstance(self.position,Rail):
-                self.gsend("rail "+self.color+" "+self.position.name)
+                s = root.__getattribute__(oldpos.replace("Saint Lazare","Lazare"))
+                s.configure(text = s.cget("text").replace(self.color+",",""))
+                s.configure(text = s.cget("text").replace(","+self.color,""))
+                s.configure(text = s.cget("text").replace(self.color,""))
+                root.__getattribute__(self.position.name).configure(text=self.color)
         elif type(self.position) == Rail:
             time.sleep(math.ceil(self.position.length/self.speed))
+            oldpos = self.position.name
+            r = root.__getattribute__(oldpos)
             self.position = self.position.move_next()
+            n = root.__getattribute__(self.position.name.replace("Saint Lazare","Lazare"))
+            r.configure(text="")
             if isinstance(self.position,Station):
                 gprint("The "+self.color+" train entered the "+self.position.name+" station")
-                self.gsend("station "+self.color+" "+self.position.name) 
+                n.configure(text=n.cget("text")+","+self.color)
             else:
                 gprint("The "+self.color+" train entered on the "+self.position.name+" rail")
-                self.gsend("rail "+self.color+" "+self.position.name)
+                n.configure(text=self.color)
 
     def run(self):
         while not self.stoped:
