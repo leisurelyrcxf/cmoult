@@ -21,7 +21,7 @@ users = []
 current_user = None
 
 def find_name_in_list(name,l):
-    ll = filter(lambda x : x.name == name,l)
+    ll = list(filter(lambda x : x.name == name,l))
     if len(ll) > 0:
         return ll[0]
     else:
@@ -107,7 +107,7 @@ def do_show(comm):
 
 def do_login(comm):
     global current_user
-    ul = filter(lambda x : x.user == comm.strip(),users)
+    ul = list(filter(lambda x : x.user == comm.strip(),users))
     if len(ul) == 1:
         current_user = ul[0]
         print("User "+comm.strip()+" logged in")
@@ -119,7 +119,7 @@ def do_logout(comm):
         current_user = None
     
 def do_register(comm):
-    ul = filter(lambda x : x.user == comm.strip(),users)
+    ul = list(filter(lambda x : x.user == comm.strip(),users))
     if len(ul) == 0:
         users.append(Account(comm.strip()))
     
