@@ -12,7 +12,7 @@ main = sys.modules["__main__"]
 #Get all threads excepted the manager
 def getAllThreads():
     threads = threading.enumerate()
-    pymoult_thread = filter(lambda x : x.name == "pymoult",threads)
+    pymoult_thread = list(filter(lambda x : x.name == "pymoult",threads))
     if len(pymoult_thread) > 0:
         threads.remove(pymoult_thread[0])
     else:
@@ -53,44 +53,46 @@ def pic_transformer(pic):
     pic.basepath = pic.path
     pic.commentary = "Witty comment"
         
-helptext = "help : shows this help\nexit : disconnects\ncomment <folder> <comment>: sets commentary for pictures of folder\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(main.files.keys())+")\n"
+helptext = "help : shows this help\nexit : disconnects\ncomment <folder> <comment>: sets commentary for pictures of folder\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(list(main.files.keys()))+")\n"
 
         
 def serve_folder_v2(self,folder):
     try:
-        self.connection.sendall("serving")
-        if self.connection.recv(1024).strip() == "go":
+        self.connection.sendall("serving".encode("ascii"))
+        if self.connection.recv(1024).decode("utf-8").strip() == "go":
             for pic in main.files[folder]:
                 pic.annotate()
                 imgstream = pic.stream()
-                self.connection.sendall("<img:"+str(len(imgstream))+">"+pic.name)
-                if self.connection.recv(1024).strip() == "cancel":
+                s = "<img:"+str(len(imgstream))+">"+pic.name
+                self.connection.sendall(s.encode("ascii"))
+                if self.connection.recv(1024).decode("utf-8").strip() == "cancel":
                     return
                 self.connection.sendall(imgstream)
-                if self.connection.recv(1024).strip() == "cancel":
+                if self.connection.recv(1024).decode("utf-8").strip() == "cancel":
                     return
-            self.connection.sendall("finished")
+            self.connection.sendall("finished".encode("ascii"))
     except socket.timeout:
         #Send finish in the client is waiting for it
-        self.connection.sendall("finished")
+        self.connection.sendall("finished".encode("ascii"))
             
 def do_command_v2(self,command):
-    if command in main.files.keys():
+    if command in list(main.files.keys()):
         self.serve_folder(command)
     elif command == "exit":
-        self.connection.sendall("terminating")
+        self.connection.sendall("terminating".encode("ascii"))
         self.connection.close()
         self.connection = None
     elif command[0:7] == "comment":
         args = command.split()
-        if len(args)> 2 and args[1] in main.files.keys():
+        if len(args)> 2 and args[1] in list(main.files.keys()):
             for pic in main.files[args[1]]:
                 pic.comment(" ".join(args[2:]))
-            self.connection.sendall("Comment '"+" ".join(args[2:])+"' applied to folder "+args[1])
+            s = "Comment '"+" ".join(args[2:])+"' applied to folder "+args[1]
+            self.connection.sendall(s.encode("ascii"))
         else:
-            self.connection.sendall(helptext)
+            self.connection.sendall(helptext.encode("ascii"))
     else:
-        self.connection.sendall(helptext)
+        self.connection.sendall(helptext.encode("ascii"))
                                     
             
 #end of update
