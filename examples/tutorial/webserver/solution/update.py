@@ -3,10 +3,9 @@ from pymoult.highlevel.updates import EagerConversionUpdate,LazyConversionUpdate
 from pymoult.lowlevel.data_access import DataAccessor
 from pymoult.lowlevel.alterability import waitStaticPoints,setupWaitStaticPoints,cleanFailedStaticPoints
 from pymoult.lowlevel.data_update import updateToClass,addFieldToClass
-from pymoult.lowlevel.stack import resumeThread
 import sys
 
-from Cookie import SimpleCookie
+from http.cookies import SimpleCookie
 
 
 main = sys.modules["__main__"]
@@ -49,7 +48,7 @@ class SessionV2(object):
 
     def cookie(self):
         c = SimpleCookie()
-        for key in self.values.keys():
+        for key in list(self.values.keys()):
             c[key] = self.values[key]
         c["session_id"] = self.session_id
         return c
@@ -156,10 +155,10 @@ class WebServerV2(object):
         cdict = {}
         session_id = None
         login="anonymous"
-        for pageK in self.pages.keys():
+        for pageK in list(self.pages.keys()):
             cdict[pageK] = 0
         if cookie:
-            for key in cookie.keys():
+            for key in list(cookie.keys()):
                 if key == "session_id":
                     session_id =int(cookie[key].value)
                 elif key == "login":
@@ -187,7 +186,7 @@ def create_new_do_GET(webserver):
             l = path[7:].split("&")
             login = l[0][6:]
             passwd = l[1][9:]
-            if login in webserver.users.keys():
+            if login in list(webserver.users.keys()):
                 user = webserver.users[login]
                 if user.log_in(passwd):
                     path="logged"
@@ -200,8 +199,8 @@ def create_new_do_GET(webserver):
             handler.send_response(200)
             handler.send_header("Content-type","text/html")
             handler.end_headers()
-            handler.wfile.write(page)
-        elif path in webserver.pages.keys():
+            handler.wfile.write(str(page).encode("ascii"))
+        elif path in list(webserver.pages.keys()):
             if session.login == "anonymous":
                 page = webserver.pages["login"]
             else:
@@ -213,7 +212,7 @@ def create_new_do_GET(webserver):
             handler.send_header("Content-type","text/html")
             handler.send_header("Set-Cookie", session.cookie().output(header=""))
             handler.end_headers()
-            handler.wfile.write(page)
+            handler.wfile.write(str(page).encode("ascii"))
         else:
             handler.send_response(404)
             handler.send_error(404, "Page not found")

@@ -1,5 +1,5 @@
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from Cookie import SimpleCookie
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.cookies import SimpleCookie
 from threading import Thread
 
 class Page(object):
@@ -34,7 +34,7 @@ class Session(object):
 
     def cookie(self):
         c = SimpleCookie()
-        for key in self.values.keys():
+        for key in list(self.values.keys()):
             c[key] = self.values[key]
         c["session_id"] = self.session_id
         return c
@@ -45,7 +45,7 @@ def produceHandler(webserver):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             path = self.path.lstrip("/")
-            if path in webserver.pages.keys():
+            if path in list(webserver.pages.keys()):
                 session = self.getSession()
                 page = webserver.pages[path]
                 page.call(session)
@@ -55,7 +55,7 @@ def produceHandler(webserver):
                 self.send_header("Content-type","text/html")
                 self.send_header("Set-Cookie", session.cookie().output(header=""))
                 self.end_headers()
-                self.wfile.write(page)
+                self.wfile.write(str(page).encode("ascii"))
             else:
                 self.send_response(404)
                 self.send_error(404, "Page not found")
@@ -65,7 +65,7 @@ def produceHandler(webserver):
             if "Cookie" in self.headers:
                 c = SimpleCookie(self.headers["Cookie"])
                 #If thenavigator's session matches a session object 
-                if c["session_id"].value in webserver.sessions.keys():
+                if c["session_id"].value in list(webserver.sessions.keys()):
                     return webserver.sessions[c["session_id"].value]
                 #Else, we create a new session object
                 else:
@@ -90,10 +90,10 @@ class WebServer(object):
     def addSession(self,cookie=None):
         cdict = {}
         session_id = None
-        for pageK in self.pages.keys():
+        for pageK in list(self.pages.keys()):
             cdict[pageK] = 0
         if cookie:
-            for key in cookie.keys():
+            for key in list(cookie.keys()):
                 if key == "session_id":
                     session_id =int(cookie[key].value)
                 else:
@@ -107,6 +107,7 @@ class WebServer(object):
         #The server will use the self.Handler class to handle the clients requests
         httpd = HTTPServer(("",8080),self.Handler)
         while True:
+            staticUpdatePoint()
             httpd.handle_request()
 
 def main():
@@ -119,5 +120,4 @@ def main():
 
 #Setup the main thread
 main_thread = Thread(target=main)
-
 main_thread.start()
