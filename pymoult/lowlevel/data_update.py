@@ -25,6 +25,7 @@
 
 import sys
 import types
+import threading
 
 def generateMixinUser(class1,*mixins):
     """Creates a class based on the given class and the given mixins"""
@@ -70,3 +71,42 @@ def redefineClass(module,tclass,nclass):
     tname = tclass.__name__
     setattr(module,tname,nclass)
     setattr(nclass,"__name__",tname)
+
+
+
+#Update.apply
+def updateLocalVarInThread(thread,func,name,value):
+    """Changes the value of local variable name to value for 
+    each frame corresponding to function func in the given thread"""
+    suspended = thread.is_suspended()
+    if not suspended:
+        try:
+            thread.suspend()
+        except ThreadError as e:
+            log(1,"Thread "+thread.name+" could not be suspended when updating local variable : " + str(e))
+    stack_size = thread.get_stack_size()
+    topframe = thread.get_current_frame()
+    currentdepth = stack_size -1
+    while topframe != None:
+        if topframe.f_code is func.__code__:
+            thread.stack_set_local(name,value,currentdepth)
+        topframe = topframe.f_back
+        currentdepth -= 1
+    if not suspended:
+        try:
+            thread.resume()
+        except ThreadError as e:
+            log(1,"Thread "+thread.name+" could not be resumed when updating local variable : " + str(e))
+
+
+#Update.apply
+def updateLocalVar(func,name,value):
+    """Changes local variable name to value for each frame corresponding
+to function func in all threads"""
+
+    threads = threading.enumerate()
+    threads.remove(threading.currentThread())
+    for t in threads:
+        updateLocalVarInThread(t,func,name,value)
+    
+    

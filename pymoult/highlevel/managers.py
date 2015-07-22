@@ -47,6 +47,7 @@ class BaseManager(object):
             for t in self.current_update.threads:
                 try:
                     t.suspend()
+                    t.wait_suspended()
                     log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
                 except ThreadError as e:
                     log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
@@ -55,6 +56,7 @@ class BaseManager(object):
             for t in self.threads:
                 try:
                     t.suspend()
+                    t.wait_suspended()
                     log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
                 except ThreadError as e:
                     log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
