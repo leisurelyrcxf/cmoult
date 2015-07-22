@@ -4,6 +4,7 @@ from pymoult.highlevel.updates import SafeRedefineUpdate,Update
 from pymoult.lowlevel.alterability import setupWaitStaticPoints,waitStaticPoints,cleanFailedStaticPoints,staticUpdatePoint
 from pymoult.highlevel.listener import log
 import sys
+import time
 
 main = sys.modules["__main__"]
 
@@ -23,7 +24,7 @@ class FailedAlterability(Update):
 
         
 update1 = FailedAlterability(name="alterability")
-update2 = SafeRedefineUpdate(main,main.func_v1,func_v2,name="func")
+update2 = SafeRedefineUpdate(main,main.func_v1,func_v2,name="func",threads=[main.thread])
 update1.set_max_tries(10)
 update1.set_sleep_time(0.1)
 main.manager.add_update(update1)

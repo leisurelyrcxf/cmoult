@@ -19,7 +19,7 @@ class FailedRequirements(Update):
         pass
 
 update1 = FailedRequirements(name="requirements")
-update2 = SafeRedefineUpdate(main,main.func_v1,func_v2,name="func")
+update2 = SafeRedefineUpdate(main,main.func_v1,func_v2,name="func",threads=[main.thread])
 main.manager.add_update(update1)
 main.manager.add_update(update2)
 

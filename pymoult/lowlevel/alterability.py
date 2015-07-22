@@ -23,7 +23,7 @@
 """
 
 from pymoult.lowlevel.relinking import redefineFunction
-from pymoult.highlevel.listener import log
+from pymoult.highlevel.listener import log,get_app_listener
 import threading
 import inspect
 import time
@@ -42,6 +42,28 @@ def getUpdateWaitValues():
         return (update.max_tries,update.sleep_time)
     return (10,2)
 
+#Suspending many threads except current thread and listener
+def suspendThreads(threads):
+    current_thread = threading.currentThread()
+    listener = get_app_listener()
+    #We suspend all threads
+    for t in threads:
+        if not(t is current_thread) and not(t is listener):
+            try:
+                t.suspend()
+                t.wait_suspended()
+            except ThreadError as e:
+                log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
+                threads.remove(t)
+
+#Resume many threads
+def resumeThreads(threads):
+    for t in threads:
+        try:
+            t.resume()
+        except ThreadError as e:
+            log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+            threads.remove(t)
 
 ##############################
 # Tools for inspecting stack #
@@ -88,30 +110,13 @@ def checkQuiescenceOfFunction(func,threads=[]):
        threads."""
     if threads == []:
         threads = threading.enumerate()
-        #remove the current thread from the list of threads to be suspended
-        threads.remove(threading.currentThread())
-    #We suspend all threads
-    for t in threads:
-        try:
-            t.suspend()
-        except ThreadError as e:
-            log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
-    #Then we capture the stacks
-    stacks = [get_current_frames()[t.ident] for t in threads]
-    #We check if the function is in the stacks
-    finstack = False
-    for stack in stacks:
-        finstack = finstack or checkFinStack(func,stack)
-        #If function is not in the stack, we return
+    suspendThreads(threads)
+
+    finstack = isFunctionInAnyStack(func,threads)
     if not finstack:
         return True
     else:
-        #We resume the threads
-        for t in threads:
-            try:
-                t.resume()
-            except ThreadError as e:
-                log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+        resumeThreads(threads)
 
 #Update.check_alterability
 def checkQuiescenceOfFunctions(funcs,threads=[]):
@@ -119,14 +124,7 @@ def checkQuiescenceOfFunctions(funcs,threads=[]):
        threads."""
     if threads == []:
         threads = threading.enumerate()
-        #remove the current thread from the list of threads to be suspended
-        threads.remove(threading.currentThread())
-    #We suspend all threads
-    for t in threads:
-        try:
-            t.suspend()
-        except ThreadError as e:
-            log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
+    suspendThreads(threads)
     #Then we capture the stacks
     stacks = [get_current_frames()[t.ident] for t in threads]
     #We check if the function is in the stacks
@@ -138,12 +136,7 @@ def checkQuiescenceOfFunctions(funcs,threads=[]):
     if not finstack:
         return True
     else:
-        #We resume the threads
-        for t in threads:
-            try:
-                t.resume()
-            except ThreadError as e:
-                log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+        resumeThreads(threads)
 
             
 #Update.wait_alterability
@@ -158,30 +151,14 @@ def waitQuiescenceOfFunction(func,threads=[]):
     finstack = False
     if threads == []:
         threads = threading.enumerate()
-        #remove the current thread from the list of threads to be suspended
-        threads.remove(threading.currentThread())
+        #remove the current thread and the listener from the list of threads to be suspended
     for x in range(max_tries):
-        #We suspend all threads
-        for t in threads:
-            try:
-                t.suspend()
-            except ThreadError as e:
-                log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
-        #Then we capture the stacks
-        stacks = [get_current_frames()[t.ident] for t in threads]
-        #We check if the function is in the stacks
-        for stack in stacks:
-            finstack = finstack or checkFinStack(func,stack)
-        #If function is not in the stack, we return
+        suspendThreads(threads)
+        finstack = isFunctionInAnyStack(func,threads)
         if not finstack:
             return True
         else:
-            #We resume the threads
-            for t in threads:
-                try:
-                    t.resume()
-                except ThreadError as e:
-                    log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+            resumeThreads(threads)
         time.sleep(sleep_time)
     return False
 
@@ -199,15 +176,9 @@ def waitQuiescenceOfFunctions(funcs,threads=[]):
     finstack = False
     if threads == []:
         threads = threading.enumerate()
-        #remove the current thread from the list of threads to be suspended
-        threads.remove(threading.currentThread())
+        #remove the current thread and the listener from the list of threads to be suspended
     for x in range(max_tries):
-        #We suspend all threads
-        for t in threads:
-            try:
-                t.suspend()
-            except ThreadError as e:
-                log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
+        suspendThreads(threads)
         #Then we capture the stacks
         stacks = [get_current_frames()[t.ident] for t in threads]
         #We check if the function is in the stacks
@@ -218,12 +189,7 @@ def waitQuiescenceOfFunctions(funcs,threads=[]):
         if not finstack:
             return True
         else:
-            #We resume the threads
-            for t in threads:
-                try:
-                    t.resume()
-                except ThreadError as e:
-                    log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+            resumeThreads(threads)
         time.sleep(sleep_time)
     return False
 
@@ -235,13 +201,8 @@ def resumeSuspendedThreads(threads=[]):
     the manager. We need to resume these threads during the resume_hook."""
     if threads == []:
         threads = threading.enumerate()
-        #remove the current thread from the list of threads to be resumed
-        threads.remove(threading.currentThread())
-    for t in threads:
-        try:
-            t.resume()
-        except ThreadError as e:
-            log(1,"ThreadError when resuming thread "+str(t.name)+" : "+str(e))
+    resumeThreads(threads)
+    
 
 #Force Quiescence
 
