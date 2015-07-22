@@ -26,7 +26,7 @@ class FailedAlterability(Update):
 update1 = FailedAlterability(name="alterability")
 update2 = SafeRedefineUpdate(main,main.func_v1,func_v2,name="func",threads=[main.thread])
 update1.set_max_tries(10)
-update1.set_sleep_time(0.1)
+update1.set_sleep_time(0.2)
 main.manager.add_update(update1)
 main.manager.add_update(update2)
 
