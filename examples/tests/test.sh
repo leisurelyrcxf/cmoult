@@ -6,6 +6,7 @@ echo "Begining tests for Pymoult"
 testPath=$(realpath $(dirname $0))
 managersPath="$testPath/managers"
 updatesPath="$testPath/updates"
+listenersPath="$testPath/listeners"
 
 if [ -f "$testPath/results.txt" ];
 then
@@ -14,6 +15,7 @@ fi
 
 managerTests=$(find "$managersPath" -type d -not -name "__pycache__" -printf '%P\n')
 updateTests=$(find "$updatesPath" -type d -not -name "__pycache__" -printf '%P\n')
+listenersTests=$(find "$listenersPath" -type d -not -name "__pycache__" -printf '%P\n')
 
 echo "Testing managers" | tee -a "$testPath/results.txt"
 
@@ -28,6 +30,12 @@ echo "Testing updates" | tee -a "$testPath/results.txt"
 for folder in $updateTests
 do
     cd "$updatesPath/$folder"
+    ./test.sh "$testPath/oracle.py" | tee -a "$testPath/results.txt"
+done
+
+for folder in $listenersTests
+do
+    cd "$listenersPath/$folder"
     ./test.sh "$testPath/oracle.py" | tee -a "$testPath/results.txt"
 done
 
