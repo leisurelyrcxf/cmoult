@@ -15,7 +15,7 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-"""pymoult.listener.py
+"""pymoult.highlevel.listener.py
    Published under the GPLv2 license (see LICENSE.txt)
 
    This module supplies the Listener class that opens a socket server,
@@ -35,7 +35,8 @@ import socket
 import os
 import imp
 import time
-
+import sys
+import http.server
 
 Listener_port = 4242
 Max_recieve = 9999
@@ -54,14 +55,14 @@ def get_app_listener():
 class Listener(threading.Thread):
     """Opens a socket server for users to supply updates."""
     
-    def __init__(self,group=None, target=None, name="Pymoult Listener", verbose=None):
+    def __init__(self,name="Pymoult Listener", verbose=None):
         """Constructor using the same parameters as a regular thread object"""
         global app_listener 
         self.hostname = socket.gethostname()
         self.port = Listener_port 
         self.keep_running = True
         self.update_thread_index = 0
-        super(Listener,self).__init__(group=group, target=target, name=name,verbose=verbose)
+        super(Listener,self).__init__(name=name,verbose=verbose)
         self.daemon = True
         self.applied_updates = []
         app_listener = self
@@ -130,7 +131,34 @@ class Listener(threading.Thread):
             data = ""
             conn.close()
 
+                        
+class PipeListener(Listener):
+    def __init__(self,name="Pymoult Advanced Listener",verbose=None,path="fifopipe"):
+        super(PipeListener,self).__init__(name=name,verbose=verbose)
+        self.path = path
+        self.pipe = None
+        
+    def run(self):
+        if not os.path.exists(self.path):
+            os.mkfifo(self.path)
+            self.pipe = open(self.path,"r")
+            while self.keep_running:
+                message = self.pipe.readline().strip()
+                if message[0:len(Invoke_message)] == Invoke_message:
+                    update_address = message[len(Invoke_message)+1:]
+                    self.start_update(update_address)
+                elif message[0:11] == "set logpath":
+                    logpath = message[12:]
+                    self.set_logpath(logpath)
+                elif message[0:12] == "set loglevel":
+                    loglevel = message[13:]
+                    self.set_loglevel(loglevel)
+            self.pipe.close()
+            os.unlink(self.path)
+        else:
+            print("Error when starting PipeListener : file "+str(self.path)+" already exists")
 
+            
 def log(level,message):
     #TODO : checkout the logging module
     if level <= log_level:
