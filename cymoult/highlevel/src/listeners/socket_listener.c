@@ -1,4 +1,4 @@
-/* threaded_listener.c This file is part of Cymoult */
+/* socket_listener.c This file is part of Cymoult */
 /* Copyright (C) 2013 Sébastien Martinez, Fabien Dagnat, Jérémy Buisson */
 
 /* This program is free software; you can redistribute it and/or modify */
@@ -17,7 +17,7 @@
 
 /*
 
-Threaded Socket Listener.
+Socket Listener.
 
  */
 
@@ -41,10 +41,7 @@ static void * listner_main(void * arg){
   int conn_fd = 0;
   char buff[LISTENER_BUFF_SIZE];
   char * libpath = NULL;
-  /* Listener spwaned threads */
-  ll_spawned * spawns =NULL;
-  /* update handles for spanwees */
-  //void ** spawns_libs = malloc(LISTENER_MAX_SPAWNS*sizeof(size_t));
+  char status;
 
   listener_socket_fd = socket(AF_INET,SOCK_STREAM,0);
   listener_serv_addr.sin_family = AF_INET;
@@ -59,26 +56,21 @@ static void * listner_main(void * arg){
     extract_library_name(buff,&libpath);
     /* If the command was invalid, libpath will be NULL */
     if (libpath != NULL){
-      //      spawn_thread(spawns,spawns_libs,&spawned_threads,libpath);
-      spawn_thread(&spawns,libpath);
+      status = load_update(libpath);
     }
     close(conn_fd);
-    clean_threads(&spawns);
   }
-  /* We clean everything */
-  free(spawns);
-  //  free(spawns_libs);
 }
 
-void start_threaded_listener(){
+void start_socket_listener(){
   pthread_create(&listener_thread,NULL,&listner_main,NULL);
 }
 
-void stop_threaded_listener(){
+void stop_socket_listener(){
   continue_listener = 0;
 }
   
-pthread_t * access_threaded_listener(){
+pthread_t * access_socket_listener(){
   return &listener_thread;
 }
 
