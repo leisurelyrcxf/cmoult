@@ -1,0 +1,11 @@
+name = "my update";
+code = "bidule.so";
+scripts = ( { name = "toto";
+              script = "toto.so";
+              manager = "truc";
+              },
+            { name = "tutu";
+              script = "tutu.so";
+              manager = "truc";
+              }
+          );

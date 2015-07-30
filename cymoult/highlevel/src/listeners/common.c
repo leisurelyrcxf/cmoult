@@ -1,31 +1,4 @@
 #include "listener.h"
-#include <string.h>
-#include <dlfcn.h>
-#include <stdio.h>
-#include <ctype.h>
-
-static void * spawn_main(void *args){
-  ll_spawned * sargs = (ll_spawned*) args;
-  if (access(sargs->libpath,F_OK) == 0){
-    dlopen(sargs->libpath,RTLD_NOW);
-    printf("error : %s\n",dlerror());
-    //When the thread is finished, we tell it
-    sargs->finished = 1;
-  }else{
-    fprintf(stderr,"Warning! Listener could not find library %s\n",sargs->libpath); 
-  }
-}
-
-void spawn_thread(ll_spawned** threads,char* libpath){
-  //Create the thread element
-  ll_spawned * new_spawned = (ll_spawned*) malloc(sizeof(ll_spawned));
-  new_spawned->next = *threads;
-  new_spawned->finished = 0;
-  new_spawned->libpath = libpath;
-  *threads = new_spawned;
-  pthread_create(&(new_spawned->thread),NULL,&spawn_main,(void*) new_spawned);
-}
-
 
 /* Trims str and copies the result in trimedstr. Allocates the
    string. trimedsize recieves the new size of the strin */
@@ -64,43 +37,47 @@ void extract_library_name(const char* str, char** libpath){
   }
 }
 
+void load_update(char* path){
+  config_t update;
+  config_setting_t * set;
+  config_setting_t * script;
+  const char * name;
+  const char * code;
+  int n;
 
-void clean_threads(ll_spawned ** threads){
-  ll_spawned * item = *threads;
-  ll_spawned * item2;
-  //First, clean the head
-  if (item->finished){
-    item2 = item->next;
-    free(item->libpath);
-    free(item);
-    item = item2;
-    while((item!=NULL) && (item->finished)){
-      item2 = item->next;
-      free(item->libpath);
-      free(item);
-      item = item2;
-    }
-    //item is either NULL (all threads have finished)
-    //or the first non-finished thread
-    *threads = item;
+  
+  config_init(&update);
+  if (! config_read_file(&update,path)){
+    //could not read file
+    return;
   }
-  if(item != NULL){ 
-    item2 = item;
-    item = item->next;
-    while (item!=NULL){
-      if (item->finished){
-        item2->next = item->next;
-        free(item->libpath);
-        free(item);
-        item = item2->next;
+  if (!(config_lookup_string(&update,"name",name) && config_lookup_string(&update,"code",code))){
+    //could not find name of code
+    
+  }
+  set = config_lookup(&update,"scripts");
+  if (set != NULL){
+    //Parse the updates
+    n = config_setting_length(set);
+    for (int i=0;i<n;i++){
+      const char * name_s, *script_s, *manager_s;
+
+      script = config_setting__get_elem(set,i);
+      if (config_setting_lookup_string(script,"name",&name_s) && config_setting_lookup_string(script,"script",&script_s) && config_setting_lookup_string(script,"manager",&manager_s)){
+        //One script parsed
+
       }else{
-        item2 = item;
-        item = item->next;
+        //Could not parse script
+
       }
+
+      
+      
     }
+
+    
   }
+  config_destroy(update);
 }
-
-
 
 
