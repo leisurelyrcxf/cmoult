@@ -48,13 +48,13 @@ void load_update(char* path){
   config_init(&update);
   if (! config_read_file(&update,path)){
     //could not read file
-    log(1,"Error : Could not read update file"); 
+    cmoult_log(1,"Error : Could not read update file"); 
     return;
   }
   //  if (!(config_lookup_string(&update,"name",name) && config_lookup_string(&update,"code",code))){
   if (!config_lookup_string(&update,"code",code)){
     //could not find name of code
-    log(1,"Warning : Could find code field in update file");
+    cmoult_log(1,"Warning : Could find code field in update file");
   }else{
     //Load code. We assume that the update is loaded from inside here
     //TODO, trigger loading from inside
@@ -64,7 +64,6 @@ void load_update(char* path){
   if (set != NULL){
     //Parse the updates
     n = config_setting_length(set);
-    char * message = (char*) malloc(256*sizeof(char)); //In case of error message
     for (int i=0;i<n;i++){
       const char * name_s, *script_s, *manager_s;
       script = config_setting__get_elem(set,i);
@@ -75,12 +74,9 @@ void load_update(char* path){
         add_update(manager,name_s,script_s);*/
       }else{
         //Could not par an update
-        sprintf(message,"Error : Could not parse update instance number %d",i);
-        log(1,message);
+        cmoult_log(1,"Error : Could not parse update instance number %d",i);
       }
     }
-    //Free set
-    free(message);
   }
   config_destroy(update);
 }
