@@ -11,10 +11,6 @@ typedef enum ra {
 } req_ans;
 
 typedef struct{
-  char * name;
-  dsuthread ** threads;
-  size_t nthreads;
-  int max_tries;
   req_ans (*check_requirements)();
   void (*preupdate_setup)();
   char (*check_alterability)();
@@ -25,8 +21,7 @@ typedef struct{
   char (*wait_over)();
   char (*check_over)();
   void (*cleanup)();
-  char applied;
-}update;
+}update_functions;
 
 /* Empty default update function */
 
@@ -35,10 +30,6 @@ void void_empty_step();
 char char_empty_step();
 
 /* Help for initializing updates */
-
-update * create_empty_update(char* name, dsuthread ** threads, int nthreads);
-
-
 
 
 #endif /* End ifndef UPDATE_H */
