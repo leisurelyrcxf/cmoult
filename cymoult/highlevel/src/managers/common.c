@@ -69,10 +69,16 @@ void * load_next_update(manager * man, update_functions * upd, dsuthread *** thr
       ok = ok && load_from_module(handle,"max_tries",module, (void**) &max_tries);      
       ok = ok && load_from_module(handle,"name",module, (void**) &name);      
       //Load functions
-      
-
-
-      
+      ok = ok && load_from_module(handle,"check_requirements",module, (void**) upd->check_requirements);      
+      ok = ok && load_from_module(handle,"preupdate_setup",module, (void**) upd->preupdate_setup);
+      ok = ok && load_from_module(handle,"check_alterability",module, (void**) upd->check_alterability);
+      ok = ok && load_from_module(handle,"wait_alterability",module, (void**) upd->wait_alterability);
+      ok = ok && load_from_module(handle,"clean_failed_alterability",module, (void**) upd->clean_failed_alterability);
+      ok = ok && load_from_module(handle,"apply",module, (void**) upd->apply);
+      ok = ok && load_from_module(handle,"preresume_setup",module, (void**) upd->preresume_setup);
+      ok = ok && load_from_module(handle,"wait_over",module, (void**) upd->wait_over);
+      ok = ok && load_from_module(handle,"check_over",module, (void**) upd->check_over);
+      ok = ok && load_from_module(handle,"cleanup",module, (void**) upd->cleanup);
       if (ok){
         man->state = checking_requirements;
       }else{
@@ -86,56 +92,61 @@ void * load_next_update(manager * man, update_functions * upd, dsuthread *** thr
 }
 
 void postpone_update(manager * man){
-  manager_add_update(man,man->current_update);
-  man->current_update = NULL;
+  char * update = queue_pop(man->updates,&(man->front_update),man->update_array_size);
+  queue_push(man->updates,update,&(man->update_array_size),&(man->back_update),&(man->fron_update));
   man->state = not_updating;
 }
 
 void abort_update(manager *man){
   man->state = not_updating;
-  free(man->current_update);
-  man->current_update = NULL;
+  pop_update(man);
 }
 
 void finish_update(manager* man){
   /* TODO : log the update */
   man->state = not_updating;
-  free(man->current_update);
-  man->current_update = NULL;
+  pop_update(man);
 }
 
-void pause_threads(manager* man){
+void manager_add_update(manager * man, char * update){
+  queue_push(man->updates,update,&(man->update_array_size),&(man->back_update),&(man->fron_update));
+}
+
+
+
+
+
+void pause_threads(manager* man,dsuthread ** update_threads, int nupdate_threads){
   size_t nthreads = man->current_update->nthreads;
   dsuthread ** threads = man->current_update->threads;
-  if (nthreads > 0){
-    for (int i=0;i<nthreads;i++){
-      pause_thread(threads[i]);
+  if (update_threads!=NULL){
+    //Update defined its own threads
+    for (int i=0;i<nupdate_threads;i++){
+      pause_thread(update_threads[i]);
     }
   }else{
-    nthreads = man->nthreads;
-    threads = man->threads;
+    //Using managerthreads
     for (int i=0;i<nthreads;i++){
       pause_thread(threads[i]);
     }
   }
 }
 
-void resume_threads(manager* man){
+void resume_threads(manager* man,dsuthread ** update_threads, int nupdate_threads){
   size_t nthreads = man->current_update->nthreads;
   dsuthread ** threads = man->current_update->threads;
-  if (nthreads > 0){
-    for (int i=0;i<nthreads;i++){
-      resume_thread(threads[i]);
+  if (update_threads!=NULL){
+    //Update defined its own threads
+    for (int i=0;i<nupdate_threads;i++){
+      resume_thread(update_threads[i]);
     }
   }else{
-    nthreads = man->nthreads;
-    threads = man->threads;
+    //Using managerthreads
     for (int i=0;i<nthreads;i++){
       resume_thread(threads[i]);
     }
   }
 }
-
 
 void pause_thread(dsuthread * dthread){
 }

@@ -38,37 +38,36 @@ static void * manager_main(void * arg){
   while (self->alive){
     sleep(MANAGER_SLEEP);
     handle = load_next_update(self,current_update,&update_threads,&nupdate_threads,&max_tries,&current_update_name);
-    if (man->state == checking_requirements){
-      req_ans req = man->current_update->check_requirements();
+    if (self->state == checking_requirements){
+      req_ans req = self->current_update->check_requirements();
       if (req == yes){
         /* requirements are met */
-        man->state = waiting_alterability;
-        man->current_update->preupdate_setup();
-        if (base->current_update->wait_alterability()){
-          pause_threads(base);
-          base->current_update->apply();
-          base->state = applied;
-          base->current_update->preresume_setup();
-          resume_threads(base);
-          base->current_update->wait_over();
-          base->current_update->cleanup();
-          finish_update(base);
+        self->state = waiting_alterability;
+        self->current_update->preupdate_setup();
+        if (self->current_update->wait_alterability()){
+          pause_threads(man,upadte_threads,nupdate_threads);
+          self->current_update->apply();
+          self->state = applied;
+          self->current_update->preresume_setup();
+          resume_threads(man,upadte_threads,nupdate_threads);
+          self->current_update->wait_over();
+          self->current_update->cleanup();
+          finish_update(self);
         }else{
-          base->current_update->clean_failed_alterability();
-          postpone_update(base);
+          self->current_update->clean_failed_alterability();
+          postpone_update(self);
           sleep(MANAGER_SLEEP);
         }
       }else if (req = no){
         /* requirements are not met but may be met later */
-        postpone_update(base);
+        postpone_update(self);
         sleep(MANAGER_SLEEP);
       }else{
         /* requirements are not met and never will be */
-        abort_update(base);
+        abort_update(self);
       }
     }
   }
-  free(current_update);
 }
 
 

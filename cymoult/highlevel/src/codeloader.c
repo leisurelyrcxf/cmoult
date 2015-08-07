@@ -21,7 +21,9 @@ Code Loader. Launched in the application so it can load code later.
 
  */
 
-#include "loader.h"
+#include "codeloader.h"
+#include <stdio.h>
+
 
 pthread_t code_loader;
 char code_loader_keep_alive = 1;
@@ -30,32 +32,25 @@ char * load_path; //Path to the code to be loaded (will be malloc'ed when strati
 
 static void * code_loader_main(void * arg){
   char* dlerr;
-
   while (code_loader_keep_alive){
     sleep(SLEEP_TIME);
-    if (load_swicth){
-      char * message = malloc((strlen(load_path)+256)*sizeof(char));
+    if (load_switch){
       if (access(load_path,F_OK) == 0){
         dlopen(load_path,RTLD_NOW|RTLD_GLOBAL);
         dlerr = dlerror();
         if (dlerr != NULL){
           //An error was met when loading the code
-          sprintf(message,"Error met when loading code %s : %s",load_path,dlerr);
-          log(1,message);
-          free(message);
+          cmoult_log(1,"Error met when loading code %s : %s",load_path,dlerr);
         }else{
           //Code loaded succesfully
-          sprintf(message,"Code loaded successfully from path %s",load_path);
-          log(2,message);
+          cmoult_log(2,"Code loaded successfully from path %s",load_path);
         }
       }else{
         //Could not access code path
-        spprintf(message,"Error met when loading code %s : could not access the code file",load_path);
-        log(1,message);
+        cmoult_log(1,"Error met when loading code %s : could not access the code file",load_path);
       }
       load_switch = 0;          
     }
-    free(message);
   }
   //The code loader is terminating, free the load_path
   free(load_path);
@@ -78,7 +73,7 @@ pthread_t * access_code_loader(){
 
 void load_code(char * path){
   if (strlen(path) > PATH_SIZE){
-    log(1,sprintf("Cannot load code from path %s : path string is too long!",path));
+    cmoult_log(1,"Cannot load code from path %s : path string is too long!",path);
   }else{
     strcpy(load_path,path);
     load_switch = 1;
