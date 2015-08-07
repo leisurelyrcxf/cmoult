@@ -30,22 +30,32 @@ char * load_path; //Path to the code to be loaded (will be malloc'ed when strati
 
 static void * code_loader_main(void * arg){
   char* dlerr;
+
   while (code_loader_keep_alive){
     sleep(SLEEP_TIME);
     if (load_swicth){
+      char * message = malloc((strlen(load_path)+256)*sizeof(char));
       if (access(load_path,F_OK) == 0){
-        dlopen(load_path,RTLD_NOW);
+        dlopen(load_path,RTLD_NOW|RTLD_GLOBAL);
         dlerr = dlerror();
         if (dlerr != NULL){
           //An error was met when loading the code
-          log(1,sprintf("Error met when loading code %s : %s",load_path,dlerr))
+          sprintf(message,"Error met when loading code %s : %s",load_path,dlerr);
+          log(1,message);
+          free(message);
+        }else{
+          //Code loaded succesfully
+          sprintf(message,"Code loaded successfully from path %s",load_path);
+          log(2,message);
         }
       }else{
         //Could not access code path
-        log(1,sprintf("Error met when loading code %s : could not access the code file")
+        spprintf(message,"Error met when loading code %s : could not access the code file",load_path);
+        log(1,message);
       }
       load_switch = 0;          
     }
+    free(message);
   }
   //The code loader is terminating, free the load_path
   free(load_path);

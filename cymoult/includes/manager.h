@@ -1,13 +1,12 @@
 #ifndef MANAGER_H
 #define MANAGER_H
 
-
 #include <pthread.h>
 #include <unistd.h>
 #include "update.h"
 
 #define MANAGER_SLEEP 5
-#define AS_BASE(x) (&(x->base))
+#define MIN_ARRAY_SIZE 32
 
 /*Common*/
 
@@ -20,40 +19,26 @@ typedef enum us {
   applied
 } update_state;
 
-/*List of updates*/
-
-typedef struct ll_updates{
-  update * update;
-  struct ll_updates * next;
-} ll_updates;
-
-update* pop_update(ll_updates **ll);
-void push_update(ll_updates **ll,update* upd);
-
-/*Non Threaded Manager (also base to threaded manager)*/
+/*Manager data structure*/
 
 typedef struct{
   char * name;
   dsuthread ** threads;
-  size_t nthreads;
-  ll_updates * updates;
-  update * current_update;
+  int nthreads;
+  char ** updates;
+  int front_update;
+  int back_update;
+  int update_array_size;
   update_state state;
   int tried;
-} manager;
-
-/*Threaded Manager*/
-
-typedef struct{
-  manager base;
-  pthread_t * thread;
   char alive;
-} threaded_manager;
+  pthread_t * thread;
+} manager;
 
 
 /* general manager functions */
 
-void manager_add_update(manager * man, update * upd);
+void manager_add_update(manager * man, char * update_name, char * update);
 void get_next_update(manager * man);
 void postpone_update(manager * man);
 void abort_update(manager * man);
