@@ -22,13 +22,15 @@ Threaded Manager.
  */
 
 #include "manager.h"
+#include <stdio.h>
+
 
 static void * manager_main(void * arg){
   manager * self = (manager*) arg;
   //Current update
   update_functions * current_update = malloc(sizeof(update_functions));
   //Pointers to data of the update
-  dsuthread ** update_threads;
+  pthread_t * update_threads;
   int nupdate_threads;
   int max_tries;
   char * current_update_name;
@@ -39,22 +41,22 @@ static void * manager_main(void * arg){
     sleep(MANAGER_SLEEP);
     handle = load_next_update(self,current_update,&update_threads,&nupdate_threads,&max_tries,&current_update_name);
     if (self->state == checking_requirements){
-      req_ans req = self->current_update->check_requirements();
+      req_ans req = current_update->check_requirements();
       if (req == yes){
         /* requirements are met */
         self->state = waiting_alterability;
-        self->current_update->preupdate_setup();
-        if (self->current_update->wait_alterability()){
-          pause_threads(man,upadte_threads,nupdate_threads);
-          self->current_update->apply();
+        current_update->preupdate_setup();
+        if (current_update->wait_alterability()){
+          pause_threads(self,update_threads,nupdate_threads);
+          current_update->apply();
           self->state = applied;
-          self->current_update->preresume_setup();
-          resume_threads(man,upadte_threads,nupdate_threads);
-          self->current_update->wait_over();
-          self->current_update->cleanup();
+          current_update->preresume_setup();
+          extern_resume_threads(self,update_threads,nupdate_threads);
+          current_update->wait_over();
+          current_update->cleanup();
           finish_update(self);
         }else{
-          self->current_update->clean_failed_alterability();
+          current_update->clean_failed_alterability();
           postpone_update(self);
           sleep(MANAGER_SLEEP);
         }
@@ -71,10 +73,8 @@ static void * manager_main(void * arg){
 }
 
 
-manager * start_extern_manager(char * name, dsuthread ** threads, int nthreads){
+manager * start_extern_manager(char * name, pthread_t * threads, int nthreads){
   manager * man = malloc(sizeof(manager));
-  pthread_t thread;
-  man->thread = &thread;
   man->alive = 1;
   man->name = name;
   man->threads = threads;
@@ -85,9 +85,10 @@ manager * start_extern_manager(char * name, dsuthread ** threads, int nthreads){
   man->update_array_size = MIN_ARRAY_SIZE;
   man->state = not_updating;
   man->tried = 0;
-  pthread_create(&thread,NULL,&manager_main,(void*) man);
+  pthread_create(&(man->thread),NULL,&manager_main,(void*) man);
   return man;
 }
+
 
 
 
