@@ -1,9 +1,10 @@
 #include "manager.h"
+#include <dlfcn.h>
 
-static void queue_push(char *** queue, const char * item, int * size, int * back, int * front){
+static void queue_push(char *** queue, char * item, int * size, int * back, int * front){
   //Detect if the queue is full. It is full if the front is at 0 and back is at size - 1
   //It is also full if back is at front -1
-  if ((*front == 0) && (*back == size -1)){
+  if (((*front) == 0) && ((*back) == (*size) -1)){
     (*size) = (*size)*2;
     (*queue) = (char**) realloc((*queue),(*size)*sizeof(size_t));
   }else if ((*front - *back) == 1){
@@ -39,18 +40,18 @@ static void pop_update(manager * man){
   free(module);
 }
 
-static char load_from_module(void * handle,const char * symbol, const char* module, void ** pointer){
+static char load_from_module(manager * man, void * handle,const char * symbol, const char* module, void ** pointer){
   (* pointer) = dlsym(handle,symbol);
   char * error = dlerror();
   if (error != NULL){
-    log(1,"Error when looking up symbol %s in %s : %s",symbol,module,error);
-    pop_update();
+    cmoult_log(1,"Error when looking up symbol %s in %s : %s",symbol,module,error);
+    pop_update(man);
     return 0;
   }
   return 1;
 }
 
-void * load_next_update(manager * man, update_functions * upd, dsuthread *** threads, int * nthreads, int * max_tries, char** name){
+void * load_next_update(manager * man, update_functions * upd, pthread_t ** threads, int * nthreads, int * max_tries, char** name){
   if ((man->state == not_updating) && (man->front_update >= 0)){
     char * module = man->updates[man->front_update];
     void * handle = dlopen(module,RTLD_LAZY);
@@ -58,31 +59,31 @@ void * load_next_update(manager * man, update_functions * upd, dsuthread *** thr
     if (handle == NULL){
       //An error happened when loading
       char * error = dlerror();
-      log(1,"Error when loading script %s : %s. Aborting",module,error);
+      cmoult_log(1,"Error when loading script %s : %s. Aborting",module,error);
       //Remove that script from the list
       pop_update(man);
     }else{
       dlerror();
       char ok = 1;
-      ok = ok && load_from_module(handle,"threads",module, (void**) &threads);      
-      ok = ok && load_from_module(handle,"nthreads",module, (void**) &nthreads);      
-      ok = ok && load_from_module(handle,"max_tries",module, (void**) &max_tries);      
-      ok = ok && load_from_module(handle,"name",module, (void**) &name);      
+      ok = ok && load_from_module(man,handle,"threads",module, (void**) &threads);      
+      ok = ok && load_from_module(man,handle,"nthreads",module, (void**) &nthreads);      
+      ok = ok && load_from_module(man,handle,"max_tries",module, (void**) &max_tries);      
+      ok = ok && load_from_module(man,handle,"name",module, (void**) &name);      
       //Load functions
-      ok = ok && load_from_module(handle,"check_requirements",module, (void**) upd->check_requirements);      
-      ok = ok && load_from_module(handle,"preupdate_setup",module, (void**) upd->preupdate_setup);
-      ok = ok && load_from_module(handle,"check_alterability",module, (void**) upd->check_alterability);
-      ok = ok && load_from_module(handle,"wait_alterability",module, (void**) upd->wait_alterability);
-      ok = ok && load_from_module(handle,"clean_failed_alterability",module, (void**) upd->clean_failed_alterability);
-      ok = ok && load_from_module(handle,"apply",module, (void**) upd->apply);
-      ok = ok && load_from_module(handle,"preresume_setup",module, (void**) upd->preresume_setup);
-      ok = ok && load_from_module(handle,"wait_over",module, (void**) upd->wait_over);
-      ok = ok && load_from_module(handle,"check_over",module, (void**) upd->check_over);
-      ok = ok && load_from_module(handle,"cleanup",module, (void**) upd->cleanup);
+      ok = ok && load_from_module(man,handle,"check_requirements",module, (void**) upd->check_requirements);      
+      ok = ok && load_from_module(man,handle,"preupdate_setup",module, (void**) upd->preupdate_setup);
+      ok = ok && load_from_module(man,handle,"check_alterability",module, (void**) upd->check_alterability);
+      ok = ok && load_from_module(man,handle,"wait_alterability",module, (void**) upd->wait_alterability);
+      ok = ok && load_from_module(man,handle,"clean_failed_alterability",module, (void**) upd->clean_failed_alterability);
+      ok = ok && load_from_module(man,handle,"apply",module, (void**) upd->apply);
+      ok = ok && load_from_module(man,handle,"preresume_setup",module, (void**) upd->preresume_setup);
+      ok = ok && load_from_module(man,handle,"wait_over",module, (void**) upd->wait_over);
+      ok = ok && load_from_module(man,handle,"check_over",module, (void**) upd->check_over);
+      ok = ok && load_from_module(man,handle,"cleanup",module, (void**) upd->cleanup);
       if (ok){
         man->state = checking_requirements;
       }else{
-        log(1,"Error when loading symbols from %s. Aborting",module);
+        cmoult_log(1,"Error when loading symbols from %s. Aborting",module);
         pop_update(man);
       }
     }
@@ -93,7 +94,7 @@ void * load_next_update(manager * man, update_functions * upd, dsuthread *** thr
 
 void postpone_update(manager * man){
   char * update = queue_pop(man->updates,&(man->front_update),man->update_array_size);
-  queue_push(man->updates,update,&(man->update_array_size),&(man->back_update),&(man->fron_update));
+  manager_add_update(man,update);
   man->state = not_updating;
 }
 
@@ -109,16 +110,28 @@ void finish_update(manager* man){
 }
 
 void manager_add_update(manager * man, char * update){
-  queue_push(man->updates,update,&(man->update_array_size),&(man->back_update),&(man->fron_update));
+  queue_push(&(man->updates),update,&(man->update_array_size),&(man->back_update),&(man->front_update));
 }
 
 
+static void pause_thread(pthread_t thread){
+}
+
+static void resume_thread(pthread_t thread){
+}
 
 
+static void extern_pause_thread(pthread_t thread){
+  ptrace(PTRACE_ATTACH, (pid_t) thread, NULL, NULL);
+  waitpid((pid_t) thread, NULL, 0);
+}
 
-void pause_threads(manager* man,dsuthread ** update_threads, int nupdate_threads){
-  size_t nthreads = man->current_update->nthreads;
-  dsuthread ** threads = man->current_update->threads;
+static void extern_resume_thread(pthread_t thread){
+  ptrace(PTRACE_DETACH, (pid_t) thread, NULL, NULL);
+}
+
+
+void pause_threads(manager* man, pthread_t * update_threads, int nupdate_threads){
   if (update_threads!=NULL){
     //Update defined its own threads
     for (int i=0;i<nupdate_threads;i++){
@@ -126,15 +139,13 @@ void pause_threads(manager* man,dsuthread ** update_threads, int nupdate_threads
     }
   }else{
     //Using managerthreads
-    for (int i=0;i<nthreads;i++){
-      pause_thread(threads[i]);
+    for (int i=0;i<(man->nthreads);i++){
+      pause_thread((man->threads)[i]);
     }
   }
 }
 
-void resume_threads(manager* man,dsuthread ** update_threads, int nupdate_threads){
-  size_t nthreads = man->current_update->nthreads;
-  dsuthread ** threads = man->current_update->threads;
+void resume_threads(manager* man, pthread_t * update_threads, int nupdate_threads){
   if (update_threads!=NULL){
     //Update defined its own threads
     for (int i=0;i<nupdate_threads;i++){
@@ -142,17 +153,42 @@ void resume_threads(manager* man,dsuthread ** update_threads, int nupdate_thread
     }
   }else{
     //Using managerthreads
-    for (int i=0;i<nthreads;i++){
-      resume_thread(threads[i]);
+    for (int i=0;i<(man->nthreads);i++){
+      resume_thread((man->threads)[i]);
     }
   }
 }
 
-void pause_thread(dsuthread * dthread){
+
+void extern_pause_threads(manager* man, pthread_t * update_threads, int nupdate_threads){
+  if (update_threads!=NULL){
+    //Update defined its own threads
+    for (int i=0;i<nupdate_threads;i++){
+      extern_pause_thread(update_threads[i]);
+    }
+  }else{
+    //Using managerthreads
+    for (int i=0;i<(man->nthreads);i++){
+      extern_pause_thread((man->threads)[i]);
+    }
+  }
 }
 
-void resume_thread(dsuthread * dthread){
+void extern_resume_threads(manager* man, pthread_t * update_threads, int nupdate_threads){
+  if (update_threads!=NULL){
+    //Update defined its own threads
+    for (int i=0;i<nupdate_threads;i++){
+      extern_resume_thread(update_threads[i]);
+    }
+  }else{
+    //Using managerthreads
+    for (int i=0;i<(man->nthreads);i++){
+      extern_resume_thread((man->threads)[i]);
+    }
+  }
 }
+
+
 
 
 

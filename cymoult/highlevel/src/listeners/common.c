@@ -1,4 +1,5 @@
 #include "listener.h"
+#include <ctype.h>
 
 /* Trims str and copies the result in trimedstr. Allocates the
    string. trimedsize recieves the new size of the strin */
@@ -52,13 +53,13 @@ void load_update(char* path){
     return;
   }
   //  if (!(config_lookup_string(&update,"name",name) && config_lookup_string(&update,"code",code))){
-  if (!config_lookup_string(&update,"code",code)){
+  if (!config_lookup_string(&update,"code",&code)){
     //could not find name of code
     cmoult_log(1,"Warning : Could find code field in update file");
   }else{
     //Load code. We assume that the update is loaded from inside here
-    //TODO, trigger loading from inside
-    load_code(code);
+    //TODO, trigger loading from outside
+    //load_code(code);
   }
   set = config_lookup(&update,"scripts");
   if (set != NULL){
@@ -66,7 +67,7 @@ void load_update(char* path){
     n = config_setting_length(set);
     for (int i=0;i<n;i++){
       const char * name_s, *script_s, *manager_s;
-      script = config_setting__get_elem(set,i);
+      script = config_setting_get_elem(set,i);
       if (config_setting_lookup_string(script,"name",&name_s) && config_setting_lookup_string(script,"script",&script_s) && config_setting_lookup_string(script,"manager",&manager_s)){
         //One script parsed
         /*type? manager;
@@ -78,7 +79,7 @@ void load_update(char* path){
       }
     }
   }
-  config_destroy(update);
+  config_destroy(&update);
 }
 
 

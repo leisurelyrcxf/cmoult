@@ -56,7 +56,7 @@ static void * listner_main(void * arg){
     extract_library_name(buff,&libpath);
     /* If the command was invalid, libpath will be NULL */
     if (libpath != NULL){
-      status = load_update(libpath);
+      load_update(libpath);
     }
     close(conn_fd);
   }

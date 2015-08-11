@@ -2,7 +2,6 @@
 #define UPDATE_H
 
 #include <stdlib.h>
-#include "dsuthread.h"
 
 typedef enum ra {
   yes,
