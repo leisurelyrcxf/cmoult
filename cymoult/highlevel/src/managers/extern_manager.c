@@ -55,18 +55,20 @@ static void * manager_main(void * arg){
           current_update->wait_over();
           current_update->cleanup();
           finish_update(self);
+          dlclose(handle);
         }else{
           current_update->clean_failed_alterability();
           postpone_update(self);
-          sleep(MANAGER_SLEEP);
+          dlclose(handle);
         }
-      }else if (req = no){
+      }else if (req == no){
         /* requirements are not met but may be met later */
         postpone_update(self);
-        sleep(MANAGER_SLEEP);
+        dlclose(handle);
       }else{
         /* requirements are not met and never will be */
         abort_update(self);
+        dlclose(handle);
       }
     }
   }
@@ -80,11 +82,12 @@ manager * start_extern_manager(char * name, pthread_t * threads, int nthreads){
   man->threads = threads;
   man->nthreads = nthreads;
   man->updates = (char**) malloc(MIN_ARRAY_SIZE*sizeof(size_t));
-  man->front_update = -1;
-  man->back_update = -1;
+  man->front_update = 0;
+  man->nupdate = 0;
   man->update_array_size = MIN_ARRAY_SIZE;
   man->state = not_updating;
   man->tried = 0;
+  register_manager(man);
   pthread_create(&(man->thread),NULL,&manager_main,(void*) man);
   return man;
 }

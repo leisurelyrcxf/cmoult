@@ -5,11 +5,15 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <dlfcn.h>
 #include "common.h"
 #include "update.h"
 
 #define MANAGER_SLEEP 5
 #define MIN_ARRAY_SIZE 32
+#define MANAGER_REGSITER_MIN_SIZE 10
+#define MAN_LOCK(x) (&(x->lock))
+
 
 /*Common*/
 
@@ -30,12 +34,13 @@ typedef struct{
   int nthreads;
   char ** updates;
   int front_update;
-  int back_update;
+  int nupdate;
   int update_array_size;
   update_state state;
   int tried;
   char alive;
   pthread_t thread;
+  pthread_mutex_t lock;
 } manager;
 
 
@@ -52,9 +57,8 @@ void extern_pause_threads(manager * man, pthread_t * update_threads, int nupdate
 void extern_resume_threads(manager * man, pthread_t * update_threads, int nupdate_threads);
 void * load_next_update(manager * man, update_functions * upd, pthread_t ** threads, int * nthreads, int * max_tries, char** name);
 
-
-manager * lookup_manager(char * request);
-
+manager * lookup_manager(const char * request);
+void register_manager(manager * man);
 
 
 /* extern manager */

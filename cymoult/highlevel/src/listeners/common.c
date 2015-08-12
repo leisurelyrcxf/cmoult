@@ -1,5 +1,6 @@
 #include "listener.h"
 #include <ctype.h>
+#include <stdio.h>
 
 /* Trims str and copies the result in trimedstr. Allocates the
    string. trimedsize recieves the new size of the strin */
@@ -44,7 +45,9 @@ void load_update(char* path){
   config_setting_t * script;
   const char * name;
   const char * code;
+  char * buff;
   int n;
+  manager * man;
 
   config_init(&update);
   if (! config_read_file(&update,path)){
@@ -60,6 +63,7 @@ void load_update(char* path){
     //Load code. We assume that the update is loaded from inside here
     //TODO, trigger loading from outside
     //load_code(code);
+    printf("Loading code : %s\n",code);
   }
   set = config_lookup(&update,"scripts");
   if (set != NULL){
@@ -70,9 +74,14 @@ void load_update(char* path){
       script = config_setting_get_elem(set,i);
       if (config_setting_lookup_string(script,"name",&name_s) && config_setting_lookup_string(script,"script",&script_s) && config_setting_lookup_string(script,"manager",&manager_s)){
         //One script parsed
-        /*type? manager;
-        manager = lookup_manager(manager_s);
-        add_update(manager,name_s,script_s);*/
+        man = lookup_manager(manager_s);
+        if (man == NULL){
+          cmoult_log(1,"Error : Request <<%s>> did not correspond to a manager",manager_s);
+        }else{
+          buff = malloc(strlen(script_s)*sizeof(char));
+          strcpy(buff,script_s);
+          manager_add_update(man,buff);
+        }
       }else{
         //Could not par an update
         cmoult_log(1,"Error : Could not parse update instance number %d",i);
