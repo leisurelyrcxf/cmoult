@@ -1,8 +1,8 @@
 name = "my update";
 code = "bidule.so";
-scripts = ( { name = "toto";
-              script = "toto.so";
-              manager = "truc";
+scripts = ( { name = "script";
+              script = "script.so";
+              manager = "manager";
               },
             { name = "tutu";
               script = "tutu.so";

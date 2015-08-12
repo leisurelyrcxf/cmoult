@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #include <libconfig.h>
 #include "common.h"
+#include "manager.h"
 
 #define LISTENER_BUFF_SIZE 1024
 #define LISTENER_PORT 4242

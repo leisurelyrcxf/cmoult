@@ -1,61 +1,109 @@
 #include "manager.h"
-#include <dlfcn.h>
 
-static void queue_push(char *** queue, char * item, int * size, int * back, int * front){
+
+/* Managers storage */
+
+manager ** managers;
+char ** manager_names; 
+int nmanagers = 0;
+int managers_size = 0;
+pthread_mutex_t register_lock;
+
+
+/* Update queue handling */
+
+static void queue_push(char *** queue, char * item, int * size, int * nitem, int * front){
   //Detect if the queue is full. It is full if the front is at 0 and back is at size - 1
   //It is also full if back is at front -1
-  if (((*front) == 0) && ((*back) == (*size) -1)){
-    (*size) = (*size)*2;
-    (*queue) = (char**) realloc((*queue),(*size)*sizeof(size_t));
-  }else if ((*front - *back) == 1){
-    //Bad luck! We have to flatten the queue
-    int newsize = (*size)*2;
-    char ** tmp = (char**) malloc(newsize*2*sizeof(size_t));
-    int i = 0;
-    int f = *front;
-    int b = *back;
-    while (f != b+1){
-      tmp[i] = (*queue)[f];
-      f = (f+1) % (*size);
-      i++;
+  int f = (*front);
+  int n = (*nitem);
+  int s = (*size);
+  if (n == s-1){
+    s*=2;
+    if (f == 0){
+      (*queue) = (char**) realloc((*queue),s*sizeof(size_t));
+    }else{
+      //Bad luck! We have to flatten the queue
+      char ** tmp = (char**) malloc(s*sizeof(size_t));
+      int j = f;
+      for(int i=0;i<(n+1);i++){
+        tmp[i] = (*queue)[((j+i) % (n+1))];
+      }
+      (*front) = 0;
+      free(*queue);
+      (*queue) = tmp;      
     }
-    *front = 0;
-    *back = (i-1);
-    *size = newsize;
-    free(*queue);
-    queue = &tmp;
+    (*size) = s;
   }
-  (*back) = ((*back)+1) % (*size);
-  (*queue)[(*back)] = item;
+  (*queue)[((f+n) % s)] = item;
+  n++;
+  (*nitem) = n;
 }
 
-static char * queue_pop(char ** queue, int * queue_front, const int size){
-  char * item = queue[(*queue_front)];
-  (*queue_front) = ((*queue_front) +1) % size;
+static char * queue_pop(char ** queue, int * front, int * nitem, const int size){
+  char * item = queue[(*front)];
+  (*front) = ((*front) +1) % size;
+  (*nitem) = (*nitem) -1;
   return item;
 }
 
 static void pop_update(manager * man){
-  char * module = queue_pop(man->updates,&(man->front_update),man->update_array_size);
+  char * module = queue_pop(man->updates,&(man->front_update),&(man->nupdate),man->update_array_size);
   free(module);
 }
 
-static char load_from_module(manager * man, void * handle,const char * symbol, const char* module, void ** pointer){
+void postpone_update(manager * man){
+  pthread_mutex_lock(MAN_LOCK(man));
+  char * update = queue_pop(man->updates,&(man->front_update),&(man->nupdate),man->update_array_size);
+  queue_push(&(man->updates),update,&(man->update_array_size),&(man->nupdate),&(man->front_update));
+  man->state = not_updating;
+  pthread_mutex_unlock(MAN_LOCK(man));
+}
+
+void abort_update(manager *man){
+  pthread_mutex_lock(MAN_LOCK(man));
+  man->state = not_updating;
+  pop_update(man);
+  pthread_mutex_unlock(MAN_LOCK(man));
+}
+
+void finish_update(manager* man){
+  /* TODO : log the update */
+  pthread_mutex_lock(MAN_LOCK(man));
+  man->state = not_updating;
+  pop_update(man);
+  pthread_mutex_unlock(MAN_LOCK(man));
+}
+
+void manager_add_update(manager * man, char * update){
+  pthread_mutex_lock(MAN_LOCK(man));
+  queue_push(&(man->updates),update,&(man->update_array_size),&(man->nupdate),&(man->front_update));
+  pthread_mutex_unlock(MAN_LOCK(man));
+}
+
+/* Life-cycle bases */
+
+static char load_from_module(manager * man, void * handle,const char * symbol, const char* module, void ** pointer, void * default_value){
   (* pointer) = dlsym(handle,symbol);
   char * error = dlerror();
   if (error != NULL){
-    cmoult_log(1,"Error when looking up symbol %s in %s : %s",symbol,module,error);
-    pop_update(man);
-    return 0;
+    if ((strstr(error,"undefined symbol") != NULL) && (default_value != NULL)){
+      (* pointer) = default_value;
+      cmoult_log(2,"Symbol %s not found in %s, using default value instead",symbol,module);
+      (*pointer) = default_value;
+    }else{
+      cmoult_log(1,"Error when looking up symbol %s in %s : %s",symbol,module,error);
+      return 0;
+    }
   }
   return 1;
 }
 
 void * load_next_update(manager * man, update_functions * upd, pthread_t ** threads, int * nthreads, int * max_tries, char** name){
-  if ((man->state == not_updating) && (man->front_update >= 0)){
+  pthread_mutex_lock(MAN_LOCK(man));
+  if ((man->state == not_updating) && (man->nupdate > 0)){
     char * module = man->updates[man->front_update];
     void * handle = dlopen(module,RTLD_LAZY);
-    char * message = malloc(2048*sizeof(char)); //For potential errors
     if (handle == NULL){
       //An error happened when loading
       char * error = dlerror();
@@ -65,54 +113,69 @@ void * load_next_update(manager * man, update_functions * upd, pthread_t ** thre
     }else{
       dlerror();
       char ok = 1;
-      ok = ok && load_from_module(man,handle,"threads",module, (void**) &threads);      
-      ok = ok && load_from_module(man,handle,"nthreads",module, (void**) &nthreads);      
-      ok = ok && load_from_module(man,handle,"max_tries",module, (void**) &max_tries);      
-      ok = ok && load_from_module(man,handle,"name",module, (void**) &name);      
+      ok = ok && load_from_module(man,handle,"threads",module, (void**) &threads, NULL);      
+      ok = ok && load_from_module(man,handle,"nthreads",module, (void**) &nthreads, NULL);      
+      ok = ok && load_from_module(man,handle,"max_tries",module, (void**) &max_tries, NULL);      
+      ok = ok && load_from_module(man,handle,"name",module, (void**) &name, NULL);      
       //Load functions
-      ok = ok && load_from_module(man,handle,"check_requirements",module, (void**) upd->check_requirements);      
-      ok = ok && load_from_module(man,handle,"preupdate_setup",module, (void**) upd->preupdate_setup);
-      ok = ok && load_from_module(man,handle,"check_alterability",module, (void**) upd->check_alterability);
-      ok = ok && load_from_module(man,handle,"wait_alterability",module, (void**) upd->wait_alterability);
-      ok = ok && load_from_module(man,handle,"clean_failed_alterability",module, (void**) upd->clean_failed_alterability);
-      ok = ok && load_from_module(man,handle,"apply",module, (void**) upd->apply);
-      ok = ok && load_from_module(man,handle,"preresume_setup",module, (void**) upd->preresume_setup);
-      ok = ok && load_from_module(man,handle,"wait_over",module, (void**) upd->wait_over);
-      ok = ok && load_from_module(man,handle,"check_over",module, (void**) upd->check_over);
-      ok = ok && load_from_module(man,handle,"cleanup",module, (void**) upd->cleanup);
+      ok = ok && load_from_module(man,handle,"check_requirements",module, (void**) &(upd->check_requirements), &req_ans_empty_step);      
+      ok = ok && load_from_module(man,handle,"preupdate_setup",module, (void**) &(upd->preupdate_setup), &void_empty_step);
+      ok = ok && load_from_module(man,handle,"check_alterability",module, (void**) &(upd->check_alterability), &char_empty_step);
+      ok = ok && load_from_module(man,handle,"wait_alterability",module, (void**) &(upd->wait_alterability), &char_empty_step);
+      ok = ok && load_from_module(man,handle,"clean_failed_alterability",module, (void**) &(upd->clean_failed_alterability),&void_empty_step);
+      ok = ok && load_from_module(man,handle,"apply",module, (void**) &(upd->apply),&void_empty_step);
+      ok = ok && load_from_module(man,handle,"preresume_setup",module, (void**) &(upd->preresume_setup),&void_empty_step);
+      ok = ok && load_from_module(man,handle,"wait_over",module, (void**) &(upd->wait_over),&char_empty_step);
+      ok = ok && load_from_module(man,handle,"check_over",module, (void**) &(upd->check_over),&char_empty_step);
+      ok = ok && load_from_module(man,handle,"cleanup",module, (void**) &(upd->cleanup),&void_empty_step);
       if (ok){
         man->state = checking_requirements;
+        cmoult_log(2,"Script %s loaded successfully",name);
       }else{
         cmoult_log(1,"Error when loading symbols from %s. Aborting",module);
         pop_update(man);
       }
     }
+    pthread_mutex_unlock(MAN_LOCK(man));
     return handle;
+  }
+  pthread_mutex_unlock(MAN_LOCK(man));
+  return NULL;
+}
+
+
+/* Manager registering */
+
+void register_manager(manager * man){
+  pthread_mutex_lock(&register_lock);
+  if (managers_size == 0){
+    managers = malloc(MANAGER_REGSITER_MIN_SIZE*sizeof(size_t));
+    manager_names = malloc(MANAGER_REGSITER_MIN_SIZE*sizeof(size_t));
+    managers_size = MANAGER_REGSITER_MIN_SIZE;
+  }else if (nmanagers >= (managers_size-1)){
+    managers_size *= 2;
+    managers = realloc(managers,managers_size*sizeof(size_t));
+    manager_names = realloc(manager_names,managers_size*sizeof(size_t));
+  }
+  manager_names[nmanagers] = man->name;
+  managers[nmanagers] = man;
+  nmanagers++;
+  pthread_mutex_unlock(&register_lock);
+}
+
+manager * lookup_manager(const char * request){
+  manager * man;
+  for (int i=0;i<nmanagers;i++){
+    if (strcmp(manager_names[i],request) == 0){
+      return managers[i];
+    }
+    
   }
   return NULL;
 }
 
-void postpone_update(manager * man){
-  char * update = queue_pop(man->updates,&(man->front_update),man->update_array_size);
-  manager_add_update(man,update);
-  man->state = not_updating;
-}
 
-void abort_update(manager *man){
-  man->state = not_updating;
-  pop_update(man);
-}
-
-void finish_update(manager* man){
-  /* TODO : log the update */
-  man->state = not_updating;
-  pop_update(man);
-}
-
-void manager_add_update(manager * man, char * update){
-  queue_push(&(man->updates),update,&(man->update_array_size),&(man->back_update),&(man->front_update));
-}
-
+/* Thread suspension */
 
 static void pause_thread(pthread_t thread){
 }

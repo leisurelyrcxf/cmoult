@@ -38,25 +38,5 @@ char char_empty_step(){
 }
 
 
-/* Intialize an empty update */
-
-update * create_empty_update(char* name, dsuthread ** threads, int nthreads){
-  update * up = malloc(sizeof(update));
-  up->name = name;
-  up->threads = threads;
-  up->nthreads = nthreads;
-  up->max_tries = 5;
-  up->check_requirements = req_ans_empty_step;
-  up->preupdate_setup = void_empty_step;
-  up->check_alterability = char_empty_step;
-  up->wait_alterability = char_empty_step;
-  up->clean_failed_alterability = void_empty_step;
-  up->apply = void_empty_step;
-  up->preresume_setup = void_empty_step;
-  up->wait_over = char_empty_step;
-  up->check_over = char_empty_step;
-  up->cleanup = void_empty_step;
-  up->applied = 0;
-}
 
   
