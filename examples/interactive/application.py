@@ -13,7 +13,7 @@ class Picture(object):
         self.name = name
 
     def stream(self):
-        f = open(self.path,'r')
+        f = open(self.path,'rb')
         stream = f.read()
         f.close()
         return stream
@@ -53,13 +53,11 @@ class ConnThread(threading.Thread):
         try:
             self.send(b"serving")
             if self.recv() == b"go":
-                print("go recieved")
                 for pic in files[folder]:
-                    print("sending "+str(pic.name))
                     imgstream = pic.stream()
                     s = "<img:"+str(len(imgstream))+">"+pic.name
                     self.send(str.encode(s))
-                    if self.recv == b"cancel":
+                    if self.recv() == b"cancel":
                         return
                     self.send(imgstream)
                     if self.recv() == b"cancel":
@@ -84,7 +82,7 @@ class ConnThread(threading.Thread):
         while self.connection:
             try:
                 data = ""
-                data = self.recv(1024)
+                data = self.recv()
                 self.do_command(data.decode("utf-8"))
             except socket.timeout:
                 pass

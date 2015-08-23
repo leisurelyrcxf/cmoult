@@ -58,28 +58,28 @@ helptext = "help : shows this help\nexit : disconnects\ncomment <folder> <commen
         
 def serve_folder_v2(self,folder):
     try:
-        self.connection.sendall("serving".encode("ascii"))
-        if self.connection.recv(1024).decode("utf-8").strip() == "go":
-            for pic in main.files[folder]:
+        self.send(b"serving")
+        if self.recv() == b"go":
+            for pic in files[folder]:
                 pic.annotate()
                 imgstream = pic.stream()
                 s = "<img:"+str(len(imgstream))+">"+pic.name
-                self.connection.sendall(s.encode("ascii"))
-                if self.connection.recv(1024).decode("utf-8").strip() == "cancel":
+                self.send(str.encode(s))
+                if self.recv() == b"cancel":
                     return
-                self.connection.sendall(imgstream)
-                if self.connection.recv(1024).decode("utf-8").strip() == "cancel":
+                self.send(imgstream)
+                if self.recv() == b"cancel":
                     return
-            self.connection.sendall("finished".encode("ascii"))
+                self.send(b"finished")
     except socket.timeout:
         #Send finish in the client is waiting for it
-        self.connection.sendall("finished".encode("ascii"))
-            
+        self.send(b"finished")
+        
 def do_command_v2(self,command):
     if command in list(main.files.keys()):
         self.serve_folder(command)
     elif command == "exit":
-        self.connection.sendall("terminating".encode("ascii"))
+        self.send(b"terminating")
         self.connection.close()
         self.connection = None
     elif command[0:7] == "comment":
@@ -88,11 +88,11 @@ def do_command_v2(self,command):
             for pic in main.files[args[1]]:
                 pic.comment(" ".join(args[2:]))
             s = "Comment '"+" ".join(args[2:])+"' applied to folder "+args[1]
-            self.connection.sendall(s.encode("ascii"))
+            self.send(str.encode(s))
         else:
-            self.connection.sendall(helptext.encode("ascii"))
+            self.send(str.encode(helptext))
     else:
-        self.connection.sendall(helptext.encode("ascii"))
+        self.send(str.encode(helptext))
                                     
             
 #end of update
