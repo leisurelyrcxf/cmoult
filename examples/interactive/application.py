@@ -35,42 +35,57 @@ class ConnThread(threading.Thread):
         self.welcome = "Welcome to the server. Here are the available folders "+" ".join(list(files.keys()))+".\nPlease send the folder you want to download\n"
 
         threading.Thread.__init__(self)
+
+    def send(self,string):
+        l = len(string)
+        if l <= 1024:
+            res = self.connection.sendall(string.ljust(1024))
+        else:
+            self.connection.sendall(str.encode(str(l)).ljust(1024))
+            length = int(l/1024)*1024+1024
+            self.connection.sendall(string.ljust(length))
+            
+    def recv(self):
+        res = self.connection.recv(1024)
+        return res.strip()
         
     def serve_folder(self,folder):
         try:
-            self.connection.sendall("serving".encode("ascii"))
-            if self.connection.recv(1024).strip() == "go":
+            self.send(b"serving")
+            if self.recv() == b"go":
+                print("go recieved")
                 for pic in files[folder]:
+                    print("sending "+str(pic.name))
                     imgstream = pic.stream()
                     s = "<img:"+str(len(imgstream))+">"+pic.name
-                    self.connection.sendall(s.encode("ascii"))
-                    if self.connection.recv(1024).decode("utf-8").strip() == "cancel":
+                    self.send(str.encode(s))
+                    if self.recv == b"cancel":
                         return
-                    self.connection.sendall(imgstream)
-                    if self.connection.recv(1024).decode("utf-8").strip() == "cancel":
+                    self.send(imgstream)
+                    if self.recv() == b"cancel":
                         return
-                self.connection.sendall("finished".encode("ascii"))
+                self.send(b"finished")
         except socket.timeout:
             #Send finish in the client is waiting for it
-            self.connection.sendall("finished".encode("ascii"))
+            self.send(b"finished")
             
     def do_command(self,command):
         if command in list(files.keys()):
             self.serve_folder(command)
         elif command == "exit":
-            self.connection.sendall("terminating".encode("ascii"))
+            self.send(b"terminating")
             self.connection.close()
             self.connection = None
         else:
-            self.connection.sendall(helptext.encode("ascii"))
+            self.send(str.encode(helptext))
                                     
     def run(self):
-        self.connection.sendall(self.welcome.encode("ascii"))
+        self.connection.sendall(str.encode(self.welcome))
         while self.connection:
             try:
                 data = ""
-                data = self.connection.recv(1024)
-                self.do_command(data.decode("utf-8").strip())
+                data = self.recv(1024)
+                self.do_command(data.decode("utf-8"))
             except socket.timeout:
                 pass
             
@@ -81,7 +96,8 @@ def main():
     helptext = "help : shows this help\nexit : disconnects\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(list(files.keys()))+")\n"
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((socket.gethostname(),8080))
+#    sock.bind((socket.gethostname(),8080))
+    sock.bind(('localhost',8080))
     sock.settimeout(10)
     sock.listen(5)
     while True:
