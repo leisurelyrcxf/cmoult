@@ -61,7 +61,6 @@ try:
                         f = open(pic,"wb")
                         f.write(stream)
                         f.close()
-                        print("ok")
                         sock.sendall(b"ok")
                     elif response == b"finished":
                         print("downlad finished")
