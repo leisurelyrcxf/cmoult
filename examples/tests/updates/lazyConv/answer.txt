@@ -4,7 +4,7 @@ An item named mango of color green
 Adding update item to Manager global queue
 Manager global begining update item
 Alterabilty for update item reached
-Manager global suspended thread app
+Manager global triggered suspension of thread app
 Manager global resumed thread app
 Update item over condition met
 Update item was succesfully completed
