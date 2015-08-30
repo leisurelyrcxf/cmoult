@@ -219,7 +219,8 @@ $EDITOR $TPATH/update.py
 dialog --msgbox "$TITLE\n\nThe update is ready to be applied!" 10 80
 
 echo "set loglevel 2" | netcat $(hostname) 4242
-echo "update $TPATH/update.py" | netcat $(hostname) 4242
+#echo "update $TPATH/update.py" | netcat $(hostname) 4242
+echo "update update.py" | netcat $(hostname) 4242
 
 dialog --msgbox "$TITLE\n\nThe update has been started.\nDo you see the new feature?" 10 80
 
