@@ -3,7 +3,6 @@ v1 : 1
 Adding update main to Manager pymoult queue
 Manager pymoult begining update main
 Alterabilty for update main reached
-Manager pymoult suspended thread app
 Manager pymoult resumed thread app
 Update main over condition met
 Update main was succesfully completed
