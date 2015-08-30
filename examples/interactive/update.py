@@ -36,7 +36,7 @@ class Picture_V2(object):
         self.commentary = "Witty comment"
 
     def stream(self):
-        f = open(self.path,'r')
+        f = open(self.path,'rb')
         stream = f.read()
         f.close()
         return stream
@@ -60,7 +60,7 @@ def serve_folder_v2(self,folder):
     try:
         self.send(b"serving")
         if self.recv() == b"go":
-            for pic in files[folder]:
+            for pic in main.files[folder]:
                 pic.annotate()
                 imgstream = pic.stream()
                 s = "<img:"+str(len(imgstream))+">"+pic.name

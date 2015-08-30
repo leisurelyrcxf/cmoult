@@ -47,14 +47,18 @@ def suspendThreads(threads):
     current_thread = threading.currentThread()
     listener = get_app_listener()
     #We suspend all threads
+    waited_threads = []
     for t in threads:
         if not(t is current_thread) and not(t is listener):
             try:
                 t.suspend()
-                t.wait_suspended()
+                #waited_threads.append(t)
             except ThreadError as e:
                 log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
                 threads.remove(t)
+    # for pending in waited_threads:
+    #     pending.wait_suspended()
+                
 
 #Resume many threads
 def resumeThreads(threads):

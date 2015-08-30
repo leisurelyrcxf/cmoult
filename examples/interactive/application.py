@@ -94,8 +94,8 @@ def main():
     helptext = "help : shows this help\nexit : disconnects\n<folder name> : downloads pictures from the folder\n(Available folders : "+" ".join(list(files.keys()))+")\n"
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#    sock.bind((socket.gethostname(),8080))
-    sock.bind(('localhost',8080))
+    sock.bind((socket.gethostname(),8080))
+#    sock.bind(('localhost',8080))
     sock.settimeout(10)
     sock.listen(5)
     while True:

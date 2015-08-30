@@ -43,13 +43,14 @@ class BaseManager(object):
     def pause_threads(self):
         self.current_update.pause_hook()
         """suspends all threads managed by the manager"""
+        waited_threads = []
         if self.current_update.threads != []:
             for t in self.current_update.threads:
                 try:
                     if not (t.is_suspended()):
                         t.suspend()
-                        t.wait_suspended()                  
-                        log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                        #waited_threads.append(t)
+                        log(2,"Manager "+str(self.name)+" triggered suspension of thread "+str(t.name))
                     else:
                         log(2,"Manager "+str(self.name)+" found thread "+str(t.name)+" already suspended")
                 except ThreadError as e:
@@ -60,12 +61,21 @@ class BaseManager(object):
                 try:
                     if not (t.is_suspended()):
                         t.suspend()
-                        t.wait_suspended()                  
-                        log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                        #waited_threads.append(t)
+                        log(2,"Manager "+str(self.name)+" triggered suspension of thread "+str(t.name))
                     else:
                         log(2,"Manager "+str(self.name)+" found thread "+str(t.name)+" already suspended")
                 except ThreadError as e:
                     log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
+        # n = len(waited_threads)
+        # while n>0:
+        #     for i in range(n):
+        #         if waited_threads[i].is_suspended():
+        #             t = waited_threads.pop(i)
+        #             n-=1
+        #             log(2,"Thread "+str(t.name)+" suspended")
+        #             break
+
 
     def resume_threads(self):
         self.current_update.resume_hook()
