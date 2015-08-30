@@ -46,20 +46,24 @@ class BaseManager(object):
         if self.current_update.threads != []:
             for t in self.current_update.threads:
                 try:
-                    t.suspend()
-                    print("waiting")
-                    t.wait_suspended()
-                    print("ok")
-                    log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                    if not (t.is_suspended()):
+                        t.suspend()
+                        t.wait_suspended()                  
+                        log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                    else:
+                        log(2,"Manager "+str(self.name)+" found thread "+str(t.name)+" already suspended")
                 except ThreadError as e:
                     log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
 
         elif hasattr(self,"threads") and type(self.threads) == list:
             for t in self.threads:
                 try:
-                    t.suspend()
-                    t.wait_suspended()
-                    log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                    if not (t.is_suspended()):
+                        t.suspend()
+                        t.wait_suspended()                  
+                        log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                    else:
+                        log(2,"Manager "+str(self.name)+" found thread "+str(t.name)+" already suspended")
                 except ThreadError as e:
                     log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
 

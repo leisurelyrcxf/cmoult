@@ -10,7 +10,7 @@ def func_v1():
     log(0,"v1")
 
 def main():
-    for x in range(5):
+    for x in range(12):
         time.sleep(1)
         func_v1()
 
