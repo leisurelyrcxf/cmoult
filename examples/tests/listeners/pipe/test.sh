@@ -10,6 +10,11 @@ then
     rm pymoult.log
 fi
 
+if [ -p fifopipe ];
+then
+    rm fifopipe
+fi
+
 currentTest="$(basename "$PWD") ... "
 echo -n $currentTest
 
