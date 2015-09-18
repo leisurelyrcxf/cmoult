@@ -28,6 +28,7 @@ import threading
 import inspect
 import time
 import sys
+import types
 import inspect
 
 
@@ -262,6 +263,22 @@ def cleanFailedForceQuiescence(can_continue,watcher,module,function):
     redefineFunction(module,function,function)
     #Now, we can makeevryone leave the stub
     can_continue.set()
+
+def isAnyCodeInAnyStack(codes):
+    """Takes a list of code objects as argument. Returns True if any of these code objects is in the stack of any thread, False either."""
+    stacks = get_current_frames()
+    for stack in stacks.values():
+        x = stack
+        while x is not None:
+            if x.f_code in codes:
+                return True
+            x = x.f_back
+    return False
+
+def isClassInAnyStack(clazz):
+    """Takes a class as argument. Returns True if any method of the class is in the stack of any thread, False either."""
+    l = [m.__code__ for m in map(lambda m: getattr(clazz, m), dir(clazz)) if inspect.ismethod(m) or inspect.isfunction(m)]
+    return isAnyCodeInAnyStack(l)
 
 ########################
 # Static Update Points #
