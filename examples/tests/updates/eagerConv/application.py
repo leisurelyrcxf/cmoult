@@ -20,7 +20,7 @@ class Item(object):
 
 def main():
     items = [Item("apple","red"),Item("banana","yellow"),Item("mango","green")]
-    for x in range(5):
+    for x in range(8):
         for i in items:
             i.display()
         time.sleep(1)

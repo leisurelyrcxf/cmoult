@@ -10,3 +10,5 @@
     https://bitbucket.org/smartinezgd/pymoult/wiki/Home
 
 """
+
+suspend_timeout = 2

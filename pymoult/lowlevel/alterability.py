@@ -24,6 +24,7 @@
 
 from pymoult.lowlevel.relinking import redefineFunction
 from pymoult.highlevel.listener import log,get_app_listener
+from pymoult import suspend_timeout
 import threading
 import inspect
 import time
@@ -53,12 +54,11 @@ def suspendThreads(threads):
         if not(t is current_thread) and not(t is listener):
             try:
                 t.suspend()
-                #waited_threads.append(t)
+                if not t.wait_suspended(timeout=suspend_timeout):
+                    log(1,"Timed out when suspending thread "+str(t.name))
             except ThreadError as e:
                 log(1,"ThreadError when suspending thread "+str(t.name)+" : "+str(e))
                 threads.remove(t)
-    # for pending in waited_threads:
-    #     pending.wait_suspended()
                 
 
 #Resume many threads
