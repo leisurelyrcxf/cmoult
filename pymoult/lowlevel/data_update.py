@@ -23,6 +23,8 @@
 
 """
 
+from pymoult import suspend_timeout
+from pymoult.highlevel.listener import log
 import sys
 import types
 import threading
@@ -82,6 +84,8 @@ def updateLocalVarInThread(thread,func,name,value):
     if not suspended:
         try:
             thread.suspend()
+            if not thread.wait_suspended(timeout=suspend_timeout):
+                log(1,"Timed out when suspending thread "+str(thread.name))
         except ThreadError as e:
             log(1,"Thread "+thread.name+" could not be suspended when updating local variable : " + str(e))
     stack_size = thread.get_stack_size()

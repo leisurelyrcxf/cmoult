@@ -2,7 +2,9 @@ Hello!
 Adding update locals to Manager pymoult queue
 Manager pymoult begining update locals
 Alterabilty for update locals reached
-Manager pymoult triggered suspension of thread app
+Manager pymoult suspended thread app
+Timed out when suspending thread MainThread
+Timed out when suspending thread Pymoult Listener
 Manager pymoult resumed thread app
 Update locals over condition met
 Update locals was succesfully completed

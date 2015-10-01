@@ -31,7 +31,7 @@ from pymoult.threads import *
 import time
 from pymoult.highlevel.listener import get_app_listener,log
 from pymoult.highlevel.updates import Update
-
+from pymoult import suspend_timeout
 
 class BaseManager(object):
     def __init__(self,name=None,threads=[]):
@@ -49,8 +49,10 @@ class BaseManager(object):
                 try:
                     if not (t.is_suspended()):
                         t.suspend()
-                        #waited_threads.append(t)
-                        log(2,"Manager "+str(self.name)+" triggered suspension of thread "+str(t.name))
+                        if t.wait_suspended(timeout=suspend_timeout):
+                            log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                        else:
+                            log(1,"Manager "+str(self.name)+" timed out when suspending thread "+str(t.name))
                     else:
                         log(2,"Manager "+str(self.name)+" found thread "+str(t.name)+" already suspended")
                 except ThreadError as e:
@@ -61,20 +63,14 @@ class BaseManager(object):
                 try:
                     if not (t.is_suspended()):
                         t.suspend()
-                        #waited_threads.append(t)
-                        log(2,"Manager "+str(self.name)+" triggered suspension of thread "+str(t.name))
+                        if t.wait_suspended(timeout=suspend_timeout):
+                            log(2,"Manager "+str(self.name)+" suspended thread "+str(t.name))
+                        else:
+                            log(1,"Manager "+str(self.name)+" timed out when suspending thread "+str(t.name))
                     else:
                         log(2,"Manager "+str(self.name)+" found thread "+str(t.name)+" already suspended")
                 except ThreadError as e:
                     log(1,"Manager "+str(self.name)+" met a ThreadError when suspending thread "+str(t.name)+" : "+str(e))
-        # n = len(waited_threads)
-        # while n>0:
-        #     for i in range(n):
-        #         if waited_threads[i].is_suspended():
-        #             t = waited_threads.pop(i)
-        #             n-=1
-        #             log(2,"Thread "+str(t.name)+" suspended")
-        #             break
 
 
     def resume_threads(self):
