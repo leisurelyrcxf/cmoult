@@ -2,6 +2,9 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <dlfcn.h>
+#include <sys/ptrace.h>
+#include <sys/wait.h>
+
 
 #define PATH_SIZE 1024
 
