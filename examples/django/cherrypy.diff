@@ -1,0 +1,45 @@
+diff -ru CherryPy-3.8.0-orig/cherrypy/process/servers.py CherryPy-3.8.0/cherrypy/process/servers.py
+--- CherryPy-3.8.0-orig/cherrypy/process/servers.py	2015-10-02 17:07:39.912653012 +0200
++++ CherryPy-3.8.0/cherrypy/process/servers.py	2015-10-02 16:13:32.743442857 +0200
+@@ -169,8 +169,10 @@
+         if isinstance(self.bind_addr, tuple):
+             wait_for_free_port(*self.bind_addr)
+ 
+-        import threading
+-        t = threading.Thread(target=self._start_http_thread)
++        # import threading
++        # t = threading.Thread(target=self._start_http_thread)
++        from pymoult.threads import DSU_Thread
++        t = DSU_Thread(target=self._start_http_thread)
+         t.setName("HTTPServer " + t.getName())
+         t.start()
+ 
+diff -ru CherryPy-3.8.0-orig/cherrypy/wsgiserver/wsgiserver3.py CherryPy-3.8.0/cherrypy/wsgiserver/wsgiserver3.py
+--- CherryPy-3.8.0-orig/cherrypy/wsgiserver/wsgiserver3.py	2015-10-02 17:07:39.915986316 +0200
++++ CherryPy-3.8.0/cherrypy/wsgiserver/wsgiserver3.py	2015-10-02 16:27:16.223176134 +0200
+@@ -100,6 +100,7 @@
+ import threading
+ import time
+ from traceback import format_exc
++from pymoult.lowlevel.alterability import staticUpdatePoint
+ 
+ if sys.version_info >= (3, 0):
+     bytestr = bytes
+@@ -1167,7 +1168,8 @@
+ _SHUTDOWNREQUEST = None
+ 
+ 
+-class WorkerThread(threading.Thread):
++from pymoult.threads import DSU_Thread
++class WorkerThread(DSU_Thread):
+ 
+     """Thread which continuously polls a Queue for Connection objects.
+ 
+@@ -1657,6 +1659,7 @@
+         self.ready = True
+         self._start_time = time.time()
+         while self.ready:
++            #staticUpdatePoint()
+             try:
+                 self.tick()
+             except (KeyboardInterrupt, SystemExit):
