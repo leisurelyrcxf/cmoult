@@ -81,4 +81,12 @@ void load_code(char * path){
 
 }
 
+void extern_load_code(char * path, pid_t id){
+  ptrace(PTRACE_ATTACH, id, NULL, NULL);
+  waitpid(id,NULL,0);
+  //write globals for code loading
 
+  ptrace(PTRACE_DETACH, id, NULL, NULL);
+
+
+}
