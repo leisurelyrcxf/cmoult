@@ -8,9 +8,12 @@ To read the manual of Pymoult, please follow [this link](http://bitbucket.org/sm
 
 A simple tutorial to Pymoult is available [here](http://bitbucket.org/smartinezgd/pymoult/wiki/A%20simple%20Pymoult%20tutorial)
 
+##Acknowledgement
+
+The work on Pymoult, Cmoult and other derivatives is funded by the Brittany Regional Council in the context of project IMAJD.
+
 
 ##LICENSE
-
 
 Pymoult is published under the GPLv2 license (see LICENSE.txt)
 
