@@ -10,7 +10,7 @@ if __name__ == '__main__':
     listener.start()
 
     #Start cherrypy 
-#    cherrypy.tree.graft(application,"/")
+    cherrypy.tree.graft(application,"/")
     cherrypy.server.unsubscribe()
     server = cherrypy._cpserver.Server()
     server.socket_host = "0.0.0.0"
