@@ -146,6 +146,26 @@ class SafeRedefineUpdate(Update):
     def apply(self):
         redefineFunction(self.module,self.function,self.new_function)
 
+class SafeRedefineMethodUpdate(Update):
+    def __init__(self,clas,method,new_method,name=None,threads=[]):
+        self.clas = clas
+        self.method = method
+        self.new_method = new_method
+        super(SafeRedefineMethodUpdate,self).__init__(name=name,threads=threads)
+
+    def wait_alterability(self):
+        return waitQuiescenceOfFunction(self.method,threads=self.threads)
+
+    def check_alterability(self):
+        return checkQuiescenceOfFunction(self.method,threads=self.threads)
+    
+    def resume_hook(self):
+        resumeSuspendedThreads(threads=self.threads)
+        
+    def apply(self):
+        addMethodToClass(self.clas,self.method.__name__,self.new_method)
+
+        
 class EagerConversionUpdate(Update):
     def __init__(self,cls,new_cls,transformer,name=None):
         self.cls = cls

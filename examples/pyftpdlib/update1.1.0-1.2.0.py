@@ -11,6 +11,9 @@
 
 #handlers.py
 
+from pyftpdlib.ioloop import Acceptor
+
+
 class PassiveDTP(Acceptor):
     """Creates a socket listening on a local port, dispatching the
     resultant connection to DTPHandler. Used for handling PASV command.
@@ -340,8 +343,13 @@ def _loop(self, handler):
 # Updating code
 ################
 
+from pymoult.highlevel.updates import *
+from pymoult.lowlevel.data_update import *
+from pymoult.highlevel.managers import *
+import sys
 
-import handler
+
+handlers = sys.modules['pyftpdlib.handlers']
 
 #Update class PassiveDTP
 
@@ -353,10 +361,10 @@ def empty_transformer(obj):
 
 class PassiveDTPUpdate(EagerConversionUpdate):
     def __init__(self,name):
-        super(PassiveDTPUpdate,self).__init__(handler.PassiveDTP,PassiveDTP,empty_transformer,name)
+        super(PassiveDTPUpdate,self).__init__(handlers.PassiveDTP,PassiveDTP,empty_transformer,name)
 
     def apply(self):
-        redfineClass(handler,handler.PassiveDTP,PassiveDTP)
+        redefineClass(handlers,handlers.PassiveDTP,PassiveDTP)
         super(PassiveDTPUpdate,self).apply()
 
 passiveDTPup = PassiveDTPUpdate("passiveDTP")
@@ -364,13 +372,55 @@ passiveDTPup = PassiveDTPUpdate("passiveDTP")
         
 #Update FTPHandler
 
-ftpHandlerup = SafeRedefineUpdate(handler,)
+ftpHandlerup = SafeRedefineMethodUpdate(handlers.FTPHandler,handlers.FTPHandler.ftp_FEAT,ftp_FEAT,"FTPHandler")
+
+# ioloop.py
+
+ioloop = sys.modules['pyftpdlib.ioloop']
+
+if hasattr(ioloop,"Epoll"):
+    class EpollUpdate(Update):
+        def wait_alterability(self):
+            return True
+        
+        def apply(self):
+            addMethodToClass(ioloop.Epoll,"fileno",fileno)
+
+    epollUp= EpollUpdate(name="epoll")
+
+#servers
+
+servers = sys.modules['pyftpdlib.servers']
+
+#FTPServer
+
+def ftpServerTransformer(obj):
+    #Set backlog to default value: 5
+    obj.backlog = 5
+
+
+ftpServer1 = SafeRedefineMethodUpdate(servers.FTPServer,servers.FTPServer.__init__,__init__,"FTPServer1")
+
+ftpServer2 = EagerConversionUpdate(servers.FTPServer,servers.FTPServer,ftpServerTransformer,"FTPServer2")
+
+#class _SpawnerBase
+
+spawner = SafeRedefineMethodUpdate(servers._SpawnerBase,servers._SpawnerBase._loop,_loop,"SpawnerBase")
 
 
 
+#Create a manager
+
+manager = ThreadedManager("manager")
+manager.start()
 
 
-handler.PassiveDTP = 
-
+manager.add_update(passiveDTPup)
+manager.add_update(ftpHandlerup)
+if hasattr(ioloop,"Epoll"):
+    manager.add_update(epollUp)
+manager.add_update(ftpServer1)
+manager.add_update(ftpServer1)
+manager.add_update(spawner)
 
 
