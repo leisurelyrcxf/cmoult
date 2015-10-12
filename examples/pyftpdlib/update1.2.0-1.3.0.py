@@ -30,25 +30,25 @@ def send(self, data):
         else:
             raise
 
- def recv(self, buffer_size):
-     try:
-         data = self.socket.recv(buffer_size)
-     except socket.error:
-         why = sys.exc_info()[1]
-         if why.args[0] in _DISCONNECTED:
-             self.handle_close()
-             return b('')
-         else:
-             raise
-     else:
-         if not data:
-             # a closed connection is indicated by signaling
-             # a read condition, and having recv() return 0.
-             self.handle_close()
-             return b('')
-         else:
-             return data
-
+def recv(self, buffer_size):
+    try:
+        data = self.socket.recv(buffer_size)
+    except socket.error:
+        why = sys.exc_info()[1]
+        if why.args[0] in _DISCONNECTED:
+            self.handle_close()
+            return b('')
+        else:
+            raise
+    else:
+        if not data:
+            # a closed connection is indicated by signaling
+            # a read condition, and having recv() return 0.
+            self.handle_close()
+            return b('')
+        else:
+            return data
+        
 
 #servers.py
 
@@ -210,7 +210,6 @@ spawner2up = SafeRedefineMethodUpdate(servers._SpawnerBase,servers._SpawnerBase.
 #Fetch manager from previous update 
 
 manager = fetch_manager("manager")
-
 
 manager.add_update(asyncchat1up)
 manager.add_update(asyncchat2up)

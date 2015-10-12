@@ -271,7 +271,7 @@ def _do_ssl_shutdown(self):
             self._ssl_closing = False
             self.handle_ssl_shutdown()
 
-#TLD_FTPHandler
+#TLS_FTPHandler
 #classmethod
 def get_ssl_context(cls):
     if cls.ssl_context is None:
@@ -317,12 +317,12 @@ def loop(self, timeout=None, blocking=True):
             while socket_map:
                 poll(soonest_timeout)
                 soonest_timeout = sched_poll()
-        else:
-            sched = self.sched
-            if self.socket_map:
-                self.poll(timeout)
-            if sched._tasks:
-                return sched.poll()
+    else:
+        sched = self.sched
+        if self.socket_map:
+            self.poll(timeout)
+        if sched._tasks:
+            return sched.poll()
 
 #log.py
 #class LogFormatter
@@ -414,12 +414,11 @@ handlers = sys.modules["pyftpdlib.handlers"]
 
 if hasattr(handlers,"SSLConnection"):
     sslconnection1up = SafeRedefineMethodUpdate(handlers.SSLConnection,handlers.SSLConnection._do_ssl_shutdown,_do_ssl_shutdown,name="sslconnection1")
-
-tldftp1up = SafeRedefineMethodUpdate(handlers.TLD_FTPHandler,handlers.TLD_FTPHandler.get_ssl_context,get_ssl_context,name="tldftp1")
+    tlsftp1up = SafeRedefineMethodUpdate(handlers.TLS_FTPHandler,handlers.TLS_FTPHandler.get_ssl_context,get_ssl_context,name="tlsftp1")
 
 #iloop
 
-ioloop = sys.modules["pyftpdlib.iollop"]
+ioloop = sys.modules["pyftpdlib.ioloop"]
 
 ioloop1up = SafeRedefineMethodUpdate(ioloop._IOLoop,ioloop._IOLoop.loop,loop,name="ioloop1")
 
@@ -429,6 +428,8 @@ log = sys.modules["pyftpdlib.log"]
 
 logFormatter1up = SafeRedefineMethodUpdate(log.LogFormatter,log.LogFormatter.__init__,__init__,name="logFormatter1") 
 
+import logging
+import curses
 
 def transformer(obj):
     obj._colors = {
@@ -460,7 +461,7 @@ manager.add_update(abstracted1up)
 manager.add_update(abstracted2up)
 if hasattr(handlers,"SSLConnection"):
     manager.add_update(sslconnection1up)
-manager.add_update(tldftp1up)
+    manager.add_update(tlsftp1up)
 manager.add_update(ioloop1up)
 manager.add_update(logFormatter1up)
 manager.add_update(logFormatter2up)
