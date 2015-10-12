@@ -2,7 +2,7 @@
 
 ############################################################
 #
-# Pymoult dynamic patch for pyftpdlib v1.0.0 to v1.2.0
+# Pymoult dynamic patch for pyftpdlib v1.1.0 to v1.2.0
 #
 ############################################################
 

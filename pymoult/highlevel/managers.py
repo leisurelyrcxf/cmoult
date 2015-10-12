@@ -33,12 +33,16 @@ from pymoult.highlevel.listener import get_app_listener,log
 from pymoult.highlevel.updates import Update
 from pymoult import suspend_timeout
 
+#Store all existing managers in a global list
+managers_database = []
+
 class BaseManager(object):
     def __init__(self,name=None,threads=[]):
         self.threads=threads
         self.updates = []
         self.current_update = None
         self.name = name
+        managers_database.append(self)
 
     def pause_threads(self):
         self.current_update.pause_hook()
@@ -202,6 +206,7 @@ class ThreadedManager(BaseManager,threading.Thread):
         self.keep_running = False
         #If we were waiting invoked,we need to set it
         self.invoked.set()
+        managers_database.remove(self)
         
     def set_sleepTime(self,sleepTime):
         self.sleepTime = sleepTime
@@ -306,3 +311,14 @@ def generatePreconfiguredManager(managerClass,updateClass,**attributes):
             #update class does not take *args or **kwargs as
             #arguments. If it does, shenanigans may happen
             
+
+
+
+#Tools for getting managers
+
+def fetch_manager(name):
+    """fetches a manager by its name"""
+    for manager in managers_database:
+        if manager.name == name:
+            return manager
+    return None
