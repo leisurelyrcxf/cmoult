@@ -70,7 +70,7 @@ def serve_folder_v2(self,folder):
                 self.send(imgstream)
                 if self.recv() == b"cancel":
                     return
-                self.send(b"finished")
+            self.send(b"finished")
     except socket.timeout:
         #Send finish in the client is waiting for it
         self.send(b"finished")
