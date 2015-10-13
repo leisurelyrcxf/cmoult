@@ -7,7 +7,7 @@ import os
 
 #import Pymoult
 from pymoult.highlevel.listener import Listener
-
+from pymoult.threads import DSU_Thread
 
 #Initialize a simple ftp server
 authorizer = DummyAuthorizer()
@@ -28,4 +28,8 @@ server.max_cons_per_ip = 5
 listener = Listener()
 listener.start()
 
-server.serve_forever()
+def main():
+    server.serve_forever(timeout=0.5)
+
+mainThread = DSU_Thread(target=main,name="mainThread")
+mainThread.start()

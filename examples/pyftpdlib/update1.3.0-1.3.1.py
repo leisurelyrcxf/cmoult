@@ -9,6 +9,13 @@
 # New code
 ###########
 
+import logging
+import curses
+from pyftpdlib._compat import unicode, PY3
+import os
+import sys
+
+
 #Filsystems
 #Class AbstractedFS
 
@@ -292,8 +299,10 @@ def get_ssl_context(cls):
 #ioloop
 #class _IOLoop
 
+ioloop = sys.modules["pyftpdlib.ioloop"]
+
 def loop(self, timeout=None, blocking=True):
-    if not _IOLoop._started_once:
+    if not ioloop._IOLoop._started_once:
         _IOLoop._started_once = True
         if not logging.getLogger('pyftpdlib').handlers:
             # If we get to this point it means the user hasn't
@@ -397,7 +406,7 @@ def _log_start(self):
 from pymoult.highlevel.updates import *
 from pymoult.lowlevel.data_update import *
 from pymoult.highlevel.managers import *
-import sys
+from pymoult.threads import *
 
 #filesystems
 
@@ -420,7 +429,37 @@ if hasattr(handlers,"SSLConnection"):
 
 ioloop = sys.modules["pyftpdlib.ioloop"]
 
-ioloop1up = SafeRedefineMethodUpdate(ioloop._IOLoop,ioloop._IOLoop.loop,loop,name="ioloop1")
+mainThread = get_thread_by_name("mainThread")
+
+import time
+class IoLoopUpdate(Update):
+    def __init__(self,name):
+        super(IoLoopUpdate,self).__init__(name=name)
+    
+    def wait_alterability(self):
+        #We want to reboot the thread only when loop is at the top of
+        #the stack or when the thread is stuck at poll.
+        tries = 0
+        while tries <= self.max_tries:
+            mainThread.suspend()
+            mainThread.wait_suspended(timeout=3)
+            stack = get_current_frames()[mainThread.ident]
+            if stack.f_code == ioloop._IOLoop.loop.__code__ or stack.f_code.co_name == "poll":
+                return True
+            mainThread.resume()
+            tries+=1
+            time.sleep(self.sleep_time)
+        return False
+
+    def apply(self):
+        addMethodToClass(ioloop._IOLoop,"loop",loop)
+        resetThread(mainThread)
+
+    def resume_hook(self):
+        mainThread.resume()
+
+ioloop1up = IoLoopUpdate("ioloop1")
+ioloop1up.set_sleep_time(0.2)
 
 #logs
 
@@ -428,8 +467,8 @@ log = sys.modules["pyftpdlib.log"]
 
 logFormatter1up = SafeRedefineMethodUpdate(log.LogFormatter,log.LogFormatter.__init__,__init__,name="logFormatter1") 
 
-import logging
-import curses
+
+fg_color = (curses.tigetstr("setaf") or curses.tigetstr("setf") or "")
 
 def transformer(obj):
     obj._colors = {
