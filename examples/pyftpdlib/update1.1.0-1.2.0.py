@@ -12,7 +12,7 @@
 #handlers.py
 
 from pyftpdlib.ioloop import Acceptor
-
+from pyftpdlib.log import logger
 
 class PassiveDTP(Acceptor):
     """Creates a socket listening on a local port, dispatching the
@@ -259,6 +259,8 @@ def __init__(self, address_or_socket, handler, ioloop=None, backlog=5):
     self.listen(backlog)
 
 #class _SpawnerBase
+
+from pyftpdlib.ioloop import IOLoop
 
 def _loop(self, handler):
     """Serve handler's IO loop in a separate thread or process."""

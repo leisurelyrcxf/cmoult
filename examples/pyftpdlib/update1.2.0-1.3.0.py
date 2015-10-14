@@ -12,6 +12,7 @@
 #ioloop.py
 
 import errno
+import sys
 
 _RETRY = frozenset((errno.EAGAIN, errno.EWOULDBLOCK))
 
@@ -188,7 +189,6 @@ def handle_accepted(self, sock, addr):
 from pymoult.highlevel.updates import *
 from pymoult.lowlevel.data_update import *
 from pymoult.highlevel.managers import *
-import sys
 
 #ioloop.py
 
