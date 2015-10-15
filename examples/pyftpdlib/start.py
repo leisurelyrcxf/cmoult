@@ -11,7 +11,7 @@ from pymoult.threads import DSU_Thread
 
 #Initialize a simple ftp server
 authorizer = DummyAuthorizer()
-authorizer.add_anonymous(os.getcwd())
+authorizer.add_anonymous(os.path.abspath("data"))
 
 handler = FTPHandler
 handler.authorizer = authorizer
