@@ -14,7 +14,10 @@ import curses
 from pyftpdlib._compat import unicode, PY3
 import os
 import sys
+import time
+from tarfile import filemode as _filemode
 
+filesystems = sys.modules["pyftpdlib.filesystems"]
 
 #Filsystems
 #Class AbstractedFS
@@ -63,14 +66,14 @@ def format_list(self, basedir, listing, ignore_err=True):
         else:
             fmtstr = "%d %H:%M"
         try:
-            mtimestr = "%s %s" % (_months_map[mtime.tm_mon],
+            mtimestr = "%s %s" % (filesystems._months_map[mtime.tm_mon],
                                   time.strftime(fmtstr, mtime))
         except ValueError:
             # It could be raised if last mtime happens to be too
             # old (prior to year 1900) in which case we return
             # the current time as last mtime.
             mtime = timefunc()
-            mtimestr = "%s %s" % (_months_map[mtime.tm_mon],
+            mtimestr = "%s %s" % (filesystems._months_map[mtime.tm_mon],
                                   time.strftime("%d %H:%M", mtime))
 
         # same as stat.S_ISLNK(st.st_mode) but slighlty faster
@@ -300,6 +303,8 @@ def get_ssl_context(cls):
 #class _IOLoop
 
 ioloop = sys.modules["pyftpdlib.ioloop"]
+log = sys.modules["pyftpdlib.log"]
+
 
 def loop(self, timeout=None, blocking=True):
     if not ioloop._IOLoop._started_once:
@@ -309,7 +314,7 @@ def loop(self, timeout=None, blocking=True):
             # configured logging. We want to log by default so
             # we configure logging ourselves so that it will
             # print to stderr.
-            _config_logging()
+            log._config_logging()
 
     if blocking:
         # localize variable access to minimize overhead
@@ -335,6 +340,7 @@ def loop(self, timeout=None, blocking=True):
 
 #log.py
 #class LogFormatter
+
 def __init__(self, *args, **kwargs):
     logging.Formatter.__init__(self, *args, **kwargs)
     self._coloured = COLOURED and _stderr_supports_color()

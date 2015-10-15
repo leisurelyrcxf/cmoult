@@ -54,6 +54,8 @@ def recv(self, buffer_size):
 #servers.py
 
 #Class FTPServer
+import socket
+
 
 def __init__(self, address_or_socket, handler, ioloop=None, backlog=5):
     Acceptor.__init__(self, ioloop=ioloop)
@@ -81,6 +83,9 @@ def __init__(self, address_or_socket, handler, ioloop=None, backlog=5):
 
 
 #Class _SpawnerBase
+from pyftpdlib.ioloop import IOLoop
+import select
+import os
 
 def _loop(self, handler):
     """Serve handler's IO loop in a separate thread or process."""
