@@ -247,7 +247,7 @@ def waitForceQuiescence(quiescent):
 
 #Update.check_alterability
 def checkForceQuiescence(quiescent):
-    return quiescent._Event__flag
+    return quiescent.is_set()
 
 #Update.preresume_setup
 def cleanForceQuiescence(can_continue):
@@ -314,7 +314,7 @@ def waitStaticPoints(threads):
 #Update.check_alterability
 def checkStaticPointsReached(threads):
     for thread in threads:
-        if not thread.static_point_event._Event__flag:
+        if not thread.static_point_event.is_set():
             return False
     for thread in threads:
         delattr(thread,"static_point_event")

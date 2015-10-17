@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TITLE="Chose your own policy update!"
+TITLE="Une mise à jour dont VOUS êtes le héros!"
 TPATH=/tmp/interactive
 TMP=$TPATH/ans
 MANAGER=""
@@ -75,6 +75,8 @@ folders=$(cat $TMP)
 
 python-dsu3 $TPATH/application.py $folders &
 app=$!
+sleep 1
+echo "set loglevel 2" | netcat $(hostname) 4242
 
 dialog --msgbox "$TITLE\n\nNow, it's time to launch the client." 8 80
 
@@ -218,7 +220,7 @@ $EDITOR $TPATH/update.py
 
 dialog --msgbox "$TITLE\n\nThe update is ready to be applied!" 10 80
 
-echo "set loglevel 2" | netcat $(hostname) 4242
+
 #echo "update $TPATH/update.py" | netcat $(hostname) 4242
 echo "update update.py" | netcat $(hostname) 4242
 
