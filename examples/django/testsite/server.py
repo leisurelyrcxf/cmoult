@@ -1,12 +1,12 @@
 #!/usr/bin/python-dsu3
 
 import cherrypy
-from pymoult.highlevel.listener import PipeListener
+from pymoult.highlevel.listener import Listener
 from testsite.wsgi import application
 
 
 if __name__ == '__main__':
-    listener = PipeListener()
+    listener = Listener()
     listener.start()
 
     #Start cherrypy 
