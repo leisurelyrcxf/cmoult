@@ -52,6 +52,8 @@ def applyMixinToObject(obj,*mixins):
 def updateToClass(obj,cls,nclass,transformer=None):
     """Updates a given object to a given class. If a trasformer is given
     in argument, applies it to the object"""
+    print(obj.__class__)
+    print(cls)
     if cls == None or obj.__class__ == cls:
         obj.__class__ = nclass
     if transformer != None:
