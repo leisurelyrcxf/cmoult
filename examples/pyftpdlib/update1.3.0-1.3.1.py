@@ -15,6 +15,7 @@ from pyftpdlib._compat import unicode, PY3
 import os
 import sys
 import time
+import stat
 from tarfile import filemode as _filemode
 
 filesystems = sys.modules["pyftpdlib.filesystems"]

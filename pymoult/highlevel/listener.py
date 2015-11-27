@@ -34,6 +34,7 @@ import threading
 import socket
 import os
 import imp
+import datetime
 import time
 import sys
 import http.server
@@ -163,7 +164,8 @@ def log(level,message):
     #TODO : checkout the logging module
     if level <= log_level:
         logfile = open(os.path.join(log_path,"pymoult.log"),"a")
-        header = time.strftime("[%m/%d,%Hh%M:%S]\t")
+        header = datetime.datetime.now().strftime("[%m/%d,%Hh%M:%S.%f]\t")
+        #header = time.strftime("[%m/%d,%Hh%M:%S.%f]\t")
         logfile.write(header+message+"\n")
         logfile.close()
     
