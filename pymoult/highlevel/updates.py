@@ -167,10 +167,11 @@ class SafeRedefineMethodUpdate(Update):
 
         
 class EagerConversionUpdate(Update):
-    def __init__(self,cls,new_cls,transformer,name=None):
+    def __init__(self,cls,new_cls,transformer,name=None,module=None):
         self.cls = cls
         self.new_cls = new_cls
         self.transformer = transformer
+        self.module = module 
         super(EagerConversionUpdate,self).__init__(name=name)
 
     def object_update(self,obj):
@@ -184,12 +185,15 @@ class EagerConversionUpdate(Update):
 
     def apply(self):
         startEagerUpdate(self.cls,self.object_update)
+        if self.module:
+            redefineClass(self.module,self.cls,self.new_cls)
 
 class LazyConversionUpdate(Update):
-    def __init__(self,cls,new_cls,transformer,name=None):
+    def __init__(self,cls,new_cls,transformer,name=None,module=None):
         self.cls=cls
         self.new_cls=new_cls
         self.transformer = transformer
+        self.module = module
         super(LazyConversionUpdate,self).__init__(name=name)
 
     def object_update(self,obj):
@@ -203,6 +207,8 @@ class LazyConversionUpdate(Update):
 
     def apply(self):
         startLazyUpdate(self.cls,self.object_update)
+        if self.module:
+            redefineClass(self.module,self.cls,self.new_cls)
 
 
 class ThreadRebootUpdate(Update):
