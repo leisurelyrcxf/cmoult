@@ -8,7 +8,7 @@ app=$!
 sleep 5
 echo "BEGINING UPDATE"
 
-echo "update update.py" | netcat $hostname 4242
+echo "update solution.py" | netcat $hostname 4242
 
 control_c()
 {
