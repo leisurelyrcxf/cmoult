@@ -122,7 +122,7 @@ class BaseManager(object):
 
     def abort(self):
         """aborts the current update"""
-        log(1,"Update "+str(self.current_update.name)+" could meet its requirements : aborting")
+        log(1,"Update "+str(self.current_update.name)+" could not meet its requirements : aborting")
         self.current_update = None
 
 class Manager(BaseManager):
