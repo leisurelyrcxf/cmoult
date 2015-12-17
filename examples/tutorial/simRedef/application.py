@@ -24,12 +24,12 @@ def write_shared():
 
 def reader_f():
     while True:
-        time.sleep(0.3)
+        time.sleep(1)
         read_shared()
 
 def writer_f():
     while True:
-        time.sleep(0.5)
+        time.sleep(1.5)
         write_shared()
         
 
