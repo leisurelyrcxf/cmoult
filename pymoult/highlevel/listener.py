@@ -39,7 +39,6 @@ import time
 import sys
 import http.server
 
-Listener_port = 4242
 Max_recieve = 9999
 Invoke_message = "update"
 Max_queued_connect = 5
@@ -56,16 +55,17 @@ def get_app_listener():
 class Listener(threading.Thread):
     """Opens a socket server for users to supply updates."""
     
-    def __init__(self,name="Pymoult Listener", verbose=None):
+    def __init__(self,name="Pymoult Listener", verbose=None, localhost=True, port=4242):
         """Constructor using the same parameters as a regular thread object"""
         global app_listener 
         self.hostname = socket.gethostname()
-        self.port = Listener_port 
+        self.port = port 
         self.keep_running = True
         self.update_thread_index = 0
         super(Listener,self).__init__(name=name,verbose=verbose)
         self.daemon = True
         self.applied_updates = []
+        self.localhost = localhost
         app_listener = self
 
     def stop(self):
@@ -115,7 +115,10 @@ class Listener(threading.Thread):
         """Main loop of the thread, opens the socket and parses the commands"""
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind((self.hostname,self.port))
+        if self.localhost:
+            s.bind(("localhost",self.port))
+        else:
+            s.bind((self.hostname,self.port))
         s.listen(Max_queued_connect)
         while self.keep_running:
             conn,addr = s.accept()
