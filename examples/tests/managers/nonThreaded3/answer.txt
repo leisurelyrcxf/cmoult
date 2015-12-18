@@ -1,6 +1,6 @@
 v1
 Manager pymoult begining update requirements
-Update requirements could meet its requirements : aborting
+Update requirements could not meet its requirements : aborting
 Manager pymoult begining update func
 Alterabilty for update func reached
 Update func over condition met
