@@ -38,10 +38,11 @@ class RadioButtonWidget(QWidget):
         return self.radio_button_group.checkedId()
 
 class TextView(QDialog):
-    def __init__(self,title,filepath):
+    def __init__(self,title,filepath,main):
         super().__init__()
         self.title_label = QLabel(title)
         self.text_edit = QTextEdit()
+        updateFiles(main.choices)
         f = open(filepath)
         self.text_edit.setText(f.read())
         f.close()
@@ -54,6 +55,15 @@ class TextView(QDialog):
         self.setLayout(self.main_layout)
     
 
+def updateFiles(choices):
+    apppath = os.path.join(tstpath,"application.py")
+    updpath = os.path.join(tstpath,"update.py")
+    print("updating files")
+
+
+
+    
+        
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -76,11 +86,7 @@ class MainWindow(QMainWindow):
         i6 = self.create_info("Then, send the update to the manager",action=self.genview(os.path.join(tstpath,"update.py")))
         #Update functions
         i7 = self.create_info("Now,let's update the threads handling the connections.\n\nFor consistency, we need to update both do_command and serve_folder at the same time.\nLet's chose alterability criteria.",action=self.startfun)
-        self.funalt = self.create_mec_select("When shall we update the functions?",("When a static point is reached","When the functions are quiescent"),"funalt")
-        i8 = self.create_info("We can modify the apply method of the update, then send it to the manager.",action=self.funcomplete)
-        i9 = self.create_info("The update is now ready to be applied!",action=self.update)
-        i10 = self.create_info("The updating process as started.\nDo you see thenew features?",back=False)
-        q = self.create_quit_info()
+
         #Add them to a stacked layout
         self.stacked_layout = QStackedLayout()
         self.stacked_layout.addWidget(i0)
@@ -96,11 +102,7 @@ class MainWindow(QMainWindow):
         self.stacked_layout.addWidget(access)
         self.stacked_layout.addWidget(i6)
         self.stacked_layout.addWidget(i7)
-        self.stacked_layout.addWidget(self.funalt)
-        self.stacked_layout.addWidget(i8)
-        self.stacked_layout.addWidget(i9)
-        self.stacked_layout.addWidget(i10)
-        self.stacked_layout.addWidget(q)
+
         #Set the stacked layout as the central widget
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.stacked_layout)
@@ -109,7 +111,7 @@ class MainWindow(QMainWindow):
     def genview(self,path):
         def action():
             title = "Code of "+os.path.basename(path)
-            d = TextView(title,path)
+            d = TextView(title,path,self)
             d.exec_()
             self.next()
         return action
@@ -120,12 +122,29 @@ class MainWindow(QMainWindow):
             title = "We need to add a manager to the application"
         else:
             title = "Code of "+os.path.join(tstpath,"update.py")
-        d = TextView(title,os.path.join(tstpath,"update.py"))
+        d = TextView(title,os.path.join(tstpath,"update.py"),self)
         d.exec_()
         self.choices["picskel"] = 1
         self.next()
 
     def startfun(self):
+        if self.choices["static"] == 1: #main loop
+            i7b = self.create_info("Unfortunately, we cannot use our static update point in main's loop : the functions are not alterable here.")
+            self.stacked_layout.addWidget(i7b)
+            funalt = self.create_mec_select("When shall we update the functions?",("When the functions are quiescent",),"funalt")
+        elif self.choices["static"] == 2: #thread loop
+            funalt = self.create_mec_select("When shall we update the functions?",("When a static point is reached","When the functions are quiescent"),"funalt")
+        else:
+            funalt = self.create_mec_select("When shall we update the functions?",("When the functions are quiescent",),"funalt")
+        i8 = self.create_info("We can modify the apply method of the update, then send it to the manager.",action=self.funcomplete)
+        i9 = self.create_info("The update is now ready to be applied!",action=self.update)
+        i10 = self.create_info("The updating process as started.\nDo you see thenew features?",back=False)
+        q = self.create_quit_info()
+        self.stacked_layout.addWidget(funalt)
+        self.stacked_layout.addWidget(i8)
+        self.stacked_layout.addWidget(i9)
+        self.stacked_layout.addWidget(i10)
+        self.stacked_layout.addWidget(q)
         self.choices["funskel"] = 1
         self.next()
 
