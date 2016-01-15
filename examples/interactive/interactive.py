@@ -5,9 +5,11 @@
 
 import sys
 import os
+import shutil
+import tempfile
 from PyQt4.QtGui import *
 
-tstpath = "/tmp/interactive"
+tstpath = ""
 
 
 class RadioButtonWidget(QWidget):
@@ -58,12 +60,121 @@ class TextView(QDialog):
 def updateFiles(choices):
     apppath = os.path.join(tstpath,"application.py")
     updpath = os.path.join(tstpath,"update.py")
-    print("updating files")
+    f = open(os.path.join(tstpath,"appref.py"),"r")
+    app = f.read()
+    f.close()
+    f = open(os.path.join(tstpath,"upref.py"),"r")
+    upd = f.read()
+    f.close()
 
+    #Manager
+    if choices["manager"] == 1:
+        #Threaded manager
+        app = app.replace("import os","import os\nfrom pymoult.highlevel.managers import ThreadedManager")
+        app= app.replace("listener.start()","""listener.start()\n    manager = ThreadedManager(name="pymoult",threads=[])\n    manager.start()""")
+    elif choices["manager"] == 2:
+        #Non threaded manager
+        app =app.replace("import os","import os\nfrom pymoult.highlevel.managers import Manager")
+        app =app.replace("files = {}","""manager = Manager(name='pymoult')\nfiles = {}""")
+        app=app.replace("while True:","while True:\n        manager.apply_next_update()")
+    else:
+        #No manager in app, add it in update
+        upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.highlevel.managers import ThreadedManager")
+        upd = upd.replace('["__main__"]','["__main__"]\nmanager = ThreadedManager(name="pymoult")\nmanager.start()')
 
+    #Static points
+    if choices["static"] == 1:
+        #static point in main
+        app = app.replace("import os","import os\nfrom pymoult.lowlevel.alterability import staticUpdatePoint\nfrom pymoult.threads import DSU_Thread")
+        app = app.replace("  main()","  main_thread = DSU_Thread(target=main)\n    main_thread.start()")
+        app = app.replace("conn,addr","staticUpdatePoint()\n            conn,addr")
+    elif choices["static"] ==2:
+        #static point in thread loop
+        app = app.replace("import os","import os\nfrom pymoult.lowlevel.alterability import staticUpdatePoint\nfrom pymoult.threads import DSU_Thread")
+        app = app.replace("threading.Thread","DSU_Thread")
+        app = app.replace("run","main")
+        app = app.replace('data = ""','staticUpdatePoint()\n                data = ""')
+    #else: nothing to do
+
+    #picskel
+    if choices["picskel"] == 1:
+        #Add skeleton of picture update
+        upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.highlevel.updates import Update")
+        upd = upd.replace("helptext =",'class PictureUpd(Update):\n    def preupdate_setup(self):\n        self.threads=getAllThreads()\n    def wait_alterability(self):\n        return True\n    def check_alterability(self):\n        return True\n    def apply(self):\n        #Updating the Pictures\n\n\nhelptext =')
+    #else: nothing to do
+
+    #type and access
+    if choices["access"] == 1:
+        #eager access
+        upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.lowlevel.data_access import startEagerUpdate")
+        if choices["type"] == 1:
+            #redefine
+            upd = upd.replace("helptext =","old_Pic = main.Picture\ndef pic_upd(pic):\n    updateToClass(pic,old_Pic,Picture_V2,pic_transformer)\n\nhelptext =")
+            upd = upd.replace("import updateToClass","import updateToClass, redefineClass")
+            upd = upd.replace("#Updating the Pictures","#Updating the Pictures\n        redefineClass(main,main.Picture,Picture_V2)\n        startEagerUpdate(old_Pic,pic_upd)")
+        elif choices["type"] == 2:
+            #add along
+            upd = upd.replace("helptext =","def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =")
+            upd = upd.replace("#Updating the Pictures","#Updating the Pictures\n        startEagerUpdate(main.Picture,pic_upd)")
+    elif choices["access"] == 2:
+        #lazy access
+        upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.lowlevel.data_access import startLazyUpdate")
+        if choices["type"] == 1:
+            #redefine
+            upd = upd.replace("helptext =","old_Pic = main.Picture\ndef pic_upd(pic):\n    updateToClass(pic,old_Pic,Picture_V2,pic_transformer)\n\nhelptext =")
+            upd = upd.replace("import updateToClass","import updateToClass, redefineClass")
+            upd = upd.replace("#Updating the Pictures","#Updating the Pictures\n        redefineClass(main,main.Picture,Picture_V2)\n        startLazyUpdate(old_Pic,pic_upd)")
+        elif choices["type"] == 2:
+            #add along
+            upd = upd.replace("helptext =","def pic_upd(pic):\n    updateToClass(pic,main.Picture,Picture_V2,pic_transformer)\n\nhelptext =")
+            upd = upd.replace("#Updating the Pictures","#Updating the Pictures\n        startLazyUpdate(main.Picture,pic_upd)")
+    if choices["access"] != 0 and choices["manager"] == 3:
+        #Manager is in update code, add picUpdate to this manager
+        upd =upd.replace("helptext =",'picture_update = PictureUpd(name="picupd")\nmanager.add_update(picture_update)\n\nhelptext =')
+    elif choices["access"] != 0 and choices["manager"] != 3:
+        #Manager is in app code, add picUpdate to this manager
+        upd = upd.replace("helptext =",'picture_update = PictureUpd(name="picupd")\nmain.manager.add_update(picture_update)\n\nhelptext =')
+
+    #funskel
+    if choices["funskel"] == 1:
+        upd = upd.replace("import Update","import Update, isApplied")
+        upd = upd.replace("#end of update",'class ConnUpd(Update):\n\n    def check_requirements(self):\n        if isApplied("picupd"):\n            return "yes"\n        return "no"\n\n    def preupdate_setup(self):\n        #preupdate setup\n        pass\n\n    def wait_alterability(self):\n        #wait for alterability\n\n    def check_alterability(self):\n        #check for alterability\n\n    def clean_failed_alterability(self):\n        #clean failed alt\n        pass\n\n    def apply(self):\n        #Updating the connection threads\n\n    def resume_hook(self):\n        #resume hook\n        pass\n\n\n#end of update')
+
+    #funalt
+    if choices["funalt"] != 0:
+        upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.lowlevel.alterability import *")
+    if choices["funalt"] == 1:
+        #update when quiescent
+        upd = upd.replace("#wait for alterability","return waitQuiescenceOfFunctions([main.ConnThread.do_command,main.ConnThread.serve_folder])")
+        upd = upd.replace("#check for alterability","return checkQuiescenceOfFunctions([main.ConnThread.do_command,main.ConnThread.serve_folder])")
+        upd = upd.replace("#resume hook","resumeSuspendedThreads()")
+    elif choices["funalt"] == 2:
+        #update when static point reached
+        upd = upd.replace("#preupdate setup","self.connThreads = getAllConnThreads()\n        setupWaitStaticPoints(self.connThreads)")
+        upd = upd.replace("#check for alterability","return checkStaticPointsReached(self.connThreads)")
+        upd = upd.replace("#wait for alterability","return waitStaticPoints(self.connThreads)")
+        upd = upd.replace("#clean failed alt","cleanFailedStaticPoints(self.connThreads)")
+        upd = upd.replace("#resume hook","resumeSuspendedThreads(self.connThreads)")
+    
+    #funapp
+    if choices["funapp"] == 1:
+        upd = upd.replace("from pymoult.lowlevel.data_update import","from pymoult.lowlevel.data_update import addMethodToClass,")
+        upd = upd.replace("#Updating the connection threads",'addMethodToClass(main.ConnThread,"do_command",do_command_v2)\n        addMethodToClass(main.ConnThread,"serve_folder",serve_folder_v2)')
+        if choices["manager"] == 3:
+            #Manager in update
+            upd = upd.replace("#end of update",'conn_update = ConnUpd(name="conn_update")\nconn_update.set_sleep_time(0.5)\nmanager.add_update(conn_update)')
+        else:
+            #Manager in app
+            upd = upd.replace("#end of update",'conn_update = ConnUpd(name="conn_update")\nconn_update.set_sleep_time(0.5)\nmain.manager.add_update(conn_update)')
+
+    f = open(apppath,"w")
+    f.write(app)
+    f.close()
+    f = open(updpath,"w")
+    f.write(upd)
+    f.close()
 
     
-        
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -119,6 +230,7 @@ class MainWindow(QMainWindow):
     def checkman(self):
         if self.choices["manager"] == 3:
             #Manager was not installed, install it now
+            updateFiles(self.choices)
             title = "We need to add a manager to the application"
         else:
             title = "Code of "+os.path.join(tstpath,"update.py")
@@ -133,7 +245,7 @@ class MainWindow(QMainWindow):
             self.stacked_layout.addWidget(i7b)
             funalt = self.create_mec_select("When shall we update the functions?",("When the functions are quiescent",),"funalt")
         elif self.choices["static"] == 2: #thread loop
-            funalt = self.create_mec_select("When shall we update the functions?",("When a static point is reached","When the functions are quiescent"),"funalt")
+            funalt = self.create_mec_select("When shall we update the functions?",("When the functions are quiescent","When a static point is reached"),"funalt")
         else:
             funalt = self.create_mec_select("When shall we update the functions?",("When the functions are quiescent",),"funalt")
         i8 = self.create_info("We can modify the apply method of the update, then send it to the manager.",action=self.funcomplete)
@@ -245,7 +357,7 @@ class MainWindow(QMainWindow):
         return quit_widget
 
     def create_launch(self):
-        text_label= QLabel("It is now time to launch the application\nPlease enter paths fo the folders to serve (separated by spaces)")
+        text_label= QLabel("It is now time to launch the application\nPlease enter paths fo the folders to serve\n(absolute paths separated by spaces)")
         text_label.setWordWrap(True)
         paths_field = QLineEdit()
         launch_button = QPushButton("Launch")
@@ -264,11 +376,22 @@ class MainWindow(QMainWindow):
         return launch_widget
 
         
-app = QApplication(sys.argv)
 
-mec = MainWindow()
-mec.show()
-mec.raise_()
+if __name__ == "__main__":
+    #Get path to interactive folder
+    interactiveFolder = os.path.dirname(os.path.abspath(sys.argv[0]))
+    #Create the tmp directory and copy files
+    tstpath = tempfile.mkdtemp()
+    shutil.copy(os.path.join(interactiveFolder,"application.py"),tstpath)
+    shutil.copy(os.path.join(interactiveFolder,"update.py"),tstpath)
+    #Reference file
+    shutil.copy(os.path.join(interactiveFolder,"application.py"),os.path.join(tstpath,"appref.py"))
+    shutil.copy(os.path.join(interactiveFolder,"update.py"),os.path.join(tstpath,"upref.py"))
 
-app.exec_()
+    app = QApplication(sys.argv)
+    mec = MainWindow()
+    mec.show()
+    mec.raise_()
+
+    app.exec_()
 
