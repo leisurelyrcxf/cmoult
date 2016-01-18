@@ -9,5 +9,6 @@ And YOU chose the strategy to use! Should the manager be added when
 starting the application or later? Should we use safe redefinition or
 thread rebooting? The choice is yours!
 
-Run interactive.sh and see the application run!
+Run interactive.py and see the application run!
+(This example requires PyQt4 and Python 3)
 
