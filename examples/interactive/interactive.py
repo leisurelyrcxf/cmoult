@@ -7,6 +7,7 @@ import sys
 import os
 import shutil
 import tempfile
+import subprocess
 from PyQt4.QtGui import *
 
 tstpath = ""
@@ -55,6 +56,7 @@ class TextView(QDialog):
         self.main_layout.addWidget(self.text_edit)
         self.main_layout.addWidget(self.ok_button)
         self.setLayout(self.main_layout)
+        self.resize(640,640)
     
 
 def updateFiles(choices):
@@ -106,6 +108,7 @@ def updateFiles(choices):
     #type and access
     if choices["access"] == 1:
         #eager access
+        upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.lowlevel.data_update import updateToClass")
         upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.lowlevel.data_access import startEagerUpdate")
         if choices["type"] == 1:
             #redefine
@@ -118,6 +121,7 @@ def updateFiles(choices):
             upd = upd.replace("#Updating the Pictures","#Updating the Pictures\n        startEagerUpdate(main.Picture,pic_upd)")
     elif choices["access"] == 2:
         #lazy access
+        upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.lowlevel.data_update import updateToClass")
         upd = upd.replace("import tempfile","import tempfile\nfrom pymoult.lowlevel.data_access import startLazyUpdate")
         if choices["type"] == 1:
             #redefine
@@ -178,6 +182,8 @@ def updateFiles(choices):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.subprocess = None
+        self.paths_field = None
         self.setWindowTitle("Chose your own strategy update")
         self.choices = {"manager":0,"static":0,"picskel":0,"type":0,"access":0,"funskel":0,"funalt":0,"funapp":0}
         self.current_layout = 0
@@ -188,7 +194,7 @@ class MainWindow(QMainWindow):
         staticpoint = self.create_mec_select("Do we put static update points?",("Put a point in main's loop","Put a point in threads loop","Do not pout static update points"),"static")
         i2 = self.create_info("We are now ready to start the application.")
         launch = self.create_launch()
-        i3 = self.create_info("It is now time to launch the client",back=False)
+        i3 = self.create_info("You can now launch the client",back=False)
         #Update picture type
         i4 = self.create_info("Ready for a dynamic update?\nLet's take a look at the code.",action=self.checkman)
         i5 = self.create_info("Let's update the Picture class\nBecause the new version of Picture is backward compatible, we don't have to mind alterability\n\nLet's look at the skeleton of our update",action=self.genview(os.path.join(tstpath,"update.py")))
@@ -263,17 +269,19 @@ class MainWindow(QMainWindow):
     def funcomplete(self):
         self.choices["funapp"] = 1
         self.genview(os.path.join(tstpath,"update.py"))()
-        self.next()
 
     def update(self):
-        print("update!")
+        os.system('echo "set loglevel 2" | netcat localhost 4242')
+        os.system('echo "update update.py" | netcat localhost 4242')
         self.next()
         
     def back(self):
-        if self.current_layout > 5:
+        if self.current_layout > 6:
             self.current_layout -= 1
-        elif self.current_layout < 5 and self.current_layout > 0:
-            self.current_layout -= 1 
+        elif self.current_layout < 6 and self.current_layout > 0:
+            self.current_layout -= 1
+            if self.paths_field:
+                self.paths_field.setText("")
         self.stacked_layout.setCurrentIndex(self.current_layout)
 
     def next(self):
@@ -281,6 +289,8 @@ class MainWindow(QMainWindow):
         self.stacked_layout.setCurrentIndex(self.current_layout)
 
     def quit(self):
+        if self.subprocess:
+            self.subprocess.kill()
         self.close()
         
     def mec_select_action(self,radio_buttons,key):
@@ -293,12 +303,18 @@ class MainWindow(QMainWindow):
                 self.genview(os.path.join(tstpath,"update.py"))()
         return action
 
-    def launch(self,paths_field):
-        def action():
-            print(paths_field.text())
-            self.next()
-        return action
+    def launch(self):
+        args = self.paths_field.text().strip()
+        argl = args.split("\n")
+        self.subprocess = subprocess.Popen(["python-dsu3",os.path.join(tstpath,"application.py")]+argl)
+        self.next()
 
+
+    def select_folder(self):
+        t = self.paths_field.text()
+        folder = QFileDialog.getExistingDirectory()
+        self.paths_field.setText(t+"\n"+folder)
+        
     def create_mec_select(self,title,options,key):
         radio_buttons = RadioButtonWidget(title,'Select one mechanism',options)
         apply_button = QPushButton("Use this mechanism")
@@ -357,22 +373,26 @@ class MainWindow(QMainWindow):
         return quit_widget
 
     def create_launch(self):
-        text_label= QLabel("It is now time to launch the application\nPlease enter paths fo the folders to serve\n(absolute paths separated by spaces)")
+        text_label= QLabel('It is now time to launch the application\nPlease add folders to serve then click "Lanuch"')
         text_label.setWordWrap(True)
-        paths_field = QLineEdit()
+        self.paths_field = QLabel()
+        self.paths_field.setWordWrap(True)
+        select_dir = QPushButton("Select Folder")
         launch_button = QPushButton("Launch")
         back_button = QPushButton("Back")
         layout = QVBoxLayout()
         layout0 = QHBoxLayout()
         layout0.addWidget(back_button)
+        layout0.addWidget(select_dir)
         layout0.addWidget(launch_button)
         layout.addWidget(text_label)
-        layout.addWidget(paths_field)
+        layout.addWidget(self.paths_field)
         layout.addLayout(layout0)
         launch_widget = QWidget()
         launch_widget.setLayout(layout)
-        launch_button.clicked.connect(self.launch(paths_field))
+        launch_button.clicked.connect(self.launch)
         back_button.clicked.connect(self.back)
+        select_dir.clicked.connect(self.select_folder)
         return launch_widget
 
         
@@ -392,6 +412,6 @@ if __name__ == "__main__":
     mec = MainWindow()
     mec.show()
     mec.raise_()
-
     app.exec_()
-
+    if mec.subprocess:
+        mec.subprocess.kill()
