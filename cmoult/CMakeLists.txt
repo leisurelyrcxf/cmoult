@@ -3,4 +3,6 @@ project(Cmoult)
 
 #Cmoult depends on libuminati
 ADD_SUBDIRECTORY(libuminati)
+#Add Cmoult files
+ADD_SUBDIRECTORY(cmoult)
 
