@@ -14,3 +14,12 @@ The work on Pymoult, Cmoult and other derivatives is funded by the Brittany Regi
 ##LICENCE
 
 Cmoult is published under the GPLv2 license (see LICENSE.txt)
+
+
+##Building
+
+Make a _build directory in the current folder and run cmake from here
+
+`mkdir _build && cd _build && cmake ..`
+
+

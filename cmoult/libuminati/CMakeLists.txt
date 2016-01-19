@@ -10,8 +10,11 @@ file(GLOB_RECURSE source_files src/* include/*)
 include_directories(include)
 
 #We cannot use pkg-config for finding these paths, so we have to guess
-#TODO, find a way to automate this
-include_directories(SYSTEM /usr/include/elfutils)
+EXEC_PROGRAM(${CMAKE_CURRENT_SOURCE_DIR}/finddw ARGS "h" OUTPUT_VARIABLE dwh_path)
+EXEC_PROGRAM(${CMAKE_CURRENT_SOURCE_DIR}/finddw ARGS "l" OUTPUT_VARIABLE dwl_path)
+
+include_directories(SYSTEM ${dwh_path})
+link_directories(${dwl_path})
 
 
 #Output binaries into bin
