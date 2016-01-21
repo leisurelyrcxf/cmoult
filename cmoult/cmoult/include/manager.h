@@ -61,22 +61,4 @@ manager * lookup_manager(const char * request);
 void register_manager(manager * man);
 
 
-/* extern manager */
-
-manager * start_extern_manager(char * name, pthread_t * threads, int nthreads);
-
-
-/* threaded manager functions */
-
-
-/* threaded_manager * start_threaded_manager(char * name, dsuthread ** threads, int nthreads); */
-/* threaded_manager * request_threaded_manager(); */
-
-/*non threaded manager functions */
-
-/* manager * start_manager(char * name, dsuthread ** threads, int nthreads); */
-/* void manager_apply_next_update(manager * ntmanager); */
-/* manager * request_manager(); */
-
-
 #endif /* End ifndef MANAGER_H */
