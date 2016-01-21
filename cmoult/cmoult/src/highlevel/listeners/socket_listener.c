@@ -40,8 +40,8 @@ static void * listner_main(void * arg){
   /*Initiate the socket */
   int conn_fd = 0;
   char buff[LISTENER_BUFF_SIZE];
-  char * libpath = NULL;
-  char status;
+  bool status;
+  bool intern = *((bool*)arg);
 
   listener_socket_fd = socket(AF_INET,SOCK_STREAM,0);
   listener_serv_addr.sin_family = AF_INET;
@@ -52,18 +52,14 @@ static void * listner_main(void * arg){
   while(continue_listener){
     conn_fd = accept(listener_socket_fd,(struct sockaddr*)NULL,NULL);
     read(conn_fd,buff,(LISTENER_BUFF_SIZE-1)*sizeof(char));
-    /* We got a command,we extract the library name from it*/
-    extract_library_name(buff,&libpath);
-    /* If the command was invalid, libpath will be NULL */
-    if (libpath != NULL){
-      load_update(libpath);
-    }
+    /* We got a command, parse it*/
+    parse_and_run_command(buff,intern);
     close(conn_fd);
   }
 }
 
-void start_socket_listener(){
-  pthread_create(&listener_thread,NULL,&listner_main,NULL);
+void start_socket_listener(bool intern){
+  pthread_create(&listener_thread,NULL,&listner_main,(void*) &intern);
 }
 
 void stop_socket_listener(){

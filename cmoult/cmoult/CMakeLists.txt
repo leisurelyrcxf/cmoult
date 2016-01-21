@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.4)
 
 project(CmoultLib)
 
-#Add all source files
+#Add all source files (remove extern_manager from it)
 file(GLOB_RECURSE source_files src/* include/*)
+list(REMOVE_ITEM source_files ${CMAKE_CURRENT_SOURCE_DIR}/src/highlevel/managers/extern_manager.c)
 
 #Add includes
 include_directories(include)
@@ -20,7 +21,7 @@ set(LIBRARY_OUTPUT_PATH lib/)
 #Build libcmoult.so
 add_library(cmoult SHARED ${source_files})
 #Cmoult requires libuminati
-target_link_libraries(cmoult uminati config dl)
+target_link_libraries(cmoult uminati config dl pthread)
 
 #Build external manager
 add_executable(
@@ -31,3 +32,5 @@ add_executable(
     src/highlevel/listeners/socket_listener.c
     src/common.c
 )
+
+target_link_libraries(cmoult_manager pthread uminati config dl)

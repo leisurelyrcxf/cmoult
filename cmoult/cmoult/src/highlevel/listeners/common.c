@@ -29,15 +29,15 @@ void extract_library_name(const char* str, char** libpath){
   char * trimedstr;
   int trimedsize;
   strtrim(str,&trimedstr,&trimedsize);
-  int keyword_size = sizeof(UPDATE_KEYWORD)/sizeof(char) -1;
-  if ((strncmp(trimedstr,UPDATE_KEYWORD,keyword_size) == 0) && (trimedsize > keyword_size)){
-    *libpath = (char*) malloc((trimedsize-keyword_size+1)*sizeof(char));
-    strcpy(*libpath,&(trimedstr[keyword_size]));
+  if ((strncmp(trimedstr,UPD_STR,UPD_LEN) == 0) && (trimedsize > UPD_LEN)){
+    *libpath = (char*) malloc((trimedsize-UPD_LEN+1)*sizeof(char));
+    strcpy(*libpath,&(trimedstr[UPD_LEN]));
     free(trimedstr);
   }else{
     *libpath = NULL;
   }
 }
+
 
 void load_update(char* path){
   config_t update;
@@ -91,3 +91,66 @@ void load_update(char* path){
 }
 
 
+void ext_load_update(char* path, int pid){
+
+}
+
+
+/* Parses a command and calls the proper function for running it */
+
+void parse_and_run_command(const char* command, bool intern){
+  char * trimed_command;
+  int command_size;
+  int intarg;
+  char * chararg;
+  char * token;
+  //First, trim the command
+  strtrim(command,&trimed_command,&command_size);
+  //check if it is a "set" command
+  if ((strncmp(trimed_command,SET_STR,SET_LEN) ==0) && (command_size > SET_LEN)){
+    //the command can be "set loglevel <lvl>" or "set logpath <path>"
+    if ((strncmp(trimed_command+SET_LEN,LOGLVL_STR,LOGLVL_LEN) ==0) && (command_size > LOGLVL_LEN)){
+      //We are setting the loglevel
+      intarg = strtol(trimed_command+SET_LEN+LOGLVL_LEN,&token,10);
+      if (token != NULL){
+        set_loglevel((int) intarg);
+        return;
+      }
+    }
+    if ((strncmp(trimed_command+SET_LEN,LOGPATH_STR,LOGPATH_LEN) ==0) && (command_size > LOGPATH_LEN)){
+      chararg = trimed_command+SET_LEN+LOGPATH_LEN;
+      if (strlen(chararg) > 0){
+        set_logpath(chararg);
+        return;
+      }
+    }
+  }
+  //check if it is an update command
+  if ((strncmp(trimed_command,UPD_STR,UPD_LEN)==0) && (command_size > UPD_LEN)){
+    //The command can be either "update <update file>" (internal listner) or "update <pid> <update file>" (external listener)
+    intarg = strtol(trimed_command+UPD_LEN,&token,10);
+    if (token != NULL){
+      //We found a pid
+      chararg = token+1;
+      if (intern){
+        //Load update from inside
+        load_update(chararg);
+      }else{
+        ext_load_update(chararg,intarg);
+      }
+    }else{
+      //We did not find a pid
+      chararg = trimed_command+UPD_LEN;
+      if (intern){
+        //Load update from inside
+        load_update(chararg);
+      }else{
+        //We cannot load update from outside because we didn't find a pid
+        cmoult_log(1,"Error, cannot load update from ouside without a target pid");
+      }
+    }
+    return;
+  }
+  //If we reach here, the command could not be parsed
+  cmoult_log(1,"Error, could not parse command <<%s>>",trimed_command);
+}

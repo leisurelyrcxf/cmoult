@@ -17,11 +17,12 @@
 
 /*
 
-Threaded Manager.
+External Manager.
 
  */
 
 #include "manager.h"
+#include "listener.h"
 #include <stdio.h>
 
 
@@ -75,12 +76,10 @@ static void * manager_main(void * arg){
 }
 
 
-manager * start_extern_manager(char * name, pthread_t * threads, int nthreads){
+manager * start_extern_manager(char * name){
   manager * man = malloc(sizeof(manager));
   man->alive = 1;
   man->name = name;
-  man->threads = threads;
-  man->nthreads = nthreads;
   man->updates = (char**) malloc(MIN_ARRAY_SIZE*sizeof(size_t));
   man->front_update = 0;
   man->nupdate = 0;
@@ -92,9 +91,11 @@ manager * start_extern_manager(char * name, pthread_t * threads, int nthreads){
   return man;
 }
 
-
-
-
+void main(int argc,char** argv){
+  pthread_t manager_thread;
+  start_extern_manager("manager");
+  start_socket_listener(false);
+}
 
 
 
