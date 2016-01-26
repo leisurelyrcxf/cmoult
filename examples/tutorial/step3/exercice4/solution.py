@@ -10,7 +10,7 @@ import time
 main = sys.modules["__main__"]
 
 def hello_v2():
-    print("hello James")
+    print("hello Dave")
 
 def new_main():
     while True:

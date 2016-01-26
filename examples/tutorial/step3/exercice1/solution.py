@@ -9,7 +9,7 @@ import sys
 main = sys.modules["__main__"]
 
 def hello_v2():
-    print("Hello James")
+    print("Hello Dave")
 
 
 class CustomUpdate(Update):
