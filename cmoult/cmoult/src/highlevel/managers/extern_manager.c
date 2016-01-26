@@ -25,7 +25,6 @@ External Manager.
 #include "listener.h"
 #include <stdio.h>
 
-
 static void * manager_main(void * arg){
   manager * self = (manager*) arg;
   //Current update
