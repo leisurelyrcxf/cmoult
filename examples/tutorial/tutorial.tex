@@ -1,5 +1,5 @@
 \documentclass{article}
-\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage[a4paper, total={7in, 9in}]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{tikz}
@@ -78,7 +78,7 @@ application.
 Open the \texttt{application.py}, this application calls
 \texttt{tic} then \texttt{tac} each second. Note that the
 application starts a manager before calling its main function. You can
-use that manager when updating by calling
+use that manager when updating by calling \\
 \texttt{main.manager.add\_update(<update>)} where \texttt{main}
 is the module captured by \texttt{sys.modules["\_\_main\_\_"]}.
 
@@ -116,14 +116,42 @@ found in the \texttt{step2} folder.
 
 \subsection{Exercise 1 : Back to updating Data}
 
+This exercise uses the same \texttt{Data} class as last exercise. The
+application maintains a list of \texttt{Data} following the principle
+of the Fibonacci sequence : the new element of the list is the sum of
+the two last elements of the list.
 
+As in the previous exercise, origin is added to the \texttt{Data}
+class, which requires modifying the \texttt{sum} function. Open
+\texttt{update.py} and use the update classes of the High-level API of
+Pymoult to update \texttt{Data}  and \texttt{sum}.
 
-
-
-
+Notice that in \texttt{Data\_v2}, the \textit{origin} argument of the
+constructor is optional. This is because \texttt{Data} and
+\texttt{sum} are updated separately : the old version of \texttt{sum}
+may create an instance of \texttt{Data\_v2} without supplying the
+\textit{origin} argument.
 
 \subsection{Exercise 2 : Series of integer}
 
+This application generates ten thousand integers then creates a serie
+of 5 randomly picked integers every two seconds.
+
+Write an update that applies two modifications to the application :
+
+\begin{enumerate}
+
+\item Update the \texttt{Integer} class so that all integers are multiplied by 2.
+
+\item Redefine the \texttt{\_\_str\_\_} method of \texttt{Serie} so that
+  it shuffles the integers before returning its content.
+
+\end{enumerate}
+
+Since there are a lot of integers in the application, use the Lazy
+strategy for updating them.
+
+Hint : you can shuffle a list by calling \texttt{random.shuffle(<list>)}.
 
 \section{Step 3 : Developing custom update classes}
 
