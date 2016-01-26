@@ -1,0 +1,207 @@
+\documentclass{article}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    colorlinks,
+    linkcolor={black!70},
+    citecolor={black!70},
+    urlcolor={blue!60!black}
+}
+\usetikzlibrary{
+  calc,arrows,automata,backgrounds,decorations,decorations.pathreplacing,decorations.markings,decorations.pathmorphing,fit,matrix,decorations.text,
+  positioning,shapes,shapes.geometric,shapes.symbols}%
+\usepackage{pgfuml} 
+
+\begin{document}
+\title{Pymoult Tutorial}
+\date{}
+\maketitle
+
+\section{Prerequisites}
+
+This tutorial requires a working installation of Pymoult. You can
+follow the instructions
+\href{https://bitbucket.org/smartinezgd/pymoult/wiki/Home}{here} to
+install it.
+
+Or you can download a \href{https://bitbucket.org/smartinezgd/pymoult/wiki/Virtual\%20Machine}{Virtual Machine} with Pymoult pre-installed and
+ready to use. If chose this option, make sure Pymoult is up to date
+following the instructions on the VM's page.  
+
+\section{The Tutorial}
+
+For each exercise, you can find the solution in a solution.py file. It
+provides an answer to the exercise. Keep in mind that there can be
+more than one way to apply the updates.  To execute the solution, run
+\texttt{./test.sh solution} in the proper directory.  The
+documentation of Pymoult can be found here and examples of use of
+mechanisms can be found in \texttt{pymoult/examples/tests/}
+
+\section{Step 1 : Using the High-level API}
+
+The first step of our tutorial will show how to use the predefined
+updates classes provided by the High-level API of Pymoult. The
+following exercises can be found in the \texttt{step1} folder. 
+
+\subsection{Exercise 1 : Hello World}
+
+Our first update will update a small \textit{hello world}
+program. Look at the application code : a loop calls the
+\texttt{hello} function every 2 seconds.
+
+Now, open the \texttt{update.py} file. See how it begins with
+\texttt{\#parsed}. This keyword tells Pymoult that this is an update
+file. Notice also how a manager is started during the update.  
+
+Complete the \texttt{update.py} file by defining a
+\texttt{hello\_v2} function that prints \textit{hello <your
+  name>}. Then create an update object using the
+\texttt{SafeRedefineUpdate} class from
+\texttt{pymoult.highlevel.updates} and send to the manager by adding
+\texttt{manager.add\_update(<name of your update object>)}. 
+
+When you think your update is ready, run \texttt{./test.sh} and look
+at the result.
+
+
+\subsection{Exercise 2 : Tic toc, goes the clock}
+
+In this exercise, use what you learned in the previous exercise to
+update the functions \texttt{tic} and \texttt{tac} of the
+application.
+
+Open the \texttt{application.py}, this application calls
+\texttt{tic} then \texttt{tac} each second. Note that the
+application starts a manager before calling its main function. You can
+use that manager when updating by calling
+\texttt{main.manager.add\_update(<update>)} where \texttt{main}
+is the module captured by \texttt{sys.modules["\_\_main\_\_"]}.
+
+Now, create an \texttt{update.py} file (you can copy the update file
+from previous example) and create two functions \texttt{tic\_v2} and
+\texttt{tac\_v2}. Then using two instances of
+\texttt{SafeRedefineUpdate}, update \texttt{tic} and
+\texttt{tac} to \texttt{tic\_v2} and \texttt{tac\_v2}.
+
+Run \texttt{./test.sh} when your update is ready
+
+\subsection{Exercice 3 : Updating Data}
+
+In this exercise, you will use an instance of
+\texttt{EagerConversionUpdate} to update the class \texttt{Data} of
+the application.
+
+Create an \texttt{update.py} file and write a new version of the
+\texttt{Data} class where it has an \textit{origin} attribute. When an
+instance of \texttt{Data\_v2} is printed, it should display
+\textit{<value> from <origin>}.
+
+Then, write a \texttt{tranformer(data)} function that takes an
+instance of \texttt{Data} (old version) and adds a \textit{origin}
+attribute to it so that it becomes compatible with
+\texttt{Data\_v2}. After that, you can create an instance of
+\texttt{EagerConversionUpdate} and send it to the manager to update
+\texttt{Data}.
+
+\section{Step 2 : Combining update classes} 
+
+The second step of our tutorial shows how to combine predefined update
+classes to design more complex updates. The following exercises can be
+found in the \texttt{step2} folder.
+
+\subsection{Exercise 1 : Back to updating Data}
+
+
+
+
+
+
+
+\subsection{Exercise 2 : Series of integer}
+
+
+\section{Step 3 : Developing custom update classes}
+
+The third step of our tutorial shows how to develop custom update
+classes by combining mechanisms from the Low-level API of Pymoult. The
+following exercises can be found in the \texttt{step3} folder.
+
+\subsection{Exercice 1 : Hello again}
+
+\subsection{Exercice 2 : The return of the Data update}
+
+\subsection{Exercice 3 : The clock never stops ticking}
+
+\subsection{Exercice 4 : Rebooting threads}
+
+
+\section{Step 4 : Complex updates}
+
+In the last step of our tutorial, you will use everything you learned
+in the previous steps to develop complex updates. The
+following exercises can be found in the \texttt{step4} folder.
+
+\subsection{Exercice 1 : Simultaneous update}
+
+In this application, a shared variable is read and written by two
+functions (\texttt{write\_shared} and \texttt{read\_shared}). We want
+to update the application so that the variable stores the time when it
+was written. This requires the two functions to be updates at the same
+time. Indeed, if the \texttt{write\_shared} write the variable in the
+new format, the old version of \texttt{read\_shared} would crash when
+reading it.
+
+In this example, we will use the same strategy as in DynamOS (Dynamic
+and Adaptive Updates of Non-Quiescent Subsystems in Commodity
+Operating System Kernels, Eurosys 2007) : In a first phase, we well
+redefine \texttt{write\_shared} and \texttt{read\_shared} to
+intermediate functions that can call both old and new versions:
+
+\begin{verbatim}
+def interm_write():
+    if update:
+        <code of write_shared_v2>
+    else:
+        <code of write_shared>
+\end{verbatim}
+ 
+When both \texttt{write\_shared} and \texttt{read\_shared} are
+replaced by their intermediate version, the global variable
+\texttt{update} is set to true. The application will be behave as if
+it where in its new version. Both functions can, then, be redefined to
+\texttt{write\_shared\_v2} and \texttt{read\_shared\_v2}.
+
+
+\subsection{Exercice 2 : Web Server}
+
+The application here is a web server serving small predefined pages on
+localhost:8080. After running \texttt{./test.sh}, you can go to
+\url{http://localhost:8080/hello}, \url{http://localhost:8080/banana},
+\url{http://localhost:8080/coconut}. For this example, the update will
+not be summoned until you press a key.
+
+The application uses the \texttt{server} python library (embedded by
+the Python interpreter). Before updating, familiarize yourself with
+the code of the application.
+
+The update will add authentication to the server. It will require
+users to log in and customize the messages in the served pages to the
+user currently logged in. All the necessary code for this can be found
+in the \texttt{update.py} file.
+
+To apply this update, we advise that you proceed in two steps. As a
+first step, update the \texttt{Page} and the \texttt{Session}
+classes. Then, update the \texttt{Webserver} class and redefine the
+\texttt{do\_GET} method of the Handler class. You will need to generate
+the new version with the \texttt{create\_new\_do\_GET} function in
+\texttt{update.py}.
+
+Hint : You may use a static update point to indicate the alterability
+of the web server.
+
+\end{document}
