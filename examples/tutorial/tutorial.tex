@@ -35,23 +35,25 @@ following the instructions on the VM's page.
 
 \section{The Tutorial}
 
-For each exercise, you can find the solution in a solution.py file. It
-provides an answer to the exercise. Keep in mind that there can be
-more than one way to apply the updates.  To execute the solution, run
-\texttt{./test.sh solution} in the proper directory.  The
-documentation of Pymoult can be found here and examples of use of
-mechanisms can be found in \texttt{pymoult/examples/tests/}
+For each exercise, you can find the solution in a \texttt{solution.py}
+file. It provides an answer to the exercise. Keep in mind that there
+can be more than one way to apply the updates.  To execute the
+solution, run \texttt{./test.sh solution} in the proper directory.
+The documentation of Pymoult can be found
+\href{https://bitbucket.org/smartinezgd/pymoult/wiki/Pymoult\%20manual}{here}
+and examples of use of mechanisms can be found in the directory
+\texttt{pymoult/examples/tests}.
 
-\section{Step 1 : Using the High-level API}
+\section{Step 1: Using the High-level API}
 
 The first step of our tutorial will show how to use the predefined
-updates classes provided by the High-level API of Pymoult. The
+updates classes provided by the high-level API of Pymoult. The
 following exercises can be found in the \texttt{step1} folder. 
 
-\subsection{Exercise 1 : Hello World}
+\subsection{Exercise 1: Hello World}
 
 Our first update will update a small \textit{hello world}
-program. Look at the application code : a loop calls the
+program. Look at the application code: a loop calls the
 \texttt{hello} function every 2 seconds.
 
 Now, open the \texttt{update.py} file. See how it begins with
@@ -69,7 +71,7 @@ When you think your update is ready, run \texttt{./test.sh} and look
 at the result.
 
 
-\subsection{Exercise 2 : Tic toc, goes the clock}
+\subsection{Exercise 2: Tic toc, goes the clock}
 
 In this exercise, use what you learned in the previous exercise to
 update the functions \texttt{tic} and \texttt{tac} of the
@@ -90,7 +92,7 @@ from previous example) and create two functions \texttt{tic\_v2} and
 
 Run \texttt{./test.sh} when your update is ready
 
-\subsection{Exercice 3 : Updating Data}
+\subsection{Exercice 3: Updating Data}
 
 In this exercise, you will use an instance of
 \texttt{EagerConversionUpdate} to update the class \texttt{Data} of
@@ -108,17 +110,17 @@ attribute to it so that it becomes compatible with
 \texttt{EagerConversionUpdate} and send it to the manager to update
 \texttt{Data}.
 
-\section{Step 2 : Combining update classes} 
+\section{Step 2: Combining update classes} 
 
 The second step of our tutorial shows how to combine predefined update
 classes to design more complex updates. The following exercises can be
 found in the \texttt{step2} folder.
 
-\subsection{Exercise 1 : Back to updating Data}
+\subsection{Exercise 1: Back to updating Data}
 
 This exercise uses the same \texttt{Data} class as last exercise. The
 application maintains a list of \texttt{Data} following the principle
-of the Fibonacci sequence : the new element of the list is the sum of
+of the Fibonacci sequence: the new element of the list is the sum of
 the two last elements of the list.
 
 As in the previous exercise, origin is added to the \texttt{Data}
@@ -128,16 +130,16 @@ Pymoult to update \texttt{Data}  and \texttt{sum}.
 
 Notice that in \texttt{Data\_v2}, the \textit{origin} argument of the
 constructor is optional. This is because \texttt{Data} and
-\texttt{sum} are updated separately : the old version of \texttt{sum}
+\texttt{sum} are updated separately: the old version of \texttt{sum}
 may create an instance of \texttt{Data\_v2} without supplying the
 \textit{origin} argument.
 
-\subsection{Exercise 2 : Series of integer}
+\subsection{Exercise 2: Series of integer}
 
 This application generates ten thousand integers then creates a serie
 of 5 randomly picked integers every two seconds.
 
-Write an update that applies two modifications to the application :
+Write an update that applies two modifications to the application:
 
 \begin{enumerate}
 
@@ -151,30 +153,30 @@ Write an update that applies two modifications to the application :
 Since there are a lot of integers in the application, use the Lazy
 strategy for updating them.
 
-Hint : you can shuffle a list by calling \texttt{random.shuffle(<list>)}.
+Hint: you can shuffle a list by calling \texttt{random.shuffle(<list>)}.
 
-\section{Step 3 : Developing custom update classes}
+\section{Step 3: Developing custom update classes}
 
 The third step of our tutorial shows how to develop custom update
 classes by combining mechanisms from the Low-level API of Pymoult. The
 following exercises can be found in the \texttt{step3} folder.
 
-\subsection{Exercice 1 : Hello again}
+\subsection{Exercice 1: Hello again}
 
-\subsection{Exercice 2 : The return of the Data update}
+\subsection{Exercice 2: The return of the Data update}
 
-\subsection{Exercice 3 : The clock never stops ticking}
+\subsection{Exercice 3: The clock never stops ticking}
 
-\subsection{Exercice 4 : Rebooting threads}
+\subsection{Exercice 4: Rebooting threads}
 
 
-\section{Step 4 : Complex updates}
+\section{Step 4: Complex updates}
 
 In the last step of our tutorial, you will use everything you learned
 in the previous steps to develop complex updates. The
 following exercises can be found in the \texttt{step4} folder.
 
-\subsection{Exercice 1 : Simultaneous update}
+\subsection{Exercice 1: Simultaneous update}
 
 In this application, a shared variable is read and written by two
 functions (\texttt{write\_shared} and \texttt{read\_shared}). We want
@@ -186,7 +188,7 @@ reading it.
 
 In this example, we will use the same strategy as in DynamOS (Dynamic
 and Adaptive Updates of Non-Quiescent Subsystems in Commodity
-Operating System Kernels, Eurosys 2007) : In a first phase, we well
+Operating System Kernels, Eurosys 2007): In a first phase, we well
 redefine \texttt{write\_shared} and \texttt{read\_shared} to
 intermediate functions that can call both old and new versions:
 
@@ -205,7 +207,7 @@ it where in its new version. Both functions can, then, be redefined to
 \texttt{write\_shared\_v2} and \texttt{read\_shared\_v2}.
 
 
-\subsection{Exercice 2 : Web Server}
+\subsection{Exercice 2: Web Server}
 
 The application here is a web server serving small predefined pages on
 localhost:8080. After running \texttt{./test.sh}, you can go to
@@ -229,7 +231,7 @@ classes. Then, update the \texttt{Webserver} class and redefine the
 the new version with the \texttt{create\_new\_do\_GET} function in
 \texttt{update.py}.
 
-Hint : You may use a static update point to indicate the alterability
+Hint: You may use a static update point to indicate the alterability
 of the web server.
 
 \end{document}
