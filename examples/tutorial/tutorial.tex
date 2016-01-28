@@ -163,11 +163,90 @@ following exercises can be found in the \texttt{step3} folder.
 
 \subsection{Exercice 1: Hello again}
 
+Here, you will solve the first exercise of the first step again, but
+by defining your own update Class. 
+
+Open the \texttt{update.py} file. You need to complete the code of the
+\texttt{CustomUpdate} by filling up its methods:
+
+\begin{itemize}
+\item \texttt{wait\_alterability} must return \textit{True} when
+  \texttt{hello} is quiescent
+
+\item \texttt{resume\_hook} is called when resuming the program
+
+\item \texttt{apply} must redefine \texttt{hello} to its new version
+
+\end{itemize}
+
+Then, create an instance of \texttt{CustomUpdate} and send it manager.
+
+
 \subsection{Exercice 2: The return of the Data update}
+
+Remember the first exercise of step 2? The new version of the
+\texttt{Data} had to define a default value for the \textit{origin}
+attribute because the two parts of the update where independent. In
+this exercise, you will write a custom update that will redefine
+\texttt{sum} and update \texttt{Data} in a single go.
+
+To update \texttt{Data}, you can use the following mechanisms from the
+low-level API:
+
+\begin{itemize}
+\item \texttt{DataAccessor(class,"immediate")}, creates an iterator
+  over all instances of \textit{class} that exist when the data
+  accessor is created.
+
+\item \texttt{redefineClass(module,class,class_v2)}, redefines
+  \textit{class} from \textit{module} to \textit{class\_v2}.
+
+\item \texttt{updateToClass(obj,class,class\_v2,transformer)}, updates
+  \textit{obj} of class \textit{class} to \textit{class\_v2} and
+  applies \textit{transformer}.
+
+\end{itemize}
 
 \subsection{Exercice 3: The clock never stops ticking}
 
+In the second exercise of the first step, you used safe redefinition
+to update functions \texttt{tic} and \texttt{tac}. While this works,
+it does not guarantee that the update won't happen between calls to
+\texttt{tic} and \texttt{tac}.
+
+Open the \texttt{application.py} file and notice the static update
+point placed at beginning of \texttt{main}'s loop. You will use it as
+alterability criteria to ensure that the following trace is not possible:
+
+\textit{tic,tac,tic,tac2,tic2,...}
+
+
+Notice that the \texttt{main} function is called in a
+\texttt{DSU\_Thread}. This Pymoult specific Thread is an extension of
+the \texttt{threading.Thread} class of Python. It is required for
+using static points.
+
+
+To use the static point as alterability criteria, you will need to
+call \texttt{setupWaitStaticPoints} during the first setup step of the
+update (method \texttt{preupdate\_setup} and
+gg\texttt{cleanFailedStaticPoints} in the
+\texttt{clean\_failed\_alterability}.
+
 \subsection{Exercice 4: Rebooting threads}
+
+Let's take the \textit{Hello world} example and use a different method
+to update it. In this exercise, you will use Thread rebooting.
+
+Place a static update point in the code of the application and write
+an update that reboots \texttt{thread} to update the \texttt{hello}
+function.
+ 
+\begin{itemize}
+\item \texttt{switchMain(thread,new\_main)} changes the main function of DSU\_Thread thread to new\_main.
+\item \texttt{resetThread(thread)} reboots thread (it must be a DSU\_Thread)  
+
+\end{itemize}
 
 
 \section{Step 4: Complex updates}
