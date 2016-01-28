@@ -52,11 +52,7 @@ browsing.
 
 ##Virtual Machine
 
-Virtaul Machines preconfigured with pypy-dsu and Pymoult.
-
-[Debian VM for Pymoult v3](https://partage.mines-telecom.fr/public.php?service=files&t=29660336d08df1374ee9ade5d2afede9&download) (Remember to update the installation of Pymoult before using it)
-
-[Archlinux VM for Pymoult v2](https://partage.mines-telecom.fr/public.php?service=files&t=0ba628d67cf115064c39914f0b57dd08&download)
+A Virtual Machine preconfigured with Python-dsu and Pymoult is available on the [VM page](Virtual Machine).
 
 ##Older version : using Pypy-dsu
 
@@ -90,8 +86,4 @@ To use the latest version of Pymoult, you need to install pypy-dsu-2.4-2.
 
 5. Export your new PYTHONPATH
 	
-	$> export PYTHONPATH=$PYTHONPATH:<your_prefix>/site-packages	 
-
-
-
-
+	$> export PYTHONPATH=$PYTHONPATH:<your_prefix>/site-packages
