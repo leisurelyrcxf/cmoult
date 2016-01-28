@@ -52,7 +52,7 @@ browsing.
 
 ##Virtual Machine
 
-A Virtual Machine preconfigured with Python-dsu and Pymoult is available on the [VM page](Virtual Machine).
+A Virtual Machine preconfigured with Python-dsu and Pymoult is available on the [VM page](https://bitbucket.org/smartinezgd/pymoult/wiki/Virtual%20Machine).
 
 ##Older version : using Pypy-dsu
 
