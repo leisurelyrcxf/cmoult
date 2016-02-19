@@ -77,14 +77,11 @@ static void * manager_main(void * arg){
 
 manager * start_extern_manager(char * name){
   manager * man = malloc(sizeof(manager));
-  man->alive = 1;
+  man->alive = true;
   man->name = name;
-  man->updates = (char**) malloc(MIN_ARRAY_SIZE*sizeof(size_t));
-  man->front_update = 0;
-  man->nupdate = 0;
-  man->update_array_size = MIN_ARRAY_SIZE;
   man->state = not_updating;
   man->tried = 0;
+  init_update_queue(man);
   register_manager(man);
   pthread_create(&(man->thread),NULL,&manager_main,(void*) man);
   return man;

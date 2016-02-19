@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
+#include <sys/queue.h>
 #include <dlfcn.h>
 #include "common.h"
 #include "update.h"
@@ -16,6 +17,14 @@
 
 
 /*Common*/
+
+/* Update queue of managers */
+
+typedef STAILQ_HEAD(queuehead,update_q) update_queue_t; 
+struct update_q {
+  char * update;
+  STAILQ_ENTRY(update_q) updates;
+};
 
 /* state of updates */
 
@@ -32,13 +41,12 @@ typedef struct{
   char * name;
   pthread_t * threads;
   int nthreads;
-  char ** updates;
-  int front_update;
+  update_queue_t* updates;
   int nupdate;
-  int update_array_size;
+  char * current_update;
   update_state state;
   int tried;
-  char alive;
+  bool alive;
   pthread_t thread;
   pthread_mutex_t lock;
 } manager;
@@ -46,6 +54,7 @@ typedef struct{
 
 /* general manager functions */
 
+void init_update_queue(manager * man);
 void manager_add_update(manager * man, char * update);
 void get_next_update(manager * man);
 void postpone_update(manager * man);

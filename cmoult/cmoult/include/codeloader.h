@@ -13,4 +13,3 @@
 void start_code_loader();
 void stop_code_loader();
 pthread_t * access_code_loader();
-void load_code(char * path);
