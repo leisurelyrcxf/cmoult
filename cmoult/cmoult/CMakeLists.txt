@@ -31,6 +31,7 @@ add_executable(
     src/highlevel/listeners/common.c
     src/highlevel/listeners/socket_listener.c
     src/common.c
+    src/highlevel/updates/update.c
 )
 
 target_link_libraries(cmoult_manager pthread uminati config dl)

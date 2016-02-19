@@ -27,6 +27,6 @@ set(LIBRARY_OUTPUT_PATH lib/)
 add_library(uminati SHARED ${source_files})
 
 #Libuminati requires libdw
-target_link_libraries(uminati dw)
+target_link_libraries(uminati dw bfd iberty)
 
 
