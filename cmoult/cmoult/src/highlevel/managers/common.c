@@ -1,4 +1,5 @@
 #include "manager.h"
+#include <stdio.h>
 
 
 /* Managers storage */
@@ -9,53 +10,39 @@ int nmanagers = 0;
 int managers_size = 0;
 pthread_mutex_t register_lock;
 
-
-/* Update queue handling */
-
-static void queue_push(char *** queue, char * item, int * size, int * nitem, int * front){
-  //Detect if the queue is full. It is full if the front is at 0 and back is at size - 1
-  //It is also full if back is at front -1
-  int f = (*front);
-  int n = (*nitem);
-  int s = (*size);
-  if (n == s-1){
-    s*=2;
-    if (f == 0){
-      (*queue) = (char**) realloc((*queue),s*sizeof(size_t));
-    }else{
-      //Bad luck! We have to flatten the queue
-      char ** tmp = (char**) malloc(s*sizeof(size_t));
-      int j = f;
-      for(int i=0;i<(n+1);i++){
-        tmp[i] = (*queue)[((j+i) % (n+1))];
-      }
-      (*front) = 0;
-      free(*queue);
-      (*queue) = tmp;      
-    }
-    (*size) = s;
-  }
-  (*queue)[((f+n) % s)] = item;
-  n++;
-  (*nitem) = n;
+//man queue for manual
+void init_update_queue(manager * man){
+  pthread_mutex_lock(MAN_LOCK(man));
+  struct queuehead * headp;
+  update_queue_t head = STAILQ_HEAD_INITIALIZER(head);
+  STAILQ_INIT(&head);
+  man->updates = &head;
+  man->nupdate = 0;
+  man->current_update = NULL;
+  pthread_mutex_unlock(MAN_LOCK(man));
 }
 
-static char * queue_pop(char ** queue, int * front, int * nitem, const int size){
-  char * item = queue[(*front)];
-  (*front) = ((*front) +1) % size;
-  (*nitem) = (*nitem) -1;
-  return item;
+static void push_update(manager * man, char * update){
+  struct update_q * u = malloc(sizeof(struct update_q));
+  u->update = update;
+  man->nupdate++;
+  STAILQ_INSERT_TAIL(man->updates,u,updates);
 }
 
 static void pop_update(manager * man){
-  char * module = queue_pop(man->updates,&(man->front_update),&(man->nupdate),man->update_array_size);
-  free(module);
+  struct update_q * u;
+  char * update;
+  u = STAILQ_FIRST(man->updates);
+  //Segfaults here
+  printf("%s\n",u->update);
+  man->current_update = u->update;
+  STAILQ_REMOVE_HEAD(man->updates,updates);
+  man->nupdate--;
 }
 
 void postpone_update(manager * man){
   pthread_mutex_lock(MAN_LOCK(man));
-  char * update = queue_pop(man->updates,&(man->front_update),&(man->nupdate),man->update_array_size);
-  queue_push(&(man->updates),update,&(man->update_array_size),&(man->nupdate),&(man->front_update));
+  push_update(man,man->current_update);
   man->state = not_updating;
   pthread_mutex_unlock(MAN_LOCK(man));
 }
@@ -63,7 +50,8 @@ void postpone_update(manager * man){
 void abort_update(manager *man){
   pthread_mutex_lock(MAN_LOCK(man));
   man->state = not_updating;
-  pop_update(man);
+  free(man->current_update);
+  man->current_update = NULL;
   pthread_mutex_unlock(MAN_LOCK(man));
 }
 
@@ -71,13 +59,14 @@ void finish_update(manager* man){
   /* TODO : log the update */
   pthread_mutex_lock(MAN_LOCK(man));
   man->state = not_updating;
-  pop_update(man);
+  free(man->current_update);
+  man->current_update = NULL;
   pthread_mutex_unlock(MAN_LOCK(man));
 }
 
 void manager_add_update(manager * man, char * update){
   pthread_mutex_lock(MAN_LOCK(man));
-  queue_push(&(man->updates),update,&(man->update_array_size),&(man->nupdate),&(man->front_update));
+  push_update(man,update);
   pthread_mutex_unlock(MAN_LOCK(man));
 }
 
@@ -102,14 +91,17 @@ static char load_from_module(manager * man, void * handle,const char * symbol, c
 void * load_next_update(manager * man, update_functions * upd, pthread_t ** threads, int * nthreads, int * max_tries, char** name){
   pthread_mutex_lock(MAN_LOCK(man));
   if ((man->state == not_updating) && (man->nupdate > 0)){
-    char * module = man->updates[man->front_update];
+    pop_update(man);
+    char * module = man->current_update;
+    printf("%s\n",module);
     void * handle = dlopen(module,RTLD_LAZY);
+    puts("aa");
     if (handle == NULL){
       //An error happened when loading
       char * error = dlerror();
       cmoult_log(1,"Error when loading script %s : %s. Aborting",module,error);
-      //Remove that script from the list
-      pop_update(man);
+      //Abort the update
+      abort_update(man);
     }else{
       dlerror();
       char ok = 1;

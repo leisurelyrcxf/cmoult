@@ -69,24 +69,3 @@ pthread_t * access_code_loader(){
   return &code_loader;
 }
 
-/* Functions for adding a code to load from the inside */
-
-void load_code(char * path){
-  if (strlen(path) > PATH_SIZE){
-    cmoult_log(1,"Cannot load code from path %s : path string is too long!",path);
-  }else{
-    strcpy(load_path,path);
-    load_switch = 1;
-  }
-
-}
-
-void extern_load_code(char * path, pid_t id){
-  ptrace(PTRACE_ATTACH, id, NULL, NULL);
-  waitpid(id,NULL,0);
-  //write globals for code loading
-
-  ptrace(PTRACE_DETACH, id, NULL, NULL);
-
-
-}

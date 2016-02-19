@@ -39,7 +39,7 @@ void extract_library_name(const char* str, char** libpath){
 }
 
 
-void load_update(char* path){
+void load_update(char* path, int pid){
   config_t update;
   config_setting_t * set;
   config_setting_t * script;
@@ -59,10 +59,15 @@ void load_update(char* path){
     //could not find name of code
     cmoult_log(1,"Warning : Could find code field in update file");
   }else{
-    //Load code. We assume that the update is loaded from inside here
-    //TODO, trigger loading from outside
-    //load_code(code);
+    //Load code. 
     cmoult_log(2,"Loading code : %s\n",code);
+    if (pid == 0){
+      //Load from inside
+      load_code(code);
+    }else{
+      //Load from outside
+      extern_load_code(code,pid);
+    }
   }
   set = config_lookup(&update,"scripts");
   if (set != NULL){
@@ -91,9 +96,6 @@ void load_update(char* path){
 }
 
 
-void ext_load_update(char* path, int pid){
-
-}
 
 
 /* Parses a command and calls the proper function for running it */
@@ -134,16 +136,16 @@ void parse_and_run_command(const char* command, bool intern){
       chararg = token+1;
       if (intern){
         //Load update from inside
-        load_update(chararg);
+        load_update(chararg,0);
       }else{
-        ext_load_update(chararg,intarg);
+        load_update(chararg,intarg);
       }
     }else{
       //We did not find a pid
       chararg = trimed_command+UPD_LEN;
       if (intern){
         //Load update from inside
-        load_update(chararg);
+        load_update(chararg,0);
       }else{
         //We cannot load update from outside because we didn't find a pid
         cmoult_log(1,"Error, cannot load update from ouside without a target pid");
@@ -154,3 +156,19 @@ void parse_and_run_command(const char* command, bool intern){
   //If we reach here, the command could not be parsed
   cmoult_log(1,"Error, could not parse command <<%s>>",trimed_command);
 }
+
+/* Loading code from inside */
+void load_code(const char * path){
+  //Load code by hand
+}
+
+/* Loading code from outside */
+void extern_load_code(const char * path, int id){
+  ptrace(PTRACE_ATTACH, (pid_t) id, NULL, NULL);
+  waitpid((pid_t) id,NULL,0);    
+  
+  //write loadwidth = 1, load_path = path
+  
+  ptrace(PTRACE_DETACH, id, NULL, NULL);
+}
+

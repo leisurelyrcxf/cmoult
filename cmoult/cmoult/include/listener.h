@@ -29,3 +29,5 @@ pthread_t * access_socket_listener();
 
 /*Parsing and running commands*/
 void parse_and_run_command(const char* command, bool intern);
+void load_code(const char* path);
+void extern_load_code(const char* path, int pid);
