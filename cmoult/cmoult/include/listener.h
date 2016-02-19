@@ -12,13 +12,13 @@
 
 //Keywords for commands
 #define SET_STR "set "
-#define SET_LEN 3
+#define SET_LEN 4
 #define LOGLVL_STR "loglevel "
 #define LOGLVL_LEN 8
 #define LOGPATH_STR "logpath "
 #define LOGPATH_LEN 7
 #define UPD_STR "update "
-#define UPD_LEN 6
+#define UPD_LEN 7
 
 /*Socket listener*/
 void start_socket_listener(bool intern);
