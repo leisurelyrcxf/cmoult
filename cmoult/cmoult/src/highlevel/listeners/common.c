@@ -118,7 +118,7 @@ void parse_and_run_command(const char* command, bool intern){
       }
     }
     if ((strncmp(trimed_command+SET_LEN,LOGPATH_STR,LOGPATH_LEN) ==0) && (command_size > LOGPATH_LEN)){
-      chararg = trimed_command+SET_LEN+LOGPATH_LEN;
+      chararg = trimed_command+SET_LEN+LOGPATH_LEN+1;
       if (strlen(chararg) > 0){
         set_logpath(chararg);
         return;
@@ -129,7 +129,7 @@ void parse_and_run_command(const char* command, bool intern){
   if ((strncmp(trimed_command,UPD_STR,UPD_LEN)==0) && (command_size > UPD_LEN)){
     //The command can be either "update <update file>" (internal listner) or "update <pid> <update file>" (external listener)
     intarg = strtol(trimed_command+UPD_LEN,&token,10);
-    if (token != NULL){
+    if (intarg != 0){
       //We found a pid
       chararg = token+1;
       if (intern){

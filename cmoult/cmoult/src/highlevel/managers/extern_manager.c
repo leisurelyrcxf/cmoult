@@ -92,8 +92,11 @@ manager * start_extern_manager(char * name){
 
 void main(int argc,char** argv){
   pthread_t manager_thread;
-  start_extern_manager("manager");
+  manager * man = start_extern_manager("manager");
+  cmoult_log_init();
   start_socket_listener(false);
+  pthread_join(man->thread,NULL);
+  
 }
 
 

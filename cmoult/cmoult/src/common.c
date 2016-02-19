@@ -13,12 +13,20 @@
 int loglevel = 1;
 char * logpath = ".";
 pthread_mutex_t log_lock;
+pthread_mutexattr_t log_attr;
 
+
+void cmoult_log_init(){
+  pthread_mutexattr_init(&log_attr);
+  pthread_mutexattr_settype(&log_attr,PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutex_init(&log_lock,&log_attr);
+}
 
 void cmoult_log(const int level,const char * format, ...){
   struct tm *date;
   char date_str[15];
   va_list args;
+
   pthread_mutex_lock(&log_lock);
 
   if (level <= loglevel){
@@ -64,17 +72,20 @@ void set_logpath(char * path){
     closedir(d);
   }else{
     //Dir could not be opend
-    switch (errno){
-    case EACCES :
-      cmoult_log(1,"Permission denied when accessing %s",path);
-      break;
-    case ENOENT :
-      cmoult_log(1,"Path %s does not exist",path);
-      break;
-    case ENOTDIR :
-      cmoult_log(1,"Path %s does not lead to a directory",path);
-      break;
-    }
+    switch (errno)
+      {
+      case EACCES:
+        cmoult_log(1,"Permission denied when accessing %s",path);
+        break;
+      case ENOENT:
+        cmoult_log(1,"Path %s does not exist",path);
+        break;
+      case ENOTDIR:
+        cmoult_log(1,"Path %s does not lead to a directory",path);
+        break;
+      default:
+        cmoult_log(1,"Unknown error when trying to set log path to %s",path);
+      }
   }
   pthread_mutex_unlock(&log_lock);
 }
