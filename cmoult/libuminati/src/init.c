@@ -20,6 +20,7 @@ int um_init (um_data** dbg, pid_t pid, const char* fname)
     if (!dbg)
         return -1;
     (*dbg) = (um_data*) malloc(sizeof(um_data));
+    memset(*dbg, 0, sizeof(um_data));
     (*dbg)->pid = pid;
     (*dbg)->fname = fname;
 

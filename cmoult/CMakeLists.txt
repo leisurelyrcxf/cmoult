@@ -5,4 +5,6 @@ project(Cmoult)
 ADD_SUBDIRECTORY(libuminati)
 #Add Cmoult files
 ADD_SUBDIRECTORY(cmoult)
+#Add ama test
+ADD_SUBDIRECTORY(libama)
 

@@ -44,6 +44,7 @@ void cmoult_log(const int level,const char * format, ...){
       fprintf(logFile,"[%s]\t",date_str);
       va_start(args,format);
       vfprintf(logFile,format,args);
+      printf(format, args);
       va_end(args);
       fputs("\n",logFile);
       fclose(logFile);

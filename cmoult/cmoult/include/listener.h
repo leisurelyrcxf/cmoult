@@ -8,7 +8,7 @@
 
 #define LISTENER_BUFF_SIZE 1024
 #define LISTENER_PORT 4242
-#define LISTENER_MAX_CONN 10
+#define LISTENER_MAX_CONN 20
 
 //Keywords for commands
 #define SET_STR "set "

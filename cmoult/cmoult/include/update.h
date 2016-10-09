@@ -11,7 +11,7 @@ typedef enum ra {
 
 typedef struct{
   req_ans (*check_requirements)();
-  void (*preupdate_setup)();
+  char (*preupdate_setup)();
   char (*check_alterability)();
   char (*wait_alterability)();
   void (*clean_failed_alterability)();
