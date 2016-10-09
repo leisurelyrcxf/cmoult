@@ -13,36 +13,37 @@ pthread_mutex_t register_lock;
 //man queue for manual
 void init_update_queue(manager * man){
   pthread_mutex_lock(MAN_LOCK(man));
-  struct queuehead * headp;
-  update_queue_t head = STAILQ_HEAD_INITIALIZER(head);
-  STAILQ_INIT(&head);
-  man->updates = &head;
+  update_queue_t* queue = (update_queue_t*)malloc(sizeof(update_queue_t));
+  init_queue(queue);
+  man->updates = queue;
   man->nupdate = 0;
   man->current_update = NULL;
   pthread_mutex_unlock(MAN_LOCK(man));
 }
 
 static void push_update(manager * man, char * update){
-  struct update_q * u = malloc(sizeof(struct update_q));
-  u->update = update;
+  update_queue_element * u = malloc(sizeof(update_queue_element));
+  char* buff = malloc(sizeof(char) * (strlen(update) + 1));
+  strcpy(buff, update);
+  u->update = buff;
   man->nupdate++;
-  STAILQ_INSERT_TAIL(man->updates,u,updates);
+  insert_queue(man->updates,u);
 }
 
 static void pop_update(manager * man){
-  struct update_q * u;
+  update_queue_element * u;
   char * update;
-  u = STAILQ_FIRST(man->updates);
-  //Segfaults here
-  printf("%s\n",u->update);
-  man->current_update = u->update;
-  STAILQ_REMOVE_HEAD(man->updates,updates);
+  u = pop_out_queue(man->updates);
+//  printf("update file \"%s\"\n",u->update);
+  man->current_update = u;
   man->nupdate--;
 }
 
 void postpone_update(manager * man){
   pthread_mutex_lock(MAN_LOCK(man));
-  push_update(man,man->current_update);
+  push_update(man,man->current_update->update);
+  free(man->current_update->update);
+  free(man->current_update);
   man->state = not_updating;
   pthread_mutex_unlock(MAN_LOCK(man));
 }
@@ -50,6 +51,7 @@ void postpone_update(manager * man){
 void abort_update(manager *man){
   pthread_mutex_lock(MAN_LOCK(man));
   man->state = not_updating;
+  free(man->current_update->update);
   free(man->current_update);
   man->current_update = NULL;
   pthread_mutex_unlock(MAN_LOCK(man));
@@ -59,6 +61,7 @@ void finish_update(manager* man){
   /* TODO : log the update */
   pthread_mutex_lock(MAN_LOCK(man));
   man->state = not_updating;
+  free(man->current_update->update);
   free(man->current_update);
   man->current_update = NULL;
   pthread_mutex_unlock(MAN_LOCK(man));
@@ -81,7 +84,7 @@ static char load_from_module(manager * man, void * handle,const char * symbol, c
       cmoult_log(2,"Symbol %s not found in %s, using default value instead",symbol,module);
       (*pointer) = default_value;
     }else{
-      cmoult_log(1,"Error when looking up symbol %s in %s : %s",symbol,module,error);
+      cmoult_log(1,"Error when looking up symbol \"%s\" in \"%s\", error: \"%s\"",symbol,module,error);
       return 0;
     }
   }
@@ -92,10 +95,9 @@ void * load_next_update(manager * man, update_functions * upd, pthread_t ** thre
   pthread_mutex_lock(MAN_LOCK(man));
   if ((man->state == not_updating) && (man->nupdate > 0)){
     pop_update(man);
-    char * module = man->current_update;
-    printf("%s\n",module);
+    char * module = man->current_update->update;
+    printf("update module: \"%s\"\n",module);
     void * handle = dlopen(module,RTLD_LAZY);
-    puts("aa");
     if (handle == NULL){
       //An error happened when loading
       char * error = dlerror();
@@ -111,7 +113,7 @@ void * load_next_update(manager * man, update_functions * upd, pthread_t ** thre
       ok = ok && load_from_module(man,handle,"name",module, (void**) &name, NULL);      
       //Load functions
       ok = ok && load_from_module(man,handle,"check_requirements",module, (void**) &(upd->check_requirements), &req_ans_empty_step);      
-      ok = ok && load_from_module(man,handle,"preupdate_setup",module, (void**) &(upd->preupdate_setup), &void_empty_step);
+      ok = ok && load_from_module(man,handle,"preupdate_setup",module, (void**) &(upd->preupdate_setup), &char_empty_step);
       ok = ok && load_from_module(man,handle,"check_alterability",module, (void**) &(upd->check_alterability), &char_empty_step);
       ok = ok && load_from_module(man,handle,"wait_alterability",module, (void**) &(upd->wait_alterability), &char_empty_step);
       ok = ok && load_from_module(man,handle,"clean_failed_alterability",module, (void**) &(upd->clean_failed_alterability),&void_empty_step);
@@ -242,10 +244,3 @@ void extern_resume_threads(manager* man, pthread_t * update_threads, int nupdate
     }
   }
 }
-
-
-
-
-
-
-

@@ -9,6 +9,8 @@
 #include <dlfcn.h>
 #include "common.h"
 #include "update.h"
+#include "update_queue.h"
+#include "lowlevel.h"
 
 #define MANAGER_SLEEP 5
 #define MIN_ARRAY_SIZE 32
@@ -18,13 +20,6 @@
 
 /*Common*/
 
-/* Update queue of managers */
-
-typedef STAILQ_HEAD(queuehead,update_q) update_queue_t; 
-struct update_q {
-  char * update;
-  STAILQ_ENTRY(update_q) updates;
-};
 
 /* state of updates */
 
@@ -43,7 +38,7 @@ typedef struct{
   int nthreads;
   update_queue_t* updates;
   int nupdate;
-  char * current_update;
+  update_queue_element * current_update;
   update_state state;
   int tried;
   bool alive;

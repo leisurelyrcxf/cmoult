@@ -52,7 +52,7 @@ void load_update(char* path, int pid){
   config_init(&update);
   if (! config_read_file(&update,path)){
     //could not read file
-    cmoult_log(1,"Error : Could not read update file"); 
+    cmoult_log(1,"Error : Could not read update file \"%s\"", path);
     return;
   }
   if (!config_lookup_string(&update,"code",&code)){
@@ -82,7 +82,9 @@ void load_update(char* path, int pid){
         if (man == NULL){
           cmoult_log(1,"Error : Request <<%s>> did not correspond to a manager",manager_s);
         }else{
-          buff = malloc(strlen(script_s)*sizeof(char));
+          printf("find manager \"%s\"\n", manager_s);
+          printf("find script \"%s\"\n", script_s);
+          buff = malloc((strlen(script_s) + 1)*sizeof(char));
           strcpy(buff,script_s);
           manager_add_update(man,buff);
         }
@@ -92,7 +94,7 @@ void load_update(char* path, int pid){
       }
     }
   }
-  config_destroy(&update);
+//  config_destroy(&update);
 }
 
 
@@ -164,8 +166,10 @@ void load_code(const char * path){
 
 /* Loading code from outside */
 void extern_load_code(const char * path, int id){
-  ptrace(PTRACE_ATTACH, (pid_t) id, NULL, NULL);
-  waitpid((pid_t) id,NULL,0);    
+  if(ptrace(PTRACE_ATTACH, (pid_t) id, NULL, NULL) != 0){
+    perror("fail to ptrace");
+  };
+  waitpid((pid_t) id,NULL,0);
   
   //write loadwidth = 1, load_path = path
   

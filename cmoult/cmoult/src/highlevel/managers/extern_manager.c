@@ -25,6 +25,9 @@ External Manager.
 #include "listener.h"
 #include <stdio.h>
 
+
+const bool intern = false;
+
 static void * manager_main(void * arg){
   manager * self = (manager*) arg;
   //Current update
@@ -44,10 +47,23 @@ static void * manager_main(void * arg){
       req_ans req = current_update->check_requirements();
       if (req == yes){
         /* requirements are met */
+        printf("update requirements are met, ready to update\n");
         self->state = waiting_alterability;
-        current_update->preupdate_setup();
-        if (current_update->wait_alterability()){
-          pause_threads(self,update_threads,nupdate_threads);
+
+        if(current_update->preupdate_setup() != 0){
+          fprintf(stderr, "couldn't prepare update setup\n");
+          postpone_update(self);
+          dlclose(handle);
+          continue;
+        }
+
+        if (current_update->wait_alterability() == 0){
+          printf("alterability waited\n");
+          if(!intern){
+            extern_pause_threads(self, update_threads, nupdate_threads);
+          }else{
+            pause_threads(self, update_threads, nupdate_threads);
+          }
           current_update->apply();
           self->state = applied;
           current_update->preresume_setup();
@@ -57,16 +73,19 @@ static void * manager_main(void * arg){
           finish_update(self);
           dlclose(handle);
         }else{
+          fprintf(stderr, "couldn't wait alterability, will clean failed alterablity , update postponed\n");
           current_update->clean_failed_alterability();
           postpone_update(self);
           dlclose(handle);
         }
       }else if (req == no){
         /* requirements are not met but may be met later */
+        printf("update will be postponed\n");
         postpone_update(self);
         dlclose(handle);
       }else{
         /* requirements are not met and never will be */
+        printf("udpate requirements will never meet, will be aborted\n");
         abort_update(self);
         dlclose(handle);
       }
@@ -87,15 +106,15 @@ manager * start_extern_manager(char * name){
   return man;
 }
 
+int manager_pid;
 void main(int argc,char** argv){
+  manager_pid = getpid();
   pthread_t manager_thread;
   manager * man = start_extern_manager("manager");
   cmoult_log_init();
-  start_socket_listener(false);
+  start_socket_listener(intern);
   pthread_join(man->thread,NULL);
   
+  /*intend to load cmoult.so, otherwise cmoult_manager won't load cmoult lib*/
+  init_dbg_and_attach_process(NULL, -1, NULL);
 }
-
-
-
-

@@ -36,7 +36,7 @@ struct sockaddr_in listener_serv_addr;
 char continue_listener = 1;
 
 
-static void * listner_main(void * arg){
+static void* listener_main(void * arg){
   /*Initiate the socket */
   int conn_fd = 0;
   char buff[LISTENER_BUFF_SIZE];
@@ -47,11 +47,16 @@ static void * listner_main(void * arg){
   listener_serv_addr.sin_family = AF_INET;
   listener_serv_addr.sin_addr.s_addr = INADDR_ANY;
   listener_serv_addr.sin_port = htons(LISTENER_PORT);
-  bind(listener_socket_fd,(struct sockaddr*) & listener_serv_addr,sizeof(listener_serv_addr));
+  if(bind(listener_socket_fd,(struct sockaddr*) & listener_serv_addr,sizeof(listener_serv_addr)) < 0){
+    printf("error in binding to port %d", LISTENER_PORT);
+    return NULL;
+  }
   listen(listener_socket_fd,LISTENER_MAX_CONN);
   while(continue_listener){
     conn_fd = accept(listener_socket_fd,(struct sockaddr*)NULL,NULL);
-    read(conn_fd,buff,(LISTENER_BUFF_SIZE-1)*sizeof(char));
+    int read_num = read(conn_fd, buff, LISTENER_BUFF_SIZE*sizeof(char));
+    buff[read_num] = '\0';
+    printf("receive command \"%s\"\n", buff);
     /* We got a command, parse it*/
     parse_and_run_command(buff,intern);
     close(conn_fd);
@@ -59,7 +64,7 @@ static void * listner_main(void * arg){
 }
 
 void start_socket_listener(bool intern){
-  pthread_create(&listener_thread,NULL,&listner_main,(void*) &intern);
+  pthread_create(&listener_thread,NULL,&listener_main,(void*) &intern);
 }
 
 void stop_socket_listener(){
@@ -69,9 +74,3 @@ void stop_socket_listener(){
 pthread_t * access_socket_listener(){
   return &listener_thread;
 }
-
-
-
-
-
-
