@@ -7,6 +7,12 @@ int get_cfi (Dwfl_Module* mod, um_data* dbg)
     if (dbg->cfi != NULL) {
         return DWARF_CB_OK;
     }
+
+
+    dbg->cfi = dwfl_module_dwarf_cfi (mod, &(dbg->bias));
+    if (dbg->cfi != NULL) {
+        return DWARF_CB_OK;
+    }
     //Trying to get .eh_frame
     dbg->cfi = dwfl_module_eh_cfi (mod, &(dbg->bias));
     if (dbg->cfi != NULL){

@@ -1,7 +1,7 @@
 #include "set_variable.h"
 
-int um_set_variable (um_data* dbg, char* name, bool is_local, char* scope, uint64_t val, size_t size) {
-    if (is_local) {
+int um_set_variable (um_data* dbg, char* name, char* scope, uint64_t val, size_t size) {
+    if (scope != NULL) {
         int derefs = 0;
         while (name[derefs] == '*')
             derefs++;
@@ -17,23 +17,22 @@ int um_set_variable (um_data* dbg, char* name, bool is_local, char* scope, uint6
         }
         return _um_write_addr (dbg->pid, addr, val, size);
     } else {
-        Dwarf_Attribute attr;
+        int derefs = 0;
+        while (name[derefs] == '*')
+            derefs++;
 
+        Dwarf_Attribute attr;
         um_search_first_args args = {
             .tag = DW_TAG_variable,
             .wanted_attribute = DW_AT_location,
-            .name = name,
-            .parent_name = NULL,
+            .name = name+derefs,
+            .parent_name = scope == NULL ? "*" : scope,
             .address = 0,
             .result = &attr
         };
 
         if (!um_parse(dbg, &um_search_first, &args))
             return -4;
-
-        int derefs = 0;
-        while (name[derefs] == '*')
-            derefs++;
 
         uint64_t addr = compute_location(args.result, NULL, dbg);
         if (!addr)
