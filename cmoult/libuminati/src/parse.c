@@ -121,8 +121,9 @@ int walk_tree (Dwarf_Die *cur_die, const char* parent_name, int (*callback) (Dwa
     //Apply callback
     int child_result = -1, sibling_result = -1;
     int success = (*callback) (cur_die, parent_name, callback_args, bias);
-    if (success == 0)
+    if (success == 0){
         return 0;
+    }
     //Take care of the children
     int r = dwarf_child(cur_die, &next);
     if (r == 0)
@@ -149,6 +150,7 @@ int um_parse (um_data* dbg, int (*callback) (Dwarf_Die*, const char*, void*, Dwa
     while ((cu = dwfl_nextcu(dbg->debug_raw, cu, &bias)))
       {
         int tree_res = walk_tree(cu, NULL, callback, callback_args, bias);
+        printf("tree_res:%d\n", tree_res);
         if (tree_res == 0)
             return 1;
         if (tree_res == 1)

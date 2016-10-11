@@ -54,7 +54,7 @@ int um_load_code (um_data* dbg, const char* file_name) {
     uint64_t base_address = add_memory(dbg->pid, plt->size + text->size + got->size + got_plt->size + dynamic->size + dynsym->size + dynstr->size);
     if (base_address == 0 || base_address == 0xffffffffffffffff)
         return 6;
-    printf("DEBUG: Loading %d bytes at 0x%lx\n", plt->size + text->size + got->size + got_plt->size + dynamic->size + dynsym->size + dynstr->size, base_address);
+    printf("DEBUG: Loading %lu bytes at 0x%lx\n", (unsigned long)plt->size + text->size + got->size + got_plt->size + dynamic->size + dynsym->size + dynstr->size, base_address);
     //Get the dynamic symbol table for the file
     char *command = malloc(strlen(file_name) + 50), *symtab = malloc(20);
     sprintf(symtab, "/tmp/%d_dynsym", getpid());
