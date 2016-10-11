@@ -1,0 +1,18 @@
+#include "redefine.h"
+
+int um_redefine(um_data* dbg, char* name1, char* name2)
+  {
+    uint64_t f1, f2;
+    f1 = um_get_function_addr(dbg, name1);
+    f2 = um_get_function_addr(dbg, name2);
+    if(f1 == 0)
+      printf("can't get address of function \"%s\"\n", name1);
+    if(f2 == 0){
+      printf("can't get address of function \"%s\"\n", name2);
+    }
+    if (f1 == 0 || f2 == 0)
+        return -1;
+
+    insert_jump(dbg->pid, f1, f2);
+    return 0;
+  }
