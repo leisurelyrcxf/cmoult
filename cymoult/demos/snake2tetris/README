@@ -1,8 +1,0 @@
-"./snake" to launch snake
-
-DEBUG : "./snake tetris" to launch tetris without update
-
-Ideas :
-* Change variables : game name & author in Board.
-* Update only 2 functions to go from snake to tetris
-* Get some "one use functions" to execute to change state of program before changing functions in the program. (see "Cheating" function to move down snake pattern in functions.c)
