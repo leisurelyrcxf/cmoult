@@ -13,7 +13,7 @@ uint64_t um_get_function_addr (um_data* dbg, char* name)
         current = current->next;
     }
     //Then, search in the debug info
-    Dwarf_Attribute attr;
+    Dwarf_Attribute* attr;
     uint64_t addr;
     char* pname = malloc(2);
     sprintf(pname, "*");
@@ -25,7 +25,7 @@ uint64_t um_get_function_addr (um_data* dbg, char* name)
         .name = name,
         .parent_name = (const char*) pname,
         .address = 0,
-        .result = &attr
+        .result = attr
       };
 
     int r = um_parse(dbg, &um_search_first, &args);

@@ -25,14 +25,14 @@ uint64_t um_get_var_addr(um_data* dbg, bool is_local, const char* name, const ch
     while (name[derefs] == '*')
       derefs++;
 
-    Dwarf_Attribute attr;
+    Dwarf_Attribute* attr;
     um_search_first_args args = {
       .tag = DW_TAG_variable,
       .wanted_attribute = DW_AT_location,
       .name = name+derefs,
       .parent_name = scope,
       .address = 0,
-      .result = &attr
+      .result = attr
     };
 
     if (!um_parse(dbg, &um_search_first, &args))

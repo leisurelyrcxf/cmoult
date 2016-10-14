@@ -18,7 +18,7 @@ int modify_struct(void* s1, void** s2, void (*transformer)(void* s1, void *s2)){
 
 }
 
-int main(){
+int _tmain(){
 
   const int max_tries = 10;
 
@@ -66,6 +66,8 @@ int main(){
   char *program_location = malloc(PROGRAM_DIRECTORY_MAXLENGTH*sizeof(char));
   sprintf(program_location, "%s/%s", $program_directory$, $program_name$);
   printf("program at \"%s/%s\"\n", $program_directory$, $program_name$);
+
+
   um_data* dbg;
   if ((fail = um_init(&dbg, pid, program_location)) != 0)
   {
@@ -87,28 +89,30 @@ int main(){
 
 //  /***** STACK UNWINDING *****/
   um_frame* stack = NULL;
-//  um_unwind (dbg, NULL, &stack,0);
+  um_unwind (dbg, NULL, &stack,0);
 
 
 //  if(um_wait_out_of_stack(dbg, (char*)old_func_name) == 0){
 //    um_redefine(dbg, (char*)old_func_name,(char*)new_func_name);
 //  }
 
-  //
-  //void clean_failed_alterability(){
-  //
-  //}
 
 
 
-  uint64_t addr = um_get_var_addr(dbg, false, "*obj", "src/test.c");
-  printf("addr of *obj1 is %p\n", (void*)addr);
+  uint64_t addr = um_get_var_addr(dbg, true, "*obj_copy", "print1");
+//  printf("addr of *obj_copy is %p\n", (void*)addr);
 
-//  typedef struct _struct1{
-//    int age;
-//    char* name;
-//    char sex;
-//  }person;
+  if(addr != -1){
+    printf("addr of *obj_copy is %p\n", (void*)addr);
+
+    addr = um_get_var_addr(dbg, false, "*obj", "src/test.c");
+    printf("addr of *obj_copy is %p\n", (void*)addr);
+
+    um_set_variable(dbg, true, "*obj_copy", "print1", 100, 4);
+  }
+
+
+
 
 
   /*modify sex*/
@@ -117,10 +121,10 @@ int main(){
 
 
   /*modify name*/
-  uint64_t new_addr = add_memory(dbg->pid, 15);
-  const char* new_name = "xiaofan CHEN";
-  um_write_addr_n(dbg, new_addr, (void*)new_name, 15, 1);
-  um_write_addr (dbg, (addr + ((uint64_t)(&per.name) - (uint64_t)&per)), new_addr , 8);
+//  uint64_t new_addr = add_memory(dbg->pid, 15);
+//  const char* new_name = "xiaofan CHEN";
+//  um_write_addr_n(dbg, new_addr, (void*)new_name, 15, 1);
+//  um_write_addr (dbg, (addr + ((uint64_t)(&per.name) - (uint64_t)&per)), new_addr , 8);
 //  getchar();
 //
 //
@@ -137,9 +141,9 @@ int main(){
 
 
 
-  //um_set_variable(dbg, false, var_name, "src/test.c", 10, 8);
-
-//  um_set_variable(dbg, true, "**b", "print1", 100, 8);
+//  um_set_variable(dbg, false, var_name, "src/test.c", 10, 8);
+//
+//  um_set_variable(dbg, true, "*obj_copy", "print1", 100, 4);
 
 
 
@@ -167,4 +171,12 @@ int main(){
 //  }
 
   return 0;
+}
+
+
+int main(){
+  while(1){
+    _tmain();
+//    sleep(3);
+  }
 }

@@ -5,6 +5,9 @@
 #include "elfutils_includes.h"
 #include "data_structs.h"
 
+
+Dwfl *pid_to_dwfl (pid_t pid);
+
 /* This function retrieves the CFI from mod and place it into dbg */
 int get_cfi (Dwfl_Module* mod, um_data* dbg);
 
