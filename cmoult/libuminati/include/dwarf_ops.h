@@ -31,6 +31,6 @@ typedef struct op_stack{
 
 void process_op(op_stack **s, Dwarf_Op *op, um_frame *context, um_data* dbg);
 
-content compute_ops (Dwarf_Op **ops, size_t nops, um_frame *context, um_data* dbg);
+content compute_ops (Dwarf_Op *ops, size_t nops, um_frame *context, um_data* dbg);
 
 #endif
