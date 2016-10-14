@@ -110,8 +110,12 @@ int um_search_first (Dwarf_Die* die, const char* parent_name, void* vargs, Dwarf
         return -1;
       }
     Dwarf_Attribute wanted;
-    dwarf_attr(die, args->wanted_attribute, &wanted);
-    *(args->result) = wanted;
+    Dwarf_Attribute* result;
+    result = dwarf_attr(die, args->wanted_attribute, &wanted);
+    if(result == NULL){
+      return -1;
+    }
+    args->result = result;
     return 0;
   }
 
@@ -150,7 +154,7 @@ int um_parse (um_data* dbg, int (*callback) (Dwarf_Die*, const char*, void*, Dwa
     while ((cu = dwfl_nextcu(dbg->debug_raw, cu, &bias)))
       {
         int tree_res = walk_tree(cu, NULL, callback, callback_args, bias);
-        printf("tree_res:%d\n", tree_res);
+//        printf("tree_res:%d\n", tree_res);
         if (tree_res == 0)
             return 1;
         if (tree_res == 1)

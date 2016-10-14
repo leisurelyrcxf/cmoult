@@ -2,7 +2,7 @@
 
 size_t um_get_var_size (um_data *dbg, const char* var_name, const char* scope_name)
   {
-    Dwarf_Attribute attr;
+    Dwarf_Attribute* attr;
 
     um_search_first_args args =
       {
@@ -11,7 +11,7 @@ size_t um_get_var_size (um_data *dbg, const char* var_name, const char* scope_na
         .name = var_name,
         .parent_name = scope_name,
         .address = 0,
-        .result = &attr
+        .result = attr
       };
 
     int r = um_parse(dbg, &um_search_first, &args);

@@ -96,17 +96,15 @@ uint64_t um_read_addr (um_data* dbg, uint64_t addr, size_t size) {
 }
 
 int _um_read_registers(pid_t pid, struct user_regs_struct* regs) {
-    struct iovec iov;
-    iov.iov_len = sizeof(*regs);
-    iov.iov_base = regs;
-    return ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov);
+//    struct iovec iov;
+//    iov.iov_len = sizeof(*regs);
+//    iov.iov_base = regs;
+//    return ptrace(PTRACE_GETREGSET, pid, NT_PRSTATUS, &iov);
+    return ptrace(PTRACE_GETREGS, pid, 0, regs);
 }
 
 int um_read_registers(um_data* dbg, struct user_regs_struct* regs) {
-    struct iovec iov;
-    iov.iov_len = sizeof(*regs);
-    iov.iov_base = regs;
-    return ptrace(PTRACE_GETREGSET, dbg->pid, NT_PRSTATUS, &iov);
+    return _um_read_registers(dbg->pid, regs);
 }
 
 int um_cont (pid_t pid) {
