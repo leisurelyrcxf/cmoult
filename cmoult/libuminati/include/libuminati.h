@@ -102,6 +102,8 @@
 #include "dwarf_ops.h"
 #include "insert_jump.h"
 #include "get_function.h"
+#include "get_var_addr.h"
+#include "common_utils.h"
 
 
 ///*****Opaque data types*****/

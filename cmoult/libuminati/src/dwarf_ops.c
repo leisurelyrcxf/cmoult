@@ -53,7 +53,7 @@ int compare (content c1, content c2)
 
 void process_op(op_stack **s, Dwarf_Op *op, um_frame *context, um_data* dbg)
   {
-    Dwarf_Attribute attr;
+    Dwarf_Attribute* attr;
     uint64_t v;
     int comp;
     content c, c2, c3;
@@ -153,7 +153,7 @@ void process_op(op_stack **s, Dwarf_Op *op, um_frame *context, um_data* dbg)
                 .parent_name = pname,
                 .name = um_get_function(dbg, context),
                 .address = 0,
-                .result = &attr
+                .result = attr
               };
             int r = um_parse(dbg, &um_search_first, &args);
             c.loc.addr = (r > 0 && args.result)?compute_location(args.result, context, dbg)+op->number:0;
@@ -562,13 +562,13 @@ void free_op_stack (op_stack* s) {
     free(s);
 }
 
-content compute_ops (Dwarf_Op **ops, size_t nops, um_frame *context, um_data* dbg)
+content compute_ops (Dwarf_Op *ops, size_t nops, um_frame *context, um_data* dbg)
   {
     op_stack *s = (op_stack*) malloc(sizeof(op_stack));
     int i;
     s->down = NULL;
     for (i = 0; i < (int)nops; i++)
-        process_op(&s, ops[i], context, dbg);
+        process_op(&s, ops+i, context, dbg);
     content ret = s->c;
     free_op_stack(s);
     return ret;
