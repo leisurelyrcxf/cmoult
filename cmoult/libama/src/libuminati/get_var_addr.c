@@ -19,6 +19,8 @@ uint64_t um_get_var_addr(um_data* dbg, bool is_local, const char* name, const ch
         if (addr == 0xffffffffffffffff)
             return -1;
     }
+    if(addr == 0)
+      return -1;
     return addr;
   }else{
     int derefs = 0;

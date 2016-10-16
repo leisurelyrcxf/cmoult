@@ -7,7 +7,7 @@ uint64_t um_get_local_var_addr(um_data* dbg, const char* name, const char* scope
     int r = 0;
 
     if (scope) {
-        Dwarf_Attribute* attr;
+//        Dwarf_Attribute* attr;
 
         um_search_first_args args = {
             .tag = DW_TAG_variable,
@@ -15,7 +15,7 @@ uint64_t um_get_local_var_addr(um_data* dbg, const char* name, const char* scope
             .name = name,
             .parent_name = scope,
             .address = 0,
-            .result = attr
+            .result = NULL
         };
 
         r = um_parse(dbg, &um_search_first, &args);
@@ -27,9 +27,13 @@ uint64_t um_get_local_var_addr(um_data* dbg, const char* name, const char* scope
         um_frame* scope_um_frame;
         scope_um_frame = um_unwind(dbg, scope, &scope_um_frame, UM_UNWIND_STOPWHENFOUND);
         if (!scope_um_frame)
-            return 0;
+            return -1;
 
         uint64_t addr = compute_location(args.result, scope_um_frame, dbg);
+        free(args.result);
+        if(addr == 0){
+          return -1;
+        }
         return addr;
     }
 

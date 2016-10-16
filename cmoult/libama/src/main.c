@@ -89,7 +89,7 @@ int _tmain(){
 
 //  /***** STACK UNWINDING *****/
   um_frame* stack = NULL;
-  um_unwind (dbg, NULL, &stack,0);
+//  um_unwind (dbg, NULL, &stack,0);
 
 
 //  if(um_wait_out_of_stack(dbg, (char*)old_func_name) == 0){
@@ -99,16 +99,20 @@ int _tmain(){
 
 
 
-  uint64_t addr = um_get_var_addr(dbg, true, "*obj_copy", "print1");
+  uint64_t addr = -1;// um_get_var_addr(dbg, true, "*obj_copy", "print1");
 //  printf("addr of *obj_copy is %p\n", (void*)addr);
 
+
+    um_realloc_and_set_variable(dbg, true, "some_comment", "print1", 20, true, (void*)"new comments", strlen("new comments") + 1);
+
+
   if(addr != -1){
-    printf("addr of *obj_copy is %p\n", (void*)addr);
+//    printf("addr of *obj_copy is %p\n", (void*)addr);
 
-    addr = um_get_var_addr(dbg, false, "*obj", "src/test.c");
-    printf("addr of *obj_copy is %p\n", (void*)addr);
+//    addr = um_get_var_addr(dbg, false, "*obj", "src/test.c");
+//    printf("addr of *obj_copy is %p\n", (void*)addr);
 
-    um_set_variable(dbg, true, "*obj_copy", "print1", 100, 4);
+//    um_set_variable(dbg, true, "age", "_struct1", 99, 4);
   }
 
 
@@ -123,7 +127,7 @@ int _tmain(){
   /*modify name*/
 //  uint64_t new_addr = add_memory(dbg->pid, 15);
 //  const char* new_name = "xiaofan CHEN";
-//  um_write_addr_n(dbg, new_addr, (void*)new_name, 15, 1);
+//  um_write_addr_n(dbg, new_addr, (void*)new_name, 13, 1);
 //  um_write_addr (dbg, (addr + ((uint64_t)(&per.name) - (uint64_t)&per)), new_addr , 8);
 //  getchar();
 //
@@ -175,8 +179,8 @@ int _tmain(){
 
 
 int main(){
-  while(1){
+  do{
     _tmain();
 //    sleep(3);
-  }
+  }while(0);
 }

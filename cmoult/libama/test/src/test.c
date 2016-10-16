@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
 #include <sys/ptrace.h>
 
 typedef struct _struct1{
@@ -18,14 +19,32 @@ typedef struct _struct2{
 }person_with_comment;
 
 person* obj;
+char* comment;
 
 void __attribute__ ((noinline)) print1(person* obj){
+//  sleep(3);
+  char* some_comment = malloc(sizeof(char)*1024);
+  const char* some_text = "some comment";
+  memcpy(some_comment, some_text, strlen(some_text) + 1);
   person* obj_copy = obj;
   printf("obj of type person at %p\n", (void*)obj_copy);
   printf("obj->name: \"%s\"\n", obj_copy->name);
   printf("obj->age: %d\n", obj->age);
   printf("obj->sex: \'%c\'\n", obj->sex);
+  printf("char* some_comment at %p\n", (void*)some_comment);
+  printf("comment: %s\n", some_comment);
   printf("finished print1()\n\n");
+
+
+  sleep(5);
+  printf("obj of type person at %p\n", (void*)obj_copy);
+  printf("obj->name: \"%s\"\n", obj_copy->name);
+  printf("obj->age: %d\n", obj->age);
+  printf("obj->sex: \'%c\'\n", obj->sex);
+  printf("char* some_comment at %p\n", (void*)some_comment);
+  printf("comment: %s\n", some_comment);
+  printf("finished print1()\n\n");
+//  free(some_comment);
 }
 
 
@@ -43,6 +62,10 @@ void jmp(){
 }
 
 int main(){
+  comment = malloc(sizeof(char)*1024);
+  const char* some_text = "some comment";
+  memcpy(comment, some_text, strlen(some_text) + 1);
+  person* obj_copy = obj;
   obj = (person*)malloc(sizeof(person));
   obj->age = 24;
   obj->name = "Xiaofan";
@@ -51,6 +74,7 @@ int main(){
   int i = 0;
   while(1){
     print1(obj);
+    return 0;
   }
   return 0;
 }
