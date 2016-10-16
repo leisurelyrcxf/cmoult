@@ -49,25 +49,65 @@ int um_write_addr (um_data* dbg, uint64_t addr, uint64_t value, size_t size) {
     return _um_write_addr(dbg->pid, addr, value, size);
 }
 
-int um_write_addr_n (um_data* dbg, uint64_t addr, void* values, int n, size_t size){
+static int um_write_addr_n_basic (um_data* dbg, uint64_t addr, void* values, int n, size_t size){
     if(size == 4){
       uint32_t *int_values = (uint32_t*)values;
       for(int i = 0; i < n; i++){
-        um_write_addr(dbg, addr + (i << 2), (uint64_t)(*(int_values + i)), size);
+        if(um_write_addr(dbg, addr + (i << 2), (uint64_t)(*(int_values + i)), size) != 0){
+          return -1;
+        }
       }
     }else if(size == 8){
       uint64_t *int64_values = (uint64_t*)values;
       for(int i = 0; i < n; i++){
-        um_write_addr(dbg, addr + (i << 3), (*(int64_values + i)), size);
+        if(um_write_addr(dbg, addr + (i << 3), (*(int64_values + i)), size) != 0){
+          return -1;
+        }
       }
     }else if(size == 1){
       uint8_t *char_values = (uint8_t*)values;
       for(int i = 0; i < n; i++){
-        um_write_addr(dbg, addr + i, (uint64_t)(*(char_values + i)), size);
+        if(um_write_addr(dbg, addr + i, (uint64_t)(*(char_values + i)), size) != 0){
+          return -1;
+        }
       }
     }else{
       return -1;
     }
+    return 0;
+}
+
+
+int um_write_addr_n (um_data* dbg, uint64_t addr, void* values, int n, size_t size){
+  if(size == 1){
+    size_t n8 = n / 8;
+    if(n8 > 0){
+      if(um_write_addr_n_basic(dbg, addr, values, n8, 8) != 0){
+        return -1;
+      }
+    }
+    size_t remain8 = n % 8;
+
+    size_t n4 = remain8 / 4;
+    if(n4 > 0){
+      if(um_write_addr_n_basic(dbg, addr + (n8 << 3), (void*)((char*)values + (n8 << 3)), n4, 4) != 0 ){
+        return -1;
+      }
+    }
+    size_t remain4 = remain8 % 4;
+
+    size_t n1 = remain4;
+    if(n1 > 0){
+      if(um_write_addr_n_basic(dbg, addr + (n8 << 3) + (n4 << 2), (void*)((char*)values + (n8 << 3) + (n4 << 2)), n1, 1) != 0){
+        return -1;
+      }
+    }
+  }else{
+    if(um_write_addr_n_basic(dbg, addr, values, n, size) != 0){
+      return -1;
+    }
+  }
+  return 0;
 }
 
 int _um_write_registers(pid_t pid, struct user_regs_struct* regs) {

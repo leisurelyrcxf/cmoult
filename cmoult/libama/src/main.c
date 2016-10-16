@@ -103,7 +103,7 @@ int _tmain(){
 //  printf("addr of *obj_copy is %p\n", (void*)addr);
 
 
-    um_realloc_and_set_variable(dbg, true, "some_comment", "print1", 20, true, (void*)"new comments", strlen("new comments") + 1);
+  um_realloc_and_set_variable_in_heap(dbg, true, "some_comment", "print1", 40, (void*)"new comments12345", strlen("new comments12345") + 1);
 
 
   if(addr != -1){
