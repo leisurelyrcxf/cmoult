@@ -392,5 +392,5 @@ um_frame* um_unwind_print (um_data* dbg, const char* target, um_frame** cache, i
 }
 
 um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
-  um_unwind_print(dbg, target, cache, flags, 1);
+  um_unwind_print(dbg, target, cache, flags, 0);
 }

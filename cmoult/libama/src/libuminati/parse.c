@@ -77,6 +77,7 @@ int um_search_all (Dwarf_Die* die, const char* parent_name, void* vargs, Dwarf_A
 int um_search_first (Dwarf_Die* die, const char* parent_name, void* vargs, Dwarf_Addr bias)
   {
     um_search_first_args* args = vargs;
+//    printf("tag %d, name %s, scope %s\n", dwarf_tag(die), dwarf_diename(die), parent_name);
     if (dwarf_tag(die) != args->tag)
         if ((dwarf_tag(die) != DW_TAG_variable && dwarf_tag(die) != DW_TAG_formal_parameter) || (args->tag != DW_TAG_variable && args->tag != DW_TAG_formal_parameter))
             return -1;
@@ -109,9 +110,11 @@ int um_search_first (Dwarf_Die* die, const char* parent_name, void* vargs, Dwarf
         args->result = NULL;
         return -1;
       }
-    Dwarf_Attribute wanted;
+
+    int size = sizeof(Dwarf_Attribute);
+    Dwarf_Attribute* wanted = malloc(sizeof(Dwarf_Attribute));
     Dwarf_Attribute* result;
-    result = dwarf_attr(die, args->wanted_attribute, &wanted);
+    result = dwarf_attr(die, args->wanted_attribute, wanted);
     if(result == NULL){
       return -1;
     }
