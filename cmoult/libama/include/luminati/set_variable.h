@@ -11,9 +11,9 @@
 //if scope is NULL, it's ignored
 int um_set_variable (um_data* dbg, bool is_local, char* name, char* scope, uint64_t val, size_t size);
 
-uint64_t um_realloc_variable(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size, bool free_old);
+uint64_t um_realloc_variable_in_heap(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size);
 
-int um_realloc_and_set_variable(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size, bool free_old, void* new_values, size_t copy_size);
+int um_realloc_and_set_variable_in_heap(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size, void* new_values, size_t copy_size);
 
 
 

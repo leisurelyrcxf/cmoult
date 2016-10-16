@@ -11,7 +11,7 @@ int um_set_variable (um_data* dbg, bool is_local, char* name, char* scope, uint6
   return _um_write_addr (dbg->pid, addr, val, size);
 }
 
-uint64_t um_realloc_variable(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size, bool free_old){
+uint64_t um_realloc_variable_in_heap(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size){
   uint64_t addr = um_get_var_addr(dbg, is_local, name, scope);
 
 //  uint64_t addr = um_get_var_addr(dbg, false, "*obj", "src/test.c");
@@ -35,16 +35,20 @@ uint64_t um_realloc_variable(um_data* dbg, bool is_local, char* name, char* scop
   return realloc_addr;
 }
 
-int um_realloc_and_set_variable(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size, bool free_old, void* new_values, size_t copy_size){
+int um_realloc_and_set_variable_in_heap(um_data* dbg, bool is_local, char* name, char* scope, size_t realloc_size, void* new_values, size_t copy_size){
   if(copy_size > realloc_size){
     fprintf(stderr, "the size of the reallocated memory must not be smaller than the copy size\n");
     return -1;
   }
-  uint64_t realloc_addr = um_realloc_variable(dbg, is_local, name, scope, realloc_size, free_old);
+  uint64_t realloc_addr = um_realloc_variable_in_heap(dbg, is_local, name, scope, realloc_size);
   if(realloc_addr == 0xffffffffffffffff){
     return -1;
   }
 
   um_write_addr_n(dbg, realloc_addr, new_values, copy_size, 1);
-//  um_write_addr_n(dbg, realloc_addr, new_values + copy_size, 1, realloc_size - copy_size);
+
+//  void* new_empty = malloc(realloc_size - copy_size);
+//  memset(new_empty, 0, realloc_size - copy_size);
+//  um_write_addr_n(dbg, realloc_addr + copy_size, new_empty, realloc_size - copy_size, 1);
+//  free(new_empty);
 }
