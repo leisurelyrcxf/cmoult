@@ -104,6 +104,9 @@
 #include "get_function.h"
 #include "get_var_addr.h"
 #include "common_utils.h"
+#include "is_function_in_stack.h"
+#include "get_str_len.h"
+#include "read_str.h"
 
 
 ///*****Opaque data types*****/
