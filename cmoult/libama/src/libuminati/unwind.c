@@ -80,95 +80,15 @@ um_frame* um_unwind_old (um_data* dbg, const char* target, um_frame** cache, int
 }
 
 
-static int
-module_callback (Dwfl_Module *mod, void **userdata __attribute__ ((unused)),
-        const char *name, Dwarf_Addr start,
-        void *arg __attribute__ ((unused)))
-{
-//  Dwarf_Addr end;
-//  dwfl_module_info (mod, NULL, NULL, &end, NULL, NULL, NULL, NULL);
-//  printf ("%p\t%p\t%s\n", (void*)(uint64_t) start, (void*)(uint64_t) end, name);
-  return DWARF_CB_OK;
-}
-
-//static bool use_raise_jmp_patching;
-//static pid_t check_tid;
-//
-//static void
-//callback_verify (pid_t tid, unsigned frameno, Dwarf_Addr pc,
-//     const char *symname, Dwfl *dwfl)
+//static int
+//module_callback (Dwfl_Module *mod, void **userdata __attribute__ ((unused)),
+//        const char *name, Dwarf_Addr start,
+//        void *arg __attribute__ ((unused)))
 //{
-//  static bool seen_main = false;
-//  if (symname && *symname == '.')
-//    symname++;
-//  if (symname && strcmp (symname, "main") == 0)
-//    seen_main = true;
-//  if (pc == 0)
-//    {
-//      test_assert (seen_main);
-//      return;
-//    }
-//  if (check_tid == 0)
-//    check_tid = tid;
-//  if (tid != check_tid)
-//    {
-//      // For the main thread we are only interested if we can unwind till
-//      // we see the "main" symbol.
-//      return;
-//    }
-//  Dwfl_Module *mod;
-//  static bool reduce_frameno = false;
-//  if (reduce_frameno)
-//    frameno--;
-//  if (! use_raise_jmp_patching && frameno >= 2)
-//    frameno += 2;
-//  const char *symname2 = NULL;
-//  switch (frameno)
-//  {
-//    case 0:
-//      if (! reduce_frameno && symname
-//         && (strcmp (symname, "__kernel_vsyscall") == 0
-//       || strcmp (symname, "__libc_do_syscall") == 0))
-//  reduce_frameno = true;
-//      else
-//  test_assert (symname && strcmp (symname, "raise") == 0);
-//      break;
-//    case 1:
-//      test_assert (symname != NULL && strcmp (symname, "sigusr2") == 0);
-//      break;
-//    case 2: // x86_64 only
-//      /* __restore_rt - glibc maybe does not have to have this symbol.  */
-//      break;
-//    case 3: // use_raise_jmp_patching
-//      if (use_raise_jmp_patching)
-//  {
-//    /* Verify we trapped on the very first instruction of jmp.  */
-//    test_assert (symname != NULL && strcmp (symname, "jmp") == 0);
-//    mod = dwfl_addrmodule (dwfl, pc - 1);
-//    if (mod)
-//      symname2 = dwfl_module_addrname (mod, pc - 1);
-//    test_assert (symname2 == NULL || strcmp (symname2, "jmp") != 0);
-//    break;
-//  }
-//      /* PASSTHRU */
-//    case 4:
-//      test_assert (symname != NULL && strcmp (symname, "stdarg") == 0);
-//      break;
-//    case 5:
-//      /* Verify we trapped on the very last instruction of child.  */
-//      test_assert (symname != NULL && strcmp (symname, "backtracegen") == 0);
-//      mod = dwfl_addrmodule (dwfl, pc);
-//      if (mod)
-//  symname2 = dwfl_module_addrname (mod, pc);
-//
-//      // Note that the following test_assert might in theory even fail on x86_64,
-//      // there is no guarantee that the compiler doesn't reorder the
-//      // instructions or even inserts some padding instructions at the end
-//      // (which apparently happens on ppc64).
-//      if (use_raise_jmp_patching)
-//        test_assert (symname2 == NULL || strcmp (symname2, "backtracegen") != 0);
-//      break;
-//  }
+////  Dwarf_Addr end;
+////  dwfl_module_info (mod, NULL, NULL, &end, NULL, NULL, NULL, NULL);
+////  printf ("%p\t%p\t%s\n", (void*)(uint64_t) start, (void*)(uint64_t) end, name);
+//  return DWARF_CB_OK;
 //}
 
 typedef struct _frame_callback_struc {
@@ -219,41 +139,6 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
     return DWARF_CB_ABORT;
   }
 
-//  Dwarf_Addr bias;
-//  Dwarf_CFI *cfi_eh = INTUSE(dwfl_module_eh_cfi) (mod, &bias);
-//  if(cfi_eh){
-//    handle_cfi(dwfl_frame, pc - bias, cfi_eh, bias);
-//    if(!dwfl_frame->unwound){
-//      Dwarf_CFI *cfi_dwarf = dwfl_module_dwarf_cfi(mod, &bias);
-//      if(cfi_dwarf){
-//        handle_cfi (dwfl_frame, pc - bias, cfi_dwarf, bias);
-//        if (!dwfl_frame->unwound){
-//          dwarf_error("Failed in handle_cfi()");
-//          args->has_error = true;
-//          return DWARF_CB_ABORT;
-//        }
-//      }else{
-//        dwarf_error("Failed in dwfl_module_dwarf_cfi()");
-//        args->has_error = true;
-//        return DWARF_CB_ABORT;
-//      }
-//    }
-//  }else{
-//    Dwarf_CFI *cfi_dwarf = dwfl_module_dwarf_cfi(mod, &bias);
-//    if(cfi_dwarf){
-//      handle_cfi (dwfl_frame, pc - bias, cfi_dwarf, bias);
-//      if (!dwfl_frame->unwound){
-//        dwarf_error("Failed in handle_cfi()");
-//        args->has_error = true;
-//        return DWARF_CB_ABORT;
-//      }
-//    }else{
-//      dwarf_error("Failed in dwfl_module_dwarf_cfi()");
-//      args->has_error = true;
-//      return DWARF_CB_ABORT;
-//    }
-//  }
-
 
   Dwarf_Addr start, end; const char* name;
   name = dwfl_module_info (mod, NULL, &start, &end, NULL, NULL, NULL, NULL);
@@ -266,7 +151,7 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
 
   if(args->print){
     printf("#%p\t%4s\t%s\n", (void*)((uint64_t) pc),
-      ! isactivation ? "-1" : "activated", symname);
+      ! isactivation ? "-1" : "top", symname);
   }
 
 
@@ -294,12 +179,12 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
       args->current->regs[REG_RSP] = regs.rsp;
       args->current->regs[REG_RBP] = regs.rbp;
       if(get_cfa_from_dwfl_module(mod, args->current->rip, args->current, args->dbg) != 0){
-        dwarf_error("Failed in get_cfa_from_dwfl_frame()");
+//        dwarf_error("Failed in get_cfa_from_dwfl_frame()");
         args->finished = true;
         goto ppp;
       }else{
         if(get_register_from_dwfl_module(REG_RA, mod, args->current->rip, args->current, args->dbg) != 0){
-          dwarf_error("Failed in get_register_from_dwfl_frame()");
+//          dwarf_error("Failed in get_register_from_dwfl_frame()");
           args->finished = true;
           goto ppp;
         }
@@ -318,21 +203,21 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
       if ((temp_result = get_register_from_dwfl_module(REG_RBP, mod, args->current->rip, args->current, args->dbg)) > 0){
         args->current->regs[REG_RBP] = _um_read_addr(args->dbg->pid, previous->regs[REG_RBP], 8);
       }else if(temp_result < 0){
-        dwarf_error("Failed in get_register_from_dwfl_frame()");
+//        dwarf_error("Failed in get_register_from_dwfl_frame()");
         args->finished = true;
         goto ppp;
       }
     }else{
       args->current->regs[REG_RBP] = _um_read_addr(args->dbg->pid, previous->regs[REG_RBP], 8);
       if (get_cfa_from_dwfl_module(mod, args->current->rip, args->current, args->dbg) != 0){
-        dwarf_error("Failed in get_cfa_from_dwfl_frame()");
+//        dwarf_error("Failed in get_cfa_from_dwfl_frame()");
         args->finished = true;
         goto ppp;
       }
     }
 
     if (get_register_from_dwfl_module(REG_RA, mod, args->current->rip, args->current, args->dbg) != 0){
-      dwarf_error("Failed in get_register_from_dwfl_frame()");
+//      dwarf_error("Failed in get_register_from_dwfl_frame()");
       args->finished = true;
       goto ppp;
     }
@@ -357,11 +242,11 @@ ppp:
 }
 
 um_frame* um_unwind_print (um_data* dbg, const char* target, um_frame** cache, int flags, bool print) {
-  ptrdiff_t ptrdiff = dwfl_getmodules (dbg->debug_raw, module_callback, NULL, 0);
-  if(ptrdiff != 0){
-    dwarf_error("error in dwfl_getmodules()");
-    return NULL;
-  }
+//  ptrdiff_t ptrdiff = dwfl_getmodules (dbg->debug_raw, module_callback, NULL, 0);
+//  if(ptrdiff != 0){
+//    dwarf_error("error in dwfl_getmodules()");
+//    return NULL;
+//  }
 
   frame_callback_struc args = {
       .dbg = dbg,
@@ -391,6 +276,27 @@ um_frame* um_unwind_print (um_data* dbg, const char* target, um_frame** cache, i
   return args.result;
 }
 
+void um_print_stack(um_data* dbg){
+  frame_callback_struc args = {
+      .dbg = dbg,
+      .stack = NULL,
+      .current = NULL,
+      .result = NULL,
+      .target = NULL,
+      .stop_when_found = false,
+      .return_last = false,
+      .found = false,
+      .finished = false,
+      .print = true,
+      .has_error = false
+  };
+
+  if(dwfl_getthread_frames(dbg->debug_raw, dbg->pid, &frame_callback, (void*)(&args)) != 0){
+      dwarf_error("dwfl_getthread_frames");
+      return;
+  }
+}
+
 um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
-  um_unwind_print(dbg, target, cache, flags, 1);
+  um_unwind_print(dbg, target, cache, flags, 0);
 }

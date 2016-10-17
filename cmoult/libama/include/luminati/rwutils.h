@@ -14,6 +14,7 @@ int _um_write_registers(pid_t pid, struct user_regs_struct* regs);
 int um_write_registers(um_data* dbg, struct user_regs_struct* regs);
 uint64_t _um_read_addr (pid_t pid, uint64_t addr, size_t size);
 uint64_t um_read_addr (um_data* dbg, uint64_t addr, size_t size);
+int um_read_addr_n (um_data* dbg, uint64_t addr, void* p_read, int n, size_t size);
 int _um_read_registers(pid_t pid, struct user_regs_struct* regs);
 int um_read_registers(um_data* dbg, struct user_regs_struct* regs);
 int um_cont (pid_t pid);

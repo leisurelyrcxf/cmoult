@@ -5,18 +5,44 @@
 
 #include <pthread.h>
 
-typedef struct _struct1{
+
+um_data* dbg;
+
+
+//test for modify struct structure
+typedef struct _person{
   int age;
   char* name;
   char sex;
 }person;
 
-um_data* dbg;
+typedef struct _person_v2{
+  int age;
+  char* name;
+  char sex;
+  char* comment;
+}person_v2;
 
+int transform_person_to_person_v2(um_data* dbg, void * p1, void * p2, int flag){
+  person* person1 = (person*)p1;
+  person_v2* person2 = (person_v2*)p2;
+  person2->age = person1->age;
+  person2->name = person1->name;
+  person2->sex = person1->sex;
+  person2->comment = NULL;
 
-int modify_struct(void* s1, void** s2, void (*transformer)(void* s1, void *s2)){
+  person2->name = (char*)um_write_str(dbg, (uint64_t)(person2->name), "Xiaofan CHEN", flag);
 
+  char* old_name = malloc(1024);
+  um_read_str_at_address(dbg, (uint64_t)(person2->name), old_name);
+  char* comment = malloc(1024);
+  sprintf(comment, "name: %s, age: %d, sex: %c", old_name, person2->age, person2->sex);
+  free(old_name);
+
+  person2->comment = (char*)um_write_str(dbg, (uint64_t)0, comment, flag);
+  return 0;
 }
+
 
 int _tmain(){
 
@@ -99,59 +125,101 @@ int _tmain(){
 
 
 
-  uint64_t addr = -1;// um_get_var_addr(dbg, true, "*obj_copy", "print1");
-//  printf("addr of *obj_copy is %p\n", (void*)addr);
+  uint64_t addr = -1;
+
+//  //test for char*
+//  const char* new_comment = "new comment";
+//  if(strlen(new_comment) > strlen("some comment")){
+//    um_realloc_and_set_by_pointer_variable(dbg, true, "some_comment", "print1", strlen(new_comment) + 1, (void*)new_comment, strlen(new_comment) + 1);
+//  }else{
+//    um_set_by_pointer_variable(dbg, true, "some_comment", "print1", (void*)new_comment, strlen(new_comment) + 1);
+//  }
 
 
-  um_realloc_and_set_variable_in_heap(dbg, true, "some_comment", "print1", 40, (void*)"new comments12345", strlen("new comments12345") + 1);
+//  //test for char array
+//  const char* new_comment = "new comment";
+//  if(strlen(new_comment) > strlen("some comment")){
+//    fprintf(stderr, "can't reallocate array\n");
+//  }else{
+//    um_set_by_array_variable(dbg, true, "some_comment", "print1", (void*)new_comment, strlen(new_comment) + 1);
+//  }
 
 
-  if(addr != -1){
-//    printf("addr of *obj_copy is %p\n", (void*)addr);
 
-//    addr = um_get_var_addr(dbg, false, "*obj", "src/test.c");
-//    printf("addr of *obj_copy is %p\n", (void*)addr);
 
-//    um_set_variable(dbg, true, "age", "_struct1", 99, 4);
+
+
+
+
+//  //test for modify struct content
+//  typedef struct _person{
+//    int age;
+//    char* name;
+//    char sex;
+//  }person;
+
+//  person per;
+//  addr = um_get_var_addr(dbg, true, "*person1", "main");
+//  if(addr == -1 || addr == 0){
+//    fprintf(stderr, "can't get address of *person1\n");
+//  }else{
+//    um_set_addr(dbg, (addr + offsetof(person, age)), 1111, 4);
+//    um_set_str_pointer(dbg, (addr + offsetof(person, name)), "GUO1234456", 1);
+//    um_set_addr(dbg, (addr + ((char*)(&per.sex) - (char*)&per)), 'f', 1);
+//  }
+
+
+
+
+
+
+
+
+
+  addr = um_get_var_addr(dbg, true, "person1", "main");
+  if(addr == -1 || addr == 0){
+    fprintf(stderr, "can't get address of *person1\n");
+  }else{
+    um_transform_struct_pointer(dbg, addr, sizeof(person), sizeof(person_v2), &transform_person_to_person_v2, AUTO_REALLOC);
+    if(um_wait_out_of_stack(dbg, "print1") == 0){
+      um_redefine(dbg, "print1", "print2");
+    }
   }
 
 
 
 
 
-  /*modify sex*/
-  person per;
-//  um_write_addr (dbg, (addr + ((uint64_t)(&per.sex) - (uint64_t)&per)), 'f', 1);
-
-
-  /*modify name*/
-//  uint64_t new_addr = add_memory(dbg->pid, 15);
-//  const char* new_name = "xiaofan CHEN";
-//  um_write_addr_n(dbg, new_addr, (void*)new_name, 13, 1);
-//  um_write_addr (dbg, (addr + ((uint64_t)(&per.name) - (uint64_t)&per)), new_addr , 8);
-//  getchar();
-//
-//
-//
-//
-//  printf("addr is %llx\n", (unsigned long long )addr);
-//
-//  printf("next %llx\n", addr = um_read_addr(dbg, addr, 8));
-//
-////  printf("next %llx\n", addr = um_read_addr(dbg, addr, 8));
-//
-//
-//um_write_addr (dbg, addr, 10, 8);
 
 
 
-//  um_set_variable(dbg, false, var_name, "src/test.c", 10, 8);
-//
-//  um_set_variable(dbg, true, "*obj_copy", "print1", 100, 4);
 
 
 
-  /***** LOAD UPDATE *****/
+
+
+
+
+//    um_print_stack(dbg);
+//    printf("function %s %s in stack\n", "print1", is_function_in_stack(dbg, "print1") ? "is" : "isn't");
+//    printf("\n-------------------------------------------\n\n");
+//    if(um_wait_out_of_stack(dbg, "print1") == 0){
+//      um_print_stack(dbg);
+//      printf("function %s %s in stack\n", "print1", is_function_in_stack(dbg, "print1") ? "is" : "isn't");
+//      um_redefine(dbg, "print1", "print2");
+//    }
+//  }
+
+
+
+
+
+
+//  size_t size1 = um_get_var_size(dbg, "person1", "main");
+//  printf("size of person1 in main %u\n", size1);
+//  size_t size2 = um_get_var_size(dbg, "person_array", "main");
+//  printf("size of person_array in main %u\n", size2);
+
 //  printf("Loading returned %d\n", um_load_code(dbg, "./testprogs/update.so"));
 
 

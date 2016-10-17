@@ -49,7 +49,7 @@ int um_write_addr (um_data* dbg, uint64_t addr, uint64_t value, size_t size) {
     return _um_write_addr(dbg->pid, addr, value, size);
 }
 
-static int um_write_addr_n_basic (um_data* dbg, uint64_t addr, void* values, int n, size_t size){
+static int _um_write_addr_n (um_data* dbg, uint64_t addr, void* values, int n, size_t size){
     if(size == 4){
       uint32_t *int_values = (uint32_t*)values;
       for(int i = 0; i < n; i++){
@@ -82,7 +82,7 @@ int um_write_addr_n (um_data* dbg, uint64_t addr, void* values, int n, size_t si
   if(size == 1){
     size_t n8 = n / 8;
     if(n8 > 0){
-      if(um_write_addr_n_basic(dbg, addr, values, n8, 8) != 0){
+      if(_um_write_addr_n(dbg, addr, values, n8, 8) != 0){
         return -1;
       }
     }
@@ -90,7 +90,7 @@ int um_write_addr_n (um_data* dbg, uint64_t addr, void* values, int n, size_t si
 
     size_t n4 = remain8 / 4;
     if(n4 > 0){
-      if(um_write_addr_n_basic(dbg, addr + (n8 << 3), (void*)((char*)values + (n8 << 3)), n4, 4) != 0 ){
+      if(_um_write_addr_n(dbg, addr + (n8 << 3), (void*)((char*)values + (n8 << 3)), n4, 4) != 0 ){
         return -1;
       }
     }
@@ -98,12 +98,12 @@ int um_write_addr_n (um_data* dbg, uint64_t addr, void* values, int n, size_t si
 
     size_t n1 = remain4;
     if(n1 > 0){
-      if(um_write_addr_n_basic(dbg, addr + (n8 << 3) + (n4 << 2), (void*)((char*)values + (n8 << 3) + (n4 << 2)), n1, 1) != 0){
+      if(_um_write_addr_n(dbg, addr + (n8 << 3) + (n4 << 2), (void*)((char*)values + (n8 << 3) + (n4 << 2)), n1, 1) != 0){
         return -1;
       }
     }
   }else{
-    if(um_write_addr_n_basic(dbg, addr, values, n, size) != 0){
+    if(_um_write_addr_n(dbg, addr, values, n, size) != 0){
       return -1;
     }
   }
@@ -133,6 +133,79 @@ uint64_t _um_read_addr (pid_t pid, uint64_t addr, size_t size) {
 
 uint64_t um_read_addr (um_data* dbg, uint64_t addr, size_t size) {
     return _um_read_addr(dbg->pid, addr, size);
+}
+
+uint8_t _um_read_addr_8 (pid_t pid, uint64_t addr) {
+    return (uint8_t)(ptrace(PTRACE_PEEKDATA, pid, addr, 0) & 0xff);
+}
+
+uint32_t _um_read_addr_32 (pid_t pid, uint64_t addr) {
+    return (uint32_t)(ptrace(PTRACE_PEEKDATA, pid, addr, 0) & 0xffffffff);
+}
+
+uint64_t _um_read_addr_64 (pid_t pid, uint64_t addr) {
+    return ptrace(PTRACE_PEEKDATA, pid, addr, 0);
+}
+
+static int _um_read_addr_n (um_data* dbg, uint64_t addr, void* p_read, int n, size_t size){
+  if(size == 1){
+    uint8_t *uint8_values = (uint8_t*)p_read;
+    uint8_t read_result;
+    for(int i = 0; i < n; i++){
+      read_result = _um_read_addr_8(dbg->pid, addr + i);
+      *(uint8_values + i) = read_result;
+    }
+  }else if(size == 4){
+    uint32_t *uint32_values = (uint32_t*)p_read;
+    uint32_t read_result;
+    for(int i = 0; i < n; i++){
+      read_result = _um_read_addr_32(dbg->pid, addr + (i << 2));
+      *(uint32_values + i) = read_result;
+    }
+  }else if(size == 8){
+    uint64_t *int64_values = (uint64_t*)p_read;
+    uint64_t read_result;
+    for(int i = 0; i < n; i++){
+      read_result = _um_read_addr_64(dbg->pid, addr + (i << 3));
+      *(int64_values + i) = read_result;
+    }
+  }else{
+    return -1;
+  }
+  return 0;
+}
+
+
+int um_read_addr_n (um_data* dbg, uint64_t addr, void* p_read, int n, size_t size){
+  if(size == 1){
+    size_t n8 = n / 8;
+    if(n8 > 0){
+      if(_um_read_addr_n(dbg, addr, p_read, n8, 8) != 0){
+        return -1;
+      }
+    }
+    size_t remain8 = n % 8;
+
+    size_t n4 = remain8 / 4;
+    if(n4 > 0){
+      if(_um_read_addr_n(dbg, addr + (n8 << 3), (void*)((char*)p_read + (n8 << 3)), n4, 4) != 0 ){
+        return -1;
+      }
+    }
+    size_t remain4 = remain8 % 4;
+
+    size_t n1 = remain4;
+    if(n1 > 0){
+      if(_um_read_addr_n(dbg, addr + (n8 << 3) + (n4 << 2), (void*)((char*)p_read + (n8 << 3) + (n4 << 2)), n1, 1) != 0){
+        return -1;
+      }
+    }
+  }else{
+    if(_um_read_addr_n(dbg, addr, p_read, n, size) != 0){
+      return -1;
+    }
+  }
+  return 0;
 }
 
 int _um_read_registers(pid_t pid, struct user_regs_struct* regs) {

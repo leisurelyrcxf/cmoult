@@ -116,6 +116,7 @@ int um_search_first (Dwarf_Die* die, const char* parent_name, void* vargs, Dwarf
     Dwarf_Attribute* result;
     result = dwarf_attr(die, args->wanted_attribute, wanted);
     if(result == NULL){
+      free(wanted);
       return -1;
     }
     args->result = result;

@@ -8,7 +8,6 @@ int um_wait_out_of_stack(um_data* dbg, char* name){
         if (!(cache->next))
             return -2;
 
-        printf("in stack!\n");
         //Set a breakpoint after the function's return
         uint64_t old_value = add_breakpoint(dbg->pid, cache->next->rip);
         //Let the function run
