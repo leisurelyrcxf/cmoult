@@ -1,4 +1,4 @@
-_build/*
+_build/
 bin/
 *.so
 *.o
@@ -7,3 +7,4 @@ test
 lib/
 update.cfg
 pid
+update_common_header.h
