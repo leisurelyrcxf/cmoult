@@ -21,7 +21,7 @@ Basic update.
 
  */
 #include <pthread.h>
-#include "update_common_header.h"
+#include "variables.h"
 
 pthread_t thread_array[] = {$thread_array_elements$};
 pthread_t* threads = &thread_array[0];

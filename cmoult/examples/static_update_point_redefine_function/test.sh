@@ -53,7 +53,7 @@ echo "#ifndef FORCE_QUIESCENCE_UPDATE_H
 
 
 
-#endif" > update/include/update_common_header.h
+#endif" > update/include/variables.h
 
 if [ $? -ne 0 ]; then
   exit -1
