@@ -69,7 +69,7 @@ int get_cfa_from_dwfl_module(Dwfl_Module* mod, Dwarf_Addr pc, um_frame* context,
   Dwarf_Frame* dwarf_frame;
   int result = dwarf_cfi_addrframe(cfi, pc - bias, &dwarf_frame);
   if (result != 0){
-    dwarf_error("failed in dwarf_cfi_addrframe()");
+//    dwarf_error("failed in dwarf_cfi_addrframe()");
     return 1;
   }
 
@@ -99,7 +99,7 @@ int get_register_from_dwfl_module(unsigned int reg, Dwfl_Module* mod, Dwarf_Addr
   Dwarf_Frame* dwarf_frame;
   int result = dwarf_cfi_addrframe(cfi, pc - bias, &dwarf_frame);
   if (result != 0){
-    dwarf_error("failed in dwarf_cfi_addrframe()");
+//    dwarf_error("failed in dwarf_cfi_addrframe()");
     return 1;
   }
 

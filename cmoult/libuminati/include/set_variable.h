@@ -25,6 +25,8 @@ int um_set_variable (um_data* dbg, bool is_local, char* name, char* scope, uint6
 
 uint64_t um_get_addr_by_pointer_addr(um_data* dbg, uint64_t pointer_addr);
 
+int um_repoint_pointer_to_addr(um_data* dbg, uint64_t pointer_addr, uint64_t addr);
+
 uint64_t um_malloc(um_data* dbg, size_t malloc_size);
 
 uint64_t um_realloc(um_data* dbg, uint64_t old_addr, size_t old_size, size_t new_size);
@@ -34,6 +36,10 @@ int um_memcpy(um_data* dbg, uint64_t dest, uint64_t src, size_t n, int memcpy_fl
 uint64_t um_write_str(um_data* dbg, uint64_t str_addr, char* new_str, int flag);
 
 uint64_t um_set_str_pointer(um_data* dbg, uint64_t str_pointer_addr, char* new_str, int flag);
+
+uint64_t um_write_values(um_data* dbg, uint64_t exisiting_addr, size_t old_size, void* new_values, size_t new_size, int flag);
+
+uint64_t um_set_pointer_to_values(um_data* dbg, uint64_t pointer_addr, size_t old_size, void* new_values, size_t new_size, int flag);
 
 uint64_t um_transform_struct(um_data* dbg, uint64_t pointer_addr, size_t old_size, size_t new_size, int (*transform)(um_data*, void*, void*, int flag), int flag);
 

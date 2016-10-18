@@ -79,18 +79,6 @@ um_frame* um_unwind_old (um_data* dbg, const char* target, um_frame** cache, int
     return res;
 }
 
-
-//static int
-//module_callback (Dwfl_Module *mod, void **userdata __attribute__ ((unused)),
-//        const char *name, Dwarf_Addr start,
-//        void *arg __attribute__ ((unused)))
-//{
-////  Dwarf_Addr end;
-////  dwfl_module_info (mod, NULL, NULL, &end, NULL, NULL, NULL, NULL);
-////  printf ("%p\t%p\t%s\n", (void*)(uint64_t) start, (void*)(uint64_t) end, name);
-//  return DWARF_CB_OK;
-//}
-
 typedef struct _frame_callback_struc {
   um_data* dbg;
   um_frame* stack;
@@ -128,9 +116,9 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
   }
   Dwarf_Addr pc_adjusted = pc - (isactivation ? 0 : 1);
 
-  /* Get PC->SYMNAME.  */
-//  Dwfl_Thread *thread = dwfl_frame_thread (dwfl_frame);
-//  Dwfl *dwfl = dwfl_thread_dwfl (thread);
+  /* get dwfl by thread, which is not needed in our case currently, may be useful in future work*/
+  //  Dwfl_Thread *thread = dwfl_frame_thread (dwfl_frame);
+  //  Dwfl *dwfl = dwfl_thread_dwfl (thread);
   Dwfl_Module *mod = dwfl_addrmodule (args->dbg->debug_raw, pc_adjusted);
 
   if(mod == NULL){
@@ -140,9 +128,7 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
   }
 
 
-  Dwarf_Addr start, end; const char* name;
-  name = dwfl_module_info (mod, NULL, &start, &end, NULL, NULL, NULL, NULL);
-//  printf ("%p\t%p\t%s\n", (void*)(uint64_t) start, (void*)(uint64_t) end, name);
+
   const char *symname = NULL;
   if(mod){
     symname = dwfl_module_addrname (mod, pc_adjusted);
@@ -150,8 +136,11 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
 
 
   if(args->print){
-    printf("#%p\t%4s\t%s\n", (void*)((uint64_t) pc),
-      ! isactivation ? "-1" : "top", symname);
+    Dwarf_Addr start, end;
+    const char* module_name;
+    module_name = dwfl_module_info (mod, NULL, &start, &end, NULL, NULL, NULL, NULL);
+    printf("#%p\t%4s\t%s\t%s\n", (void*)((uint64_t) pc),
+      ! isactivation ? "-1" : "top", symname, module_name);
   }
 
 
@@ -191,7 +180,7 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
       }
     }
   }else{
-    args->current->rip = _um_read_addr(args->dbg->pid, previous->regs[REG_RA], 8);
+    args->current->rip = pc;//um_read_addr(args->dbg, previous->regs[REG_RA], 8);
     if(args->current->rip == 0 || args->current->rip == 0xffffffffffffffff){
       args->finished = true;
       goto ppp;
@@ -241,12 +230,7 @@ ppp:
   return DWARF_CB_OK;
 }
 
-um_frame* um_unwind_print (um_data* dbg, const char* target, um_frame** cache, int flags, bool print) {
-//  ptrdiff_t ptrdiff = dwfl_getmodules (dbg->debug_raw, module_callback, NULL, 0);
-//  if(ptrdiff != 0){
-//    dwarf_error("error in dwfl_getmodules()");
-//    return NULL;
-//  }
+um_frame* _um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags, bool print) {
 
   frame_callback_struc args = {
       .dbg = dbg,
@@ -276,6 +260,10 @@ um_frame* um_unwind_print (um_data* dbg, const char* target, um_frame** cache, i
   return args.result;
 }
 
+um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
+  _um_unwind(dbg, target, cache, flags, 0);
+}
+
 void um_print_stack(um_data* dbg){
   frame_callback_struc args = {
       .dbg = dbg,
@@ -295,8 +283,4 @@ void um_print_stack(um_data* dbg){
       dwarf_error("dwfl_getthread_frames");
       return;
   }
-}
-
-um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
-  um_unwind_print(dbg, target, cache, flags, 0);
 }

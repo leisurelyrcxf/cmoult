@@ -18,6 +18,7 @@ int um_read_addr_n (um_data* dbg, uint64_t addr, void* p_read, int n, size_t siz
 int _um_read_registers(pid_t pid, struct user_regs_struct* regs);
 int um_read_registers(um_data* dbg, struct user_regs_struct* regs);
 int um_cont (pid_t pid);
+int um_stop (pid_t pid);
 int um_detach (pid_t pid);
 
 #endif

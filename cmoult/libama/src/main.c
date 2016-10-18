@@ -34,7 +34,7 @@ int transform_person_to_person_v2(um_data* dbg, void * p1, void * p2, int flag){
   person2->name = (char*)um_write_str(dbg, (uint64_t)(person2->name), "Xiaofan CHEN", flag);
 
   char* old_name = malloc(1024);
-  um_read_str_at_address(dbg, (uint64_t)(person2->name), old_name);
+  um_read_str_at_address(dbg, (uint64_t)(person2->name), old_name, 1024);
   char* comment = malloc(1024);
   sprintf(comment, "name: %s, age: %d, sex: %c", old_name, person2->age, person2->sex);
   free(old_name);
@@ -105,22 +105,9 @@ int _tmain(){
 
 
 
-
-
-
-
-
-
-
-
 //  /***** STACK UNWINDING *****/
   um_frame* stack = NULL;
 //  um_unwind (dbg, NULL, &stack,0);
-
-
-//  if(um_wait_out_of_stack(dbg, (char*)old_func_name) == 0){
-//    um_redefine(dbg, (char*)old_func_name,(char*)new_func_name);
-//  }
 
 
 
@@ -149,42 +136,58 @@ int _tmain(){
 
 
 
+  uint64_t paddr = um_get_var_addr(dbg, true, "person1", "print1");
+  printf("\n\n\naddr %p\n", (void*)paddr);
 
 
-//  //test for modify struct content
-//  typedef struct _person{
-//    int age;
-//    char* name;
-//    char sex;
-//  }person;
-
-//  person per;
-//  addr = um_get_var_addr(dbg, true, "*person1", "main");
-//  if(addr == -1 || addr == 0){
-//    fprintf(stderr, "can't get address of *person1\n");
-//  }else{
-//    um_set_addr(dbg, (addr + offsetof(person, age)), 1111, 4);
-//    um_set_str_pointer(dbg, (addr + offsetof(person, name)), "GUO1234456", 1);
-//    um_set_addr(dbg, (addr + ((char*)(&per.sex) - (char*)&per)), 'f', 1);
-//  }
+  paddr = um_get_var_addr(dbg, true, "*person1", "print1");
+  printf("addr %p\n", (void*)paddr);
 
 
 
-
-
-
-
-
-
-  addr = um_get_var_addr(dbg, true, "person1", "main");
+  person per;
+  addr = um_get_var_addr(dbg, true, "*person1", "print1");
   if(addr == -1 || addr == 0){
     fprintf(stderr, "can't get address of *person1\n");
   }else{
-    um_transform_struct_pointer(dbg, addr, sizeof(person), sizeof(person_v2), &transform_person_to_person_v2, AUTO_REALLOC);
-    if(um_wait_out_of_stack(dbg, "print1") == 0){
-      um_redefine(dbg, "print1", "print2");
-    }
+    um_set_addr(dbg, (addr + offsetof(person, age)), 1111, 4);
+    um_set_str_pointer(dbg, (addr + offsetof(person, name)), "GUO1234456", AUTO_REALLOC);
+    um_set_addr(dbg, (addr + ((char*)(&per.sex) - (char*)&per)), 'f', 1);
   }
+  int new_int_array[20];
+  for(int i = 0; i < 20; i++){
+    new_int_array[i] = i;
+  }
+  addr = um_get_var_addr(dbg, true, "p_int_array", "print1");
+  if(addr == -1 || addr == 0){
+    fprintf(stderr, "can't get address of p_int_array\n");
+  }else{
+    um_set_pointer_to_values(dbg, addr, 10*sizeof(int), new_int_array, 20*sizeof(int), AUTO_REALLOC);
+  }
+  addr = um_get_var_addr(dbg, true, "size", "print1");
+  if(addr == -1 || addr == 0){
+    fprintf(stderr, "can't get address of size\n");
+  }else{
+    um_set_addr(dbg, addr, 20, sizeof(int));
+  }
+
+
+
+
+
+
+
+
+
+//  addr = um_get_var_addr(dbg, true, "person1", "main");
+//  if(addr == -1 || addr == 0){
+//    fprintf(stderr, "can't get address of *person1\n");
+//  }else{
+//    um_transform_struct_pointer(dbg, addr, sizeof(person), sizeof(person_v2), &transform_person_to_person_v2, AUTO_REALLOC);
+//    if(um_wait_out_of_stack(dbg, "print1") == 0){
+//      um_redefine(dbg, "print1", "print2");
+//    }
+//  }
 
 
 
@@ -203,12 +206,23 @@ int _tmain(){
 //    um_print_stack(dbg);
 //    printf("function %s %s in stack\n", "print1", is_function_in_stack(dbg, "print1") ? "is" : "isn't");
 //    printf("\n-------------------------------------------\n\n");
+//    if(um_load_code(dbg, "/home/leisurelyrcxf/cmoult/cmoult/libama/test/update/lib/libupdate.so") != 0){
+//      printf("can't load code\n");
+//      return -1;
+//    }
 //    if(um_wait_out_of_stack(dbg, "print1") == 0){
 //      um_print_stack(dbg);
 //      printf("function %s %s in stack\n", "print1", is_function_in_stack(dbg, "print1") ? "is" : "isn't");
-//      um_redefine(dbg, "print1", "print2");
+      um_redefine(dbg, "print1", "print1_v2");
 //    }
-//  }
+
+
+
+
+
+
+
+//  um_safe_redefine(dbg, "print1", "print1_v2", 10);
 
 
 

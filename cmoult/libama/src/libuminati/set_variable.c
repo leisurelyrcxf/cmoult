@@ -19,6 +19,10 @@ uint64_t um_get_addr_by_pointer_addr(um_data* dbg, uint64_t pointer_addr){
   return um_read_addr(dbg, pointer_addr, 8);
 }
 
+int um_repoint_pointer_to_addr(um_data* dbg, uint64_t pointer_addr, uint64_t addr){
+  return um_write_addr(dbg, pointer_addr, addr, 8);
+}
+
 uint64_t um_malloc(um_data* dbg, size_t malloc_size){
   uint64_t malloc_addr = add_memory(dbg->pid, malloc_size);
   if(malloc_addr == (uint64_t)-1 || malloc_addr == 0){
@@ -121,7 +125,48 @@ uint64_t um_set_str_pointer(um_data* dbg, uint64_t str_pointer_addr, char* new_s
     return -1;
   }
 
-  if(um_write_addr(dbg, str_pointer_addr, addr, 8) != 0){
+  if(um_repoint_pointer_to_addr(dbg, str_pointer_addr, addr) != 0){
+    return -1;
+  }
+  return addr;
+}
+
+uint64_t um_write_values(um_data* dbg, uint64_t exisiting_addr, size_t old_size, void* new_values, size_t new_size, int flag){
+  if(new_values == NULL){
+    return -1;
+  }
+
+  uint64_t addr;
+  if(flag == FORCE_REALLOC){
+    addr = um_malloc(dbg, new_size);
+  }else if(flag == NOT_REALLOC){
+    if(exisiting_addr == 0 || exisiting_addr == -1){
+      return -1;
+    }
+    addr = exisiting_addr;
+  }else if(flag == AUTO_REALLOC){
+    addr = um_realloc(dbg, exisiting_addr, old_size, new_size);
+  }else{
+    return -1;
+  }
+  if(um_memcpy(dbg, addr, (uint64_t)new_values, new_size, MEMCPY_LOCAL_TO_REMOTE) != 0){
+    return -1;
+  }
+  return addr;
+}
+
+uint64_t um_set_pointer_to_values(um_data* dbg, uint64_t pointer_addr, size_t old_size, void* new_values, size_t new_size, int flag){
+  uint64_t target_addr = um_get_addr_by_pointer_addr(dbg, pointer_addr);
+  if(target_addr == 0 || target_addr == -1){
+    return -1;
+  }
+
+  uint64_t addr = um_write_values(dbg, target_addr, old_size, new_values, new_size, flag);
+  if(addr == 0 || addr == -1){
+    return -1;
+  }
+
+  if(um_repoint_pointer_to_addr(dbg, pointer_addr, addr) != 0){
     return -1;
   }
   return addr;
