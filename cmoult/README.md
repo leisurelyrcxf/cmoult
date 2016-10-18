@@ -18,6 +18,8 @@ Cmoult is published under the GPLv2 license (see LICENSE.txt)
 
 ##Building
 
+you should set the path of the project first. e.g. export CMOULT_PROJECT_HOME=ur_cmoult_project_home
+
 Make a _build directory in the current folder and run cmake from here
 
 `mkdir _build && cd _build && cmake ..`
