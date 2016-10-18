@@ -111,7 +111,6 @@ int um_search_first (Dwarf_Die* die, const char* parent_name, void* vargs, Dwarf
         return -1;
       }
 
-    int size = sizeof(Dwarf_Attribute);
     Dwarf_Attribute* wanted = malloc(sizeof(Dwarf_Attribute));
     Dwarf_Attribute* result;
     result = dwarf_attr(die, args->wanted_attribute, wanted);
