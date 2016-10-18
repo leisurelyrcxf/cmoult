@@ -1,0 +1,122 @@
+diff -r d837c490ce9d cmoult/CMakeLists.txt
+--- a/cmoult/CMakeLists.txt	Fri Feb 19 17:43:17 2016 +0100
++++ b/cmoult/CMakeLists.txt	Wed Oct 05 22:54:38 2016 +0800
+@@ -3,6 +3,8 @@
+ 
+ #Cmoult depends on libuminati
+ ADD_SUBDIRECTORY(libuminati)
++ADD_SUBDIRECTORY(libama)
+ #Add Cmoult files
+ ADD_SUBDIRECTORY(cmoult)
++ADD_SUBDIRECTORY(test)
+ 
+diff -r d837c490ce9d cmoult/cmoult/CMakeLists.txt
+--- a/cmoult/cmoult/CMakeLists.txt	Fri Feb 19 17:43:17 2016 +0100
++++ b/cmoult/cmoult/CMakeLists.txt	Wed Oct 05 22:54:38 2016 +0800
+@@ -7,10 +7,10 @@
+ list(REMOVE_ITEM source_files ${CMAKE_CURRENT_SOURCE_DIR}/src/highlevel/managers/extern_manager.c)
+ 
+ #Add includes
+-include_directories(include)
++include_directories(include )
+ 
+-#Add headers and libs path to libuminati 
+-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libuminati/include)
++#Add headers and libs path of libuminati 
++include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libuminati/include ../libama/include)
+ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libuminati/lib)
+ 
+ #Output for binaries and libraries
+@@ -18,10 +18,10 @@
+ set(LIBRARY_OUTPUT_PATH lib/)
+ 
+ 
+-#Build libcmoult.so
++#Build cmoult.so
+ add_library(cmoult SHARED ${source_files})
+ #Cmoult requires libuminati
+-target_link_libraries(cmoult uminati config dl pthread)
++target_link_libraries(cmoult uminati config dl ama pthread)
+ 
+ #Build external manager
+ add_executable(
+@@ -34,4 +34,4 @@
+     src/highlevel/updates/update.c
+ )
+ 
+-target_link_libraries(cmoult_manager pthread uminati config dl)
++target_link_libraries(cmoult_manager pthread uminati ama config dl)
+diff -r d837c490ce9d cmoult/cmoult/src/highlevel/listeners/common.c
+--- a/cmoult/cmoult/src/highlevel/listeners/common.c	Fri Feb 19 17:43:17 2016 +0100
++++ b/cmoult/cmoult/src/highlevel/listeners/common.c	Wed Oct 05 22:54:38 2016 +0800
+@@ -52,7 +52,7 @@
+   config_init(&update);
+   if (! config_read_file(&update,path)){
+     //could not read file
+-    cmoult_log(1,"Error : Could not read update file"); 
++    cmoult_log(1,"Error : Could not read update file \"%s\"", path);
+     return;
+   }
+   if (!config_lookup_string(&update,"code",&code)){
+@@ -165,7 +165,7 @@
+ /* Loading code from outside */
+ void extern_load_code(const char * path, int id){
+   ptrace(PTRACE_ATTACH, (pid_t) id, NULL, NULL);
+-  waitpid((pid_t) id,NULL,0);    
++  waitpid((pid_t) id,NULL,0);
+   
+   //write loadwidth = 1, load_path = path
+   
+diff -r d837c490ce9d cmoult/cmoult/src/highlevel/listeners/socket_listener.c
+--- a/cmoult/cmoult/src/highlevel/listeners/socket_listener.c	Fri Feb 19 17:43:17 2016 +0100
++++ b/cmoult/cmoult/src/highlevel/listeners/socket_listener.c	Wed Oct 05 22:54:38 2016 +0800
+@@ -36,7 +36,7 @@
+ char continue_listener = 1;
+ 
+ 
+-static void * listner_main(void * arg){
++static void * listener_main(void * arg){
+   /*Initiate the socket */
+   int conn_fd = 0;
+   char buff[LISTENER_BUFF_SIZE];
+@@ -52,6 +52,7 @@
+   while(continue_listener){
+     conn_fd = accept(listener_socket_fd,(struct sockaddr*)NULL,NULL);
+     read(conn_fd,buff,(LISTENER_BUFF_SIZE-1)*sizeof(char));
++    printf("receive\n");
+     /* We got a command, parse it*/
+     parse_and_run_command(buff,intern);
+     close(conn_fd);
+@@ -59,7 +60,7 @@
+ }
+ 
+ void start_socket_listener(bool intern){
+-  pthread_create(&listener_thread,NULL,&listner_main,(void*) &intern);
++  pthread_create(&listener_thread,NULL,&listener_main,(void*) &intern);
+ }
+ 
+ void stop_socket_listener(){
+@@ -69,9 +70,3 @@
+ pthread_t * access_socket_listener(){
+   return &listener_thread;
+ }
+-
+-
+-
+-
+-
+-
+diff -r d837c490ce9d cmoult/cmoult/src/highlevel/managers/common.c
+--- a/cmoult/cmoult/src/highlevel/managers/common.c	Fri Feb 19 17:43:17 2016 +0100
++++ b/cmoult/cmoult/src/highlevel/managers/common.c	Wed Oct 05 22:54:38 2016 +0800
+@@ -242,10 +242,3 @@
+     }
+   }
+ }
+-
+-
+-
+-
+-
+-
+-
