@@ -276,6 +276,10 @@ um_frame* um_unwind_print (um_data* dbg, const char* target, um_frame** cache, i
   return args.result;
 }
 
+um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
+  um_unwind_print(dbg, target, cache, flags, 0);
+}
+
 void um_print_stack(um_data* dbg){
   frame_callback_struc args = {
       .dbg = dbg,
@@ -295,8 +299,4 @@ void um_print_stack(um_data* dbg){
       dwarf_error("dwfl_getthread_frames");
       return;
   }
-}
-
-um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
-  um_unwind_print(dbg, target, cache, flags, 0);
 }
