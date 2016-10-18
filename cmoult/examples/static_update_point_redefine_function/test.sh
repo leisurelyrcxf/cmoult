@@ -2,7 +2,7 @@
 
 hostname=$(hostname)
 
-cmoult_home="/home/leisurelyrcxf/cmoult/cmoult"
+cmoult_home="$CMOULT_PROJECT_HOME"
 cp "$cmoult_home/cmoult/src/highlevel/updates/static_update_point_redefine_function.c.template" "update/src/static_update_point_redefine_function.c"
 if [ $? -ne 0 ]; then
   exit -1

@@ -29,7 +29,7 @@ char preupdate_setup_static_update_point(int pid){
 
 
 char wait_static_update_point(){
-  const struct timespec rqtp = {0, 1000};
+  const struct timespec rqtp = {0, 100000000};
   while(flag_wait_static_update_point){
     nanosleep(&rqtp, NULL);
   }

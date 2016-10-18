@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include "lowlevel.h"
 
-void func1(){
+void __attribute__ ((noinline)) func1(){
   printf("func1()\n");
 }
 
-void func2(){
+void __attribute__ ((noinline)) func2(){
   printf("func2()\n");
 }
 

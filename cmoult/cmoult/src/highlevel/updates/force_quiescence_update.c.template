@@ -26,7 +26,7 @@ Basic update.
 pthread_t thread_array[] = {$thread_array_elements$};
 pthread_t* threads = &thread_array[0];
 int nthreads = sizeof(thread_array)/sizeof(thread_array[0]);
-char* name = "safeRedefineUpdate";
+char* name = "force_quiescence_update";
 
 const int max_tries = 10;
 
@@ -54,7 +54,7 @@ char preupdate_setup(){
 
 /*force quiescence of function*/
 char wait_alterability(){
-  return um_wait_out_of_stack(dbg, (char*)old_func_name);
+  return um_wait_out_of_stack(dbg, (char*)old_func_name) == 0;
 }
 
 //

@@ -4,18 +4,17 @@
 
 
 
-void func1(){
+void __attribute__ ((noinline)) func1(){
   printf("func1()\n");
 }
 
-void func2(){
+void __attribute__ ((noinline)) func2(){
   printf("func2()\n");
 }
 
 int main(){
   while(1){
     func1();
-    sleep(1);
   }
   return 0;
 }

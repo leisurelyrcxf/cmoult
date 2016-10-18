@@ -20,8 +20,8 @@ int um_redefine(um_data* dbg, char* name1, char* name2){
   return 0;
 }
 
-int um_safe_redefine(um_data* dbg, char* name1, char* name2, unsigned long mseconds){
-  while(is_function_in_stack(dbg, name1)){
+int um_wait_safe_redefine_update_point(um_data* dbg, char* func_name, unsigned long mseconds){
+  while(is_function_in_stack(dbg, func_name)){
 //    um_print_stack(dbg);
     um_cont(dbg->pid);
 
@@ -33,5 +33,10 @@ int um_safe_redefine(um_data* dbg, char* name1, char* name2, unsigned long mseco
       return -1;
     }
   }
-  return um_redefine(dbg, name1, name2);
+  return 0;
+}
+
+int um_safe_redefine(um_data* dbg, char* name1, char* name2, unsigned long mseconds){
+  if(um_wait_safe_redefine_update_point(dbg, name1, mseconds) == 0)
+    return um_redefine(dbg, name1, name2);
 }

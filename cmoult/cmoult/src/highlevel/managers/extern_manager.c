@@ -57,7 +57,7 @@ static void * manager_main(void * arg){
           continue;
         }
 
-        if (current_update->wait_alterability() == 0){
+        if (current_update->wait_alterability()){
           printf("alterability waited\n");
           if(!intern){
             extern_pause_threads(self, update_threads, nupdate_threads);
