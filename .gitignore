@@ -3,3 +3,7 @@ bin/
 *.so
 *.o
 .*.swap
+test
+lib/
+update.cfg
+pid
