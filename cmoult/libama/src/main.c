@@ -1,5 +1,5 @@
 #include "libama.h"
-#include "variables.h"
+#include "VARIABLES.h"
 #include "stdlib.h"
 #include "stdio.h"
 
