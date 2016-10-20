@@ -4,7 +4,7 @@
 #include "stdio.h"
 
 #include <pthread.h>
-
+#include "lazy_update.h"
 
 um_data* dbg;
 
@@ -43,6 +43,17 @@ int transform_person_to_person_v2(um_data* dbg, void * p1, void * p2, int flag){
   return 0;
 }
 
+int update_person(um_data* dbg, void* p, size_t len){
+  person* ppperson = (person*)p;
+  ppperson->age = 33;
+  ppperson->sex = 'm';
+  uint64_t retval = um_write_str(dbg, (uint64_t)(ppperson->name), "Sebastien", AUTO_REALLOC);
+  if(retval == 0 || retval == (uint64_t)-1){
+    return -1;
+  }
+  ppperson->name = (char*)retval;
+  return 0;
+}
 
 int _tmain(){
 
@@ -114,71 +125,55 @@ int _tmain(){
 
   uint64_t addr = -1;
 
-//  //test for char*
-//  const char* new_comment = "new comment";
-//  if(strlen(new_comment) > strlen("some comment")){
-//    um_realloc_and_set_by_pointer_variable(dbg, true, "some_comment", "print1", strlen(new_comment) + 1, (void*)new_comment, strlen(new_comment) + 1);
+
+
+
+
+
+//  //modify array test, passed
+//  uint64_t paddr = um_get_var_addr(dbg, true, "person1", "print1");
+//  printf("\n\n\naddr %p\n", (void*)paddr);
+//
+//
+//  paddr = um_get_var_addr(dbg, true, "*person1", "print1");
+//  printf("addr %p\n", (void*)paddr);
+//
+//
+//
+//  person per;
+//  addr = um_get_var_addr(dbg, true, "*person1", "print1");
+//  if(addr == -1 || addr == 0){
+//    fprintf(stderr, "can't get address of *person1\n");
 //  }else{
-//    um_set_by_pointer_variable(dbg, true, "some_comment", "print1", (void*)new_comment, strlen(new_comment) + 1);
+//    um_set_addr(dbg, (addr + offsetof(person, age)), 1111, 4);
+//    um_set_str_pointer(dbg, (addr + offsetof(person, name)), "GUO1234456", AUTO_REALLOC);
+//    um_set_addr(dbg, (addr + ((char*)(&per.sex) - (char*)&per)), 'f', 1);
+//  }
+//  int new_int_array[20];
+//  for(int i = 0; i < 20; i++){
+//    new_int_array[i] = i;
+//  }
+//  addr = um_get_var_addr(dbg, true, "p_int_array", "print1");
+//  if(addr == -1 || addr == 0){
+//    fprintf(stderr, "can't get address of p_int_array\n");
+//  }else{
+//    um_set_pointer_to_values(dbg, addr, 10*sizeof(int), new_int_array, 20*sizeof(int), AUTO_REALLOC);
+//  }
+//  addr = um_get_var_addr(dbg, true, "size", "print1");
+//  if(addr == -1 || addr == 0){
+//    fprintf(stderr, "can't get address of size\n");
+//  }else{
+//    um_set_addr(dbg, addr, 20, sizeof(int));
 //  }
 
 
-//  //test for char array
-//  const char* new_comment = "new comment";
-//  if(strlen(new_comment) > strlen("some comment")){
-//    fprintf(stderr, "can't reallocate array\n");
-//  }else{
-//    um_set_by_array_variable(dbg, true, "some_comment", "print1", (void*)new_comment, strlen(new_comment) + 1);
-//  }
 
 
 
 
 
 
-  uint64_t paddr = um_get_var_addr(dbg, true, "person1", "print1");
-  printf("\n\n\naddr %p\n", (void*)paddr);
-
-
-  paddr = um_get_var_addr(dbg, true, "*person1", "print1");
-  printf("addr %p\n", (void*)paddr);
-
-
-
-  person per;
-  addr = um_get_var_addr(dbg, true, "*person1", "print1");
-  if(addr == -1 || addr == 0){
-    fprintf(stderr, "can't get address of *person1\n");
-  }else{
-    um_set_addr(dbg, (addr + offsetof(person, age)), 1111, 4);
-    um_set_str_pointer(dbg, (addr + offsetof(person, name)), "GUO1234456", AUTO_REALLOC);
-    um_set_addr(dbg, (addr + ((char*)(&per.sex) - (char*)&per)), 'f', 1);
-  }
-  int new_int_array[20];
-  for(int i = 0; i < 20; i++){
-    new_int_array[i] = i;
-  }
-  addr = um_get_var_addr(dbg, true, "p_int_array", "print1");
-  if(addr == -1 || addr == 0){
-    fprintf(stderr, "can't get address of p_int_array\n");
-  }else{
-    um_set_pointer_to_values(dbg, addr, 10*sizeof(int), new_int_array, 20*sizeof(int), AUTO_REALLOC);
-  }
-  addr = um_get_var_addr(dbg, true, "size", "print1");
-  if(addr == -1 || addr == 0){
-    fprintf(stderr, "can't get address of size\n");
-  }else{
-    um_set_addr(dbg, addr, 20, sizeof(int));
-  }
-
-
-
-
-
-
-
-
-
+//  //transform struct test, passed
 //  addr = um_get_var_addr(dbg, true, "person1", "main");
 //  if(addr == -1 || addr == 0){
 //    fprintf(stderr, "can't get address of *person1\n");
@@ -202,7 +197,7 @@ int _tmain(){
 
 
 
-
+//    //load code test, failed
 //    um_print_stack(dbg);
 //    printf("function %s %s in stack\n", "print1", is_function_in_stack(dbg, "print1") ? "is" : "isn't");
 //    printf("\n-------------------------------------------\n\n");
@@ -213,7 +208,7 @@ int _tmain(){
 //    if(um_wait_out_of_stack(dbg, "print1") == 0){
 //      um_print_stack(dbg);
 //      printf("function %s %s in stack\n", "print1", is_function_in_stack(dbg, "print1") ? "is" : "isn't");
-      um_redefine(dbg, "print1", "print1_v2");
+//      um_redefine(dbg, "print1", "print1_v2");
 //    }
 
 
@@ -222,13 +217,7 @@ int _tmain(){
 
 
 
-//  um_safe_redefine(dbg, "print1", "print1_v2", 10);
-
-
-
-
-
-
+//  //test um_get_var_size, pass
 //  size_t size1 = um_get_var_size(dbg, "person1", "main");
 //  printf("size of person1 in main %u\n", size1);
 //  size_t size2 = um_get_var_size(dbg, "person_array", "main");
@@ -237,24 +226,36 @@ int _tmain(){
 //  printf("Loading returned %d\n", um_load_code(dbg, "./testprogs/update.so"));
 
 
+
+
+
+
+
+
+
+  //test wait data access
+
+  if(um_wait_out_of_stack(dbg, "print1") == 0){
+    um_lazy_update_variable(dbg, true, "*person", "main", sizeof(person), update_person);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
   um_destroy_stack(stack);
   um_end(dbg);
 
   //Detach manager
   um_detach(pid);
   printf("Detached from %d\n",pid);
-
-//  //Delete Update File when over
-//  char *update_file_path = malloc(PROGRAM_DIRECTORY_MAXLENGTH*sizeof(char));
-//  sprintf(update_file_path, "%s/%s",ui->update_directory,update_file);
-//  int rem_upd = remove(update_file_path);
-//  if(rem_upd != 0){
-//    printf("Could not delete update file %s \n",update_file);
-//    return 4;
-//  }
-//  else{
-//    printf("Update file %s deleted \n",update_file);
-//  }
 
   return 0;
 }

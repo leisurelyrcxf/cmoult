@@ -107,6 +107,9 @@
 #include "is_function_in_stack.h"
 #include "get_str_len.h"
 #include "read_str.h"
+#include "add_watchpoint.h"
+#include "watch_access.h"
+#include "lazy_update.h"
 
 
 ///*****Opaque data types*****/

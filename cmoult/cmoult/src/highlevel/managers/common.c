@@ -26,6 +26,7 @@ static void push_update(manager * man, char * update){
   char* buff = malloc(sizeof(char) * (strlen(update) + 1));
   strcpy(buff, update);
   u->update = buff;
+  u->next = NULL;
   man->nupdate++;
   insert_queue(man->updates,u);
 }
@@ -36,7 +37,8 @@ static void pop_update(manager * man){
   u = pop_out_queue(man->updates);
 //  printf("update file \"%s\"\n",u->update);
   man->current_update = u;
-  man->nupdate--;
+  if(u != NULL)
+    man->nupdate--;
 }
 
 void postpone_update(manager * man){

@@ -3,7 +3,21 @@
 hostname=$(hostname)
 
 cd test
-make clean && make
+make clean && make 
+
+if [ $? -ne 0 ]; then
+  exit -1
+fi
+
+
+cd update
+make clean && make 
+
+if [ $? -ne 0 ]; then
+  exit -1
+fi
+
+cd ..
 
 ./test &
 last_app_pid=$!

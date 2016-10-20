@@ -30,7 +30,7 @@ void* print_int_array(int* p, size_t size){
   printf("\n");
 }
 
-void __attribute__ ((noinline)) print1(person* person1){
+void __attribute__ ((noinline)) print1(person* person){
 //  sleep(3);
 //  char array[] = {'s', 'o', 'm', 'e', ' ', 'c', 'o', 'm', 'm', 'e', 'n', 't', '\0'};
 //  char* some_comment = array;
@@ -40,22 +40,23 @@ void __attribute__ ((noinline)) print1(person* person1){
   int size = 10;
 
   printf("Before:\n");
-  printf("person1 of type person1 at %p\n", (void*)person1);
-  printf("pointer person1 at %p\n", (void*)&person1);
-  printf("person1->name: \"%s\"\n", person1->name);
-  printf("person1->age: %d\n", person1->age);
-  printf("person1->sex: \'%c\'\n", person1->sex);
+  printf("person of type person at %p\n", (void*)person);
+  printf("pointer person at %p\n", (void*)&person);
+  printf("print1 at %p\n", (void*)print1);
+  printf("person->name: \"%s\"\n", person->name);
+  printf("person->age: %d\n", person->age);
+  printf("person->sex: \'%c\'\n", person->sex);
   print_int_array(p_int_array, size);
   printf("\n");
 
-  sleep(5);
+//  sleep(5);
 
   printf("After:\n");
-  printf("person1 of type person1 at %p\n", (void*)person1);
-  printf("pointer person1 at %p\n", (void*)&person1);
-  printf("person1->name: \"%s\"\n", person1->name);
-  printf("person1->age: %d\n", person1->age);
-  printf("person1->sex: \'%c\'\n", person1->sex);
+  printf("person of type person at %p\n", (void*)person);
+  printf("pointer person at %p\n", (void*)&person);
+  printf("person->name: \"%s\"\n", person->name);
+  printf("person->age: %d\n", person->age);
+  printf("person->sex: \'%c\'\n", person->sex);
   print_int_array(p_int_array, size);
 //  free(some_comment);
 
@@ -64,26 +65,22 @@ void __attribute__ ((noinline)) print1(person* person1){
 }
 
 
-void print2(person_v2* person2){
-  printf("person2 of type person_v2 at %llx\n", (unsigned long long)person2);
-  printf("person2->name: \"%s\"\n", person2->name);
-  printf("person2->age: %d\n", person2->age);
-  printf("person2->sex: \'%c\'\n", person2->sex);
-  printf("person2->comment: \"%s\"\n", person2->comment);
+void print1_v2(person_v2* person){
+  printf("person of type person_v2 at %llx\n", (unsigned long long)person);
+  printf("person->name: \"%s\"\n", person->name);
+  printf("person->age: %d\n", person->age);
+  printf("person->sex: \'%c\'\n", person->sex);
+  printf("person->comment: \"%s\"\n", person->comment);
   printf("finished print2\n\n");
 
 //  sleep(5);
 
-  printf("person2 of type person_v2 at %llx\n", (unsigned long long)person2);
-  printf("person2->name: \"%s\"\n", person2->name);
-  printf("person2->age: %d\n", person2->age);
-  printf("person2->sex: \'%c\'\n", person2->sex);
-  printf("person2->comment: \"%s\"\n", person2->comment);
+  printf("person of type person_v2 at %llx\n", (unsigned long long)person);
+  printf("person->name: \"%s\"\n", person->name);
+  printf("person->age: %d\n", person->age);
+  printf("person->sex: \'%c\'\n", person->sex);
+  printf("person->comment: \"%s\"\n", person->comment);
   printf("finished print2\n\n");
-}
-
-void jmp(){
-  sleep(1);
 }
 
 
@@ -94,20 +91,21 @@ int main(){
 //  memcpy(comment, some_text, strlen(some_text) + 1);
 //  ptrace(PTRACE_TRACEME,0,NULL,NULL);
 
-//  person person1;
-//  person1.age = 24;
-//  person1.name = "Xiaofan";
-//  person1.sex = 'm';
+//  person person;
+//  person.age = 24;
+//  person.name = "Xiaofan";
+//  person.sex = 'm';
 
   person person_array[] = {{0,0,0},{0,0,0},{0,0,0}};
 
-  person* person1 = malloc(sizeof(person));
-  person1->age = 24;
-  person1->name = "Xiaofan";
-  person1->sex = 'm';
+  person* person = malloc(sizeof(person));
+  person->age = 24;
+  person->name = "Xiaofan";
+  person->sex = 'm';
   do{
-    print1(person1);
-  }while(0);
-  free(person1);
+    print1(person);
+//    sleep(5);
+  }while(1);
+  free(person);
   return 0;
 }

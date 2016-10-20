@@ -15,7 +15,6 @@ int um_redefine(um_data* dbg, char* name1, char* name2){
   }
   if (f1 == 0 || f2 == 0)
       return -1;
-
   insert_jump(dbg->pid, f1, f2);
   return 0;
 }
@@ -33,7 +32,6 @@ int um_wait_safe_redefine_update_point(um_data* dbg, char* func_name, unsigned l
       return -1;
     }
   }
-//  um_print_stack(dbg);
   return 0;
 }
 

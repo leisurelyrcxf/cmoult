@@ -61,7 +61,7 @@ sleep 1
 
 echo "scripts = ( 
 			{ 
-			  name  = \"modify_struct_immediate_access\";
+			  name  = \"eager_conversion_update\";
               script = \"`pwd`/update/lib/libupdate.so\";
               manager  = \"manager\";
             }

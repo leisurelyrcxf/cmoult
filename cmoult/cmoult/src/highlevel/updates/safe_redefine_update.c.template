@@ -54,7 +54,7 @@ char preupdate_setup(){
 
 /*force quiescence of function*/
 char wait_alterability(){
-  return um_wait_safe_redefine_update_point(dbg, (char*)old_func_name, 100) == 0;
+  return !is_function_in_stack(dbg, (char*)old_func_name, 100);
 }
 
 //

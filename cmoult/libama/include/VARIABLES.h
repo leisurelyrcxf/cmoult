@@ -13,7 +13,7 @@
 #define $new_function_name$  "func2"
 #define $update_process_pid$ 23744
 #define $program_name$ "test"
-#define $program_directory$ "/home/leisurelyrcxf/cmoult/cmoult/examples/force_quiescence_update"
+#define $program_directory$ "/home/leisurelyrcxf/cmoult/cmoult/libama/test"
 #define $new_code_path$ "/home/leisurelyrcxf/cmoult/cmoult/examples/force_quiescence_update/update/lib/libupdate.so"
 
 
