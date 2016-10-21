@@ -288,7 +288,7 @@ int um_remove_watchpoint(um_data* dbg, uint64_t addr, int len, uint8_t break_con
   return ret;
 }
 
-int um_clear_all(um_data* dbg){
+int um_clear_all_dr(um_data* dbg){
   int err;
   for(int i = 0; i < 4; i++){
     err+=um_write_dr(dbg, i, 0);
@@ -300,7 +300,7 @@ int um_clear_all(um_data* dbg){
   return -1;
 }
 
-int um_clear_status(um_data* dbg){
+int um_clear_dr_status(um_data* dbg){
   if(um_write_dr(dbg, 6, 0) != 0){
     perror("write dr6");
     return -1;

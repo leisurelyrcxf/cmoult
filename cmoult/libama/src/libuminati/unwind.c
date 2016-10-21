@@ -129,18 +129,9 @@ static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
 
 
 
-  const char *symname = NULL;
+  char *symname = NULL;
   if(mod){
     symname = dwfl_module_addrname (mod, pc_adjusted);
-  }
-
-
-  if(args->print){
-    Dwarf_Addr start, end;
-    const char* module_name;
-    module_name = dwfl_module_info (mod, NULL, &start, &end, NULL, NULL, NULL, NULL);
-    printf("#%p\t%4s\t%s\t%s\n", (void*)((uint64_t) pc),
-      ! isactivation ? "-1" : "top", symname, module_name);
   }
 
 
@@ -227,6 +218,18 @@ ppp:
       }
     }
   }
+
+
+
+  if(args->print){
+    Dwarf_Addr start, end;
+    const char* module_name;
+    module_name = dwfl_module_info (mod, NULL, &start, &end, NULL, NULL, NULL, NULL);
+    symname[6] = '\0';
+    printf("#%p\t%4s\t%s\t%p\t%p\t%p\t%p\t%p\n", (void*)((uint64_t) pc),
+      ! isactivation ? "-1" : "top", symname, (void*)mod, (void*)args->current->cfa, (void*)args->current->regs[REG_RSP],
+          (void*)args->current->regs[REG_RBP], (void*)args->current->regs[REG_RA]);
+  }
   return DWARF_CB_OK;
 }
 
@@ -246,11 +249,18 @@ um_frame* _um_unwind (um_data* dbg, const char* target, um_frame** cache, int fl
       .has_error = false
   };
 
+
+
+  if(args.print){
+    printf("pc\t'active'\tfunc_name\tmod_name\tcfa\trsp\trbp\tra\n");
+  }
   if(dwfl_getthread_frames(dbg->debug_raw, dbg->pid, &frame_callback, (void*)(&args)) != 0){
       dwarf_error("dwfl_getthread_frames");
       return NULL;
   }
-
+  if(args.print){
+    printf("\n\n\n");
+  }
   *cache = args.stack;
 
   if(args.has_error || (target && !args.found)){
@@ -261,7 +271,7 @@ um_frame* _um_unwind (um_data* dbg, const char* target, um_frame** cache, int fl
 }
 
 um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) {
-  _um_unwind(dbg, target, cache, flags, 0);
+  _um_unwind(dbg, target, cache, flags, 1);
 }
 
 void um_print_stack(um_data* dbg){
@@ -278,7 +288,6 @@ void um_print_stack(um_data* dbg){
       .print = true,
       .has_error = false
   };
-
   if(dwfl_getthread_frames(dbg->debug_raw, dbg->pid, &frame_callback, (void*)(&args)) != 0){
       dwarf_error("dwfl_getthread_frames");
       return;

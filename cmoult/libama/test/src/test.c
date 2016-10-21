@@ -104,7 +104,6 @@ int main(){
   person->sex = 'm';
   do{
     print1(person);
-//    sleep(5);
   }while(1);
   free(person);
   return 0;

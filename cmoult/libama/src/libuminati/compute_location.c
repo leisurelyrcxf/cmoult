@@ -15,7 +15,7 @@ uint64_t compute_location (Dwarf_Attribute* attr, um_frame* context, um_data* db
                    &base, &begin, &end,
                    &ops, &nops)) > 0){
         if (begin >= end){
-          printf (" %p , %p) <empty range>\n", (void*)begin, (void*)end); // XXX report?
+          printf (" %p , %p) <empty range>\n", (void*)begin, (void*)end);
         }else
           {
 //      print_expr_block_addrs (&attr, begin, end,

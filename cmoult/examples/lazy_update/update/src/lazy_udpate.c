@@ -66,7 +66,7 @@ char preupdate_setup(){
 
 
 char wait_alterability(){
-  return um_wait_var_access(dbg, true, "*person", "main", sizeof(person)) == 0;
+  return  um_wait_var_access(dbg, true, "person1", "main", sizeof(person)) == 0;
 }
 
 //
@@ -75,22 +75,22 @@ char wait_alterability(){
 //}
 
 void apply(){
-//  uint64_t addr = um_get_var_addr(dbg, true, "*person", "main");
-//  size_t len = sizeof(person);
-//  void* buffer = malloc(len);
-//  if(um_memcpy(dbg, (uint64_t)buffer, addr, len, MEMCPY_REMOTE_TO_LOCAL) != 0){
-//    free(buffer);
-//    return;
-//  }
-//  if(update_person(dbg, buffer, len) != 0){
-//    free(buffer);
-//    return;
-//  }
-//  if(um_memcpy(dbg, addr, (uint64_t)buffer, len, MEMCPY_LOCAL_TO_REMOTE) != 0){
-//    free(buffer);
-//    return;
-//  }
-//  free(buffer);
+  uint64_t addr = um_get_var_addr(dbg, true, "person1", "main");
+  size_t len = sizeof(person);
+  void* buffer = malloc(len);
+  if(um_memcpy(dbg, (uint64_t)buffer, addr, len, MEMCPY_REMOTE_TO_LOCAL) != 0){
+    free(buffer);
+    return;
+  }
+  if(update_person(dbg, buffer, len) != 0){
+    free(buffer);
+    return;
+  }
+  if(um_memcpy(dbg, addr, (uint64_t)buffer, len, MEMCPY_LOCAL_TO_REMOTE) != 0){
+    free(buffer);
+    return;
+  }
+  free(buffer);
 
   sleep(5);
 
@@ -103,7 +103,7 @@ void apply(){
 //char check_over(){}
 
 void cleanup(){
-  uint64_t addr = um_get_var_addr(dbg, true, "*person", "main");
+  uint64_t addr = um_get_var_addr(dbg, true, "person1", "main");
   cleanup_watchpoint(dbg, addr, sizeof(person), WP_TRAP_COND_DATA_ACCESS);
   um_detach(pid);
   printf("Detached from %d\n",pid);

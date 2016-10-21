@@ -23,7 +23,7 @@ static int um_wait_addr(um_data* dbg, uint64_t addr, size_t len, uint8_t wait_co
       return -1;
     }
   }while(!WIFEXITED(status) && !(WIFSTOPPED(status) && WSTOPSIG(status) == SIGTRAP));
-
+  um_clear_dr_status(dbg);
   return 0;
 }
 
@@ -106,6 +106,5 @@ int cleanup_watchpoint(um_data* dbg, uint64_t addr, size_t len, uint8_t wait_con
   if(um_remove_watchpoint(dbg, addr, len, wait_cond, WATCH_LOCAL) != 0){
     fprintf(stderr, "failed to remove all watch point\n");
   }
-  um_clear_all_dr(dbg);
   return 0;
 }

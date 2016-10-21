@@ -233,7 +233,7 @@ uint64_t um_transform_struct_pointer(um_data* dbg, uint64_t pointer_addr, size_t
     return -1;
   }
 
-  if(um_write_addr(dbg, pointer_addr, addr, 8) != 0){
+  if(um_repoint_pointer_to_addr(dbg, pointer_addr, addr) != 0){
     return -1;
   }
   return addr;

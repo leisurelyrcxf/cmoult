@@ -31,7 +31,9 @@ int transform_person_to_person_v2(um_data* dbg, void * p1, void * p2, int flag){
   person2->sex = person1->sex;
   person2->comment = NULL;
 
-  person2->name = (char*)um_write_str(dbg, (uint64_t)(person2->name), "Xiaofan CHEN", flag);
+  person2->age = 11;
+  person2->sex = 'f';
+  person2->name = (char*)um_write_str(dbg, (uint64_t)(person2->name), "CPF", flag);
 
   char* old_name = malloc(1024);
   um_read_str_at_address(dbg, (uint64_t)(person2->name), old_name, 1024);
@@ -40,6 +42,7 @@ int transform_person_to_person_v2(um_data* dbg, void * p1, void * p2, int flag){
   free(old_name);
 
   person2->comment = (char*)um_write_str(dbg, (uint64_t)0, comment, flag);
+  free(comment);
   return 0;
 }
 
@@ -171,18 +174,18 @@ int _tmain(){
 
 
 
+  addr = um_get_var_addr(dbg, true, "person", "main");
 
-
-//  //transform struct test, passed
-//  addr = um_get_var_addr(dbg, true, "person1", "main");
-//  if(addr == -1 || addr == 0){
-//    fprintf(stderr, "can't get address of *person1\n");
-//  }else{
+//    addr = um_get_var_addr(dbg, true, "person", "main");
+    printf("person at addr %p\n", (void*)addr);
 //    um_transform_struct_pointer(dbg, addr, sizeof(person), sizeof(person_v2), &transform_person_to_person_v2, AUTO_REALLOC);
-//    if(um_wait_out_of_stack(dbg, "print1") == 0){
-//      um_redefine(dbg, "print1", "print2");
-//    }
-//  }
+    if(um_wait_out_of_stack(dbg, "print1") == 0){
+      addr = um_get_var_addr(dbg, true, "person", "main");
+      printf("person at addr %p\n", (void*)addr);
+//      um_transform_struct_pointer(dbg, addr, sizeof(person), sizeof(person_v2), &transform_person_to_person_v2, AUTO_REALLOC);
+//      um_redefine(dbg, "print1", "print1_v2");
+    }
+
 
 
 
@@ -235,9 +238,9 @@ int _tmain(){
 
   //test wait data access
 
-  if(um_wait_out_of_stack(dbg, "print1") == 0){
-    um_lazy_update_variable(dbg, true, "*person", "main", sizeof(person), update_person);
-  }
+//  if(um_wait_out_of_stack(dbg, "print1") == 0){
+//    um_lazy_update_variable(dbg, true, "*person", "main", sizeof(person), update_person);
+//  }
 
 
 
@@ -250,7 +253,7 @@ int _tmain(){
 
 
 
-  um_destroy_stack(stack);
+//  um_destroy_stack(stack);
   um_end(dbg);
 
   //Detach manager

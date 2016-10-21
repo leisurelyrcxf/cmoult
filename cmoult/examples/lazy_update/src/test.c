@@ -26,14 +26,13 @@ void __attribute__ ((noinline)) print_person(person* person){
 
 
 int main(){
-  person* person = malloc(sizeof(person));
-  person->age = 24;
-  person->name = "Xiaofan";
-  person->sex = 'm';
+  person person1;
+  person1.age = 24;
+  person1.name = "Xiaofan";
+  person1.sex = 'm';
   do{
-    print_person(person);
-    sleep(2);
+    print_person(&person1);
+//    sleep(1);
   }while(1);
-  free(person);
   return 0;
 }
