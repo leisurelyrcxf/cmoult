@@ -47,7 +47,7 @@ char preupdate_setup(){
 
 /*wait static update point*/
 char wait_alterability(){
-  return wait_static_update_point() == 0;
+  return wait_static_update_point(1800) == 0;
 //    return  um_wait_out_of_stack(dbg, (char*)old_func_name);
 //    return 0;
 //  }

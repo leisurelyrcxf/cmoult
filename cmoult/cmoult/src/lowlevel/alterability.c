@@ -1,11 +1,14 @@
 #include "alterability.h"
 
 
-static bool flag_wait_static_update_point;
-
+static bool flag_wait_static_update_point = 0;
+static bool flag_application_ready_to_update = 0;
 static void manager_signal_handler_wait_static_update_point(int sig){
   switch(sig){
     case SIGUSR1:
+      flag_application_ready_to_update = 1;
+      break;
+    case SIGUSR2:
       printf("recevie SIGUSR1\n");
       flag_wait_static_update_point = 0;
       break;
@@ -15,6 +18,7 @@ static void manager_signal_handler_wait_static_update_point(int sig){
 }
 
 char preupdate_setup_static_update_point(int pid){
+  flag_application_ready_to_update = 0;
   flag_wait_static_update_point = 1;
   if(signal(SIGUSR1, manager_signal_handler_wait_static_update_point) == SIG_ERR){
     fprintf(stderr, "Unable to create signal handler\n");
@@ -23,15 +27,28 @@ char preupdate_setup_static_update_point(int pid){
 
   kill(pid, SIGUSR1);
   printf("send SIGUSR1 to process %d, send the pid of manager and makes the application ready for coming update\n", pid);
+  //wait application to response
+  sleep(2);
   return 0;
 }
 
 
 
-char wait_static_update_point(){
+char wait_static_update_point(unsigned int timeout){
+  //application is not ready to updates
+  if(!flag_application_ready_to_update){
+    return -1;
+  }
   const struct timespec rqtp = {0, 100000000};
+  float time_consumed = 0;
   while(flag_wait_static_update_point){
     nanosleep(&rqtp, NULL);
+    time_consumed += 0.1;
+    if(time_consumed > timeout){
+      //can't wait static update point in timeout, may due to maybe the application is down or the application
+      //can't get into static update point, etc.
+      return -1;
+    }
   }
   return 0;
 }
@@ -54,7 +71,7 @@ void cleanup_static_update_point(int pid){
 
 /*functions for application*/
 
-extern int manager_pid;
+extern int manager_pid = 0;
 
 static bool application_static_update_point_update_finished;
 
@@ -64,6 +81,8 @@ static void application_signal_handler_wait_static_update_point(int sig, siginfo
     case SIGUSR1:
       manager_pid = info->si_pid;
       printf("manager pid is %d\n\n", info->si_pid);
+      //tell manager the application is ready for the coming update
+      kill(manager_pid, SIGUSR1);
       break;
     case SIGUSR2:
       application_static_update_point_update_finished = 1;
@@ -96,7 +115,7 @@ void pre_setup_static_update_point(){
 void static_update_point(){
   if(manager_pid != 0){
     printf("trapping into static update point, send SIGUSR1 to manager of pid %d\n", manager_pid);
-    kill(manager_pid, SIGUSR1);
+    kill(manager_pid, SIGUSR2);
     manager_pid = 0;
 
     application_static_update_point_update_finished = 0;
