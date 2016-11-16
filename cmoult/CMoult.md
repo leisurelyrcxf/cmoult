@@ -24,22 +24,22 @@ Make a _build directory in the current folder and run cmake from here
 
 `mkdir _build && cd _build && cmake ..`
 
-##1, Introduction
-The Cmoult project is a C version of Pymoult, which provides DSU ability for C langauge similar to Pymoult. In Pymoult, it provides the functionality of modify function, data types (classes), data values, etc. at runtime.
+##1 Introduction
+The Cmoult project is a C version of Pymoult, which provides DSU ability similar to Pymoult for C langauge. Pymoult provides the functionalities such as modifying function, data types (classes), data values, etc. at runtime.
 
-Thus the Cmoult project has the ambition to provide all those functionalities for the language C. Comparing to python, the implementation in C has a lot of difficulties, becuase python is a modern advanced dynamic language, but C is much closer to bottom machine level.
+The Cmoult project has the ambition to provide all those functionalities for language C. Comparing to python, the implementation in C has much more difficulties becuase python is a modern advanced dynamic language, but C is much closer to machine level.
 
-The current implementation still has some shortcomings, but it does have implemented the core functionalities of Pymoult in a prototype form. Below I am gonna the approaches that I used and other contributions which I have made to Cmoult.
+The current implementation still has some shortcomings, but it does have implemented the core functionalities of Pymoult. I am going to describe the approaches that I used in sescion 2 and some other contributions which I have made to Cmoult in section 3.
 
 
 
 ##2, Approaches
-###2.1, Tasks en Bref
-&nbsp;&nbsp;The Pymoult project includes mainly three modules————listener, manager, update. The listener module provides the functionality of receving commands from a TCP session and transfer the corresponding commands including log related commands and especially the update commands, etc. to manager. The manager module provides the functionality of executing commands, managing updates, do updating, etc. The update module provides the infrastructure for implementing customized updates, e.g., the base classes, the low-level api to handling updates, etc.
+###2.1 Tasks en Bref
+&nbsp;&nbsp;The Pymoult project includes mainly three modules————listener, manager, update. The listener module provides the functionality of receving commands from a TCP session and transferring the recevied commands (including log related commands and especially the update commands) to the manager. The manager module provides the functionality of executing commands, managing updates, do updating, etc. The update module provides the infrastructure for implementing customized updates, e.g., the base classes, the low-level api to handling updates, etc.
 
-&nbsp;&nbsp;While the modules listener and manager is much simpler in comparison to the module update, when I got involved into the prject, these two modules have bascially been done, but there are some bugs, which I will present in the later section.
+&nbsp;&nbsp;While the modules listener and manager is much simpler in comparison to the module update, when I got involved into the project, these two modules have bascially been done, but there are some tiny bugs which I fixed. I will present them in the later section.
 
-&nbsp;&nbsp;For the update modules, the updates can be firstly classified into two catagories, namely updating function (or method) and updating data, which could be further devided into updating data type and data value. Another dimenstion of updating is the updating moment.
+&nbsp;&nbsp;For the update module, the updates can be firstly classified into two catagories, namely updating function (or method) and updating data, which could be further devided into updating data type and data value. Another dimenstion of updating is the updating moment.
 
 &nbsp;&nbsp;For function update, there are mainly three mechanisms for deciding the updating moment, namely 
 * safe redefine update————periodically check the call stack and only apply the update when the function is not in the calling stack
@@ -54,16 +54,16 @@ The current implementation still has some shortcomings, but it does have impleme
 * delayed (the data is updated some time after the access) or
 * instant (the data is updated when accessed).
 
-&nbsp;&nbsp;Below I will present my approaches for implementing these updates seprately.
+&nbsp;&nbsp;Below I will present my approaches for implementing these updates separately.
 
 ###2.2 Environments
 &nbsp;&nbsp;Due to the time and hardware limitation, All these approaches are implemented and tested under Ubuntu 16.04 and some of these approaches will only work under X86-64.
 
-###2.3, Update function
-####2.3.1, Update Approach
+###2.3 Update function
+####2.3.1 Update Approach
 &nbsp;&nbsp;Cmoult uses the X86 near jump instruction (0xeb) and long jump instruction (0xe9) to implement this update. To do this, we need to get the addresses of the old function and the new function. This is done with libdw by searching the Dwarf_Die tree.
 
-The code used for updating is as below.
+The code used for updating is as below (previous work in libuminati):
 
 ```CPP
 int um_redefine(um_data* dbg, char* name1, char* name2){
@@ -77,11 +77,11 @@ int um_redefine(um_data* dbg, char* name1, char* name2){
 }
 ```
 
-####2.3.2, Dicide the Right Update Moment
-&nbsp;&nbsp;There are mainly threee approaches, namely safe redefine update, force quiescence update and static update points. I will explain them in the coming section.
-####2.3.2.1, Safe Redefine Update
+####2.3.2 Decide the Right Update Moment
+&nbsp;&nbsp;There are mainly threee approaches, namely safe redefine update, force quiescence update and static update point. I will explain them in the coming sections.
+####2.3.2.1 Safe Redefine Update
 &nbsp;&nbsp;This is done by periodically checking the call stack and only applying the update when the function is not in the calling stack.
-&nbsp;&nbsp;The key API's used to check a whether a function is in stack or not are as below.
+&nbsp;&nbsp;The key APIs used to check a whether a function is in stack or not are as below.
 
 ```CPP
 bool is_function_in_stack(um_data* dbg, char* name){
@@ -95,7 +95,7 @@ bool is_function_in_stack(um_data* dbg, char* name){
 }
 ```
 
-The function ` um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) ` is implemented with the libdw api `dwfl_getthread_frames`. The old function in libuminati has some bugs, thus I decided to write my own version of this function, but I still backed up the old function.
+The function ` um_frame* um_unwind (um_data* dbg, const char* target, um_frame** cache, int flags) ` is implemented with the libdw api `dwfl_getthread_frames`. The old function in libuminati has some bugs, thus I decided to write my own version of this function, but I still backed up the old version.
 
 ```CPP
 static int frame_callback (Dwfl_Frame *dwfl_frame, void *callback_arg){
@@ -299,10 +299,10 @@ int um_safe_redefine(um_data* dbg, char* name1, char* name2, unsigned long mseco
     return um_redefine(dbg, name1, name2);
 }
 ```
-####2.3.2.2, Force Quiescence Update
+####2.3.2.2 Force Quiescence Update
 &nbsp;&nbsp;Apply the update exactly at the point when the function has just been poped out of calling stack. This is done by unwind the stack and add a breakpoint at the entrance of the next function in the call stack.
 
-The code is as below.
+The code is as below (previous work in libuminati).
 ```CPP
 int um_wait_out_of_stack(um_data* dbg, char* name){
     um_frame* cache = NULL;
@@ -327,25 +327,30 @@ int um_wait_out_of_stack(um_data* dbg, char* name){
     return 0;
 }
 ```
-####2.3.2.3, Static Update Point
+####2.3.2.3 Static Update Point
 The static update point is implemented using the linux signal system.
 
-The manager firstly sends a SIGUSR1 to the process to be updated, if then the manager receives a SIGUSR1 back from the application then the manager will be ready to doing update. By calling `char wait_static_update_point(unsigned int)`, the manager will block itself until receiving a SIGUSR2 from the application which indiates that the application has entered a static update point or the timeout is expired which indicates what the application doesn't enter any static update point within the given timeout.
+The manager firstly sends a SIGUSR1 to the process to be updated, if then the manager receives a SIGUSR1 back from the application then the manager will be ready to do the update. By calling `char wait_static_update_point(unsigned int)`, the manager will block itself until receiving a SIGUSR2 from the application which indiates that the application has entered a static update point or until the timeout is expired which indicates that the application doesn't enter any static update point within the given timeout.
 
-The application firstly registers functions for handling signal SIGUSR1 and SIGUSR2. If it receives a SIGUSR1 from manager, it will be aware of that there is a coming update event. Then it will store the pid of the manager and send a SIGUSR1 back to the manager. When it reaches its *static_update_point* function, it will send a SIGUSR2 to the manager, and block itself until the manager finished the update and sending back a SIGUSR2.
+The application firstly registers handlers for signal SIGUSR1 and SIGUSR2. If it receives a SIGUSR1 from manager, it will be aware of that there is a coming update event. Then it will store the pid of the manager and send a SIGUSR1 back to the manager to inform the manager that it is ready to do the update. When it reaches its *static_update_point* function, it will send a SIGUSR2 to the manager, and block itself until the manager finished the update and sending back a SIGUSR2.
 
 The key APIs come as below:
 ```CPP
 static bool flag_wait_static_update_point = 0;
 static bool flag_application_ready_to_update = 0;
-static void manager_signal_handler_wait_static_update_point(int sig){
+static int app_pid = -1;
+
+static void manager_signal_handler_wait_static_update_point(int sig, siginfo_t *info, void *ctx){
   switch(sig){
     case SIGUSR1:
-      flag_application_ready_to_update = 1;
+      printf("recevie SIGUSR1\n");
+      if(info->si_pid == app_pid)
+        flag_application_ready_to_update = 1;
       break;
     case SIGUSR2:
-      printf("recevie SIGUSR1\n");
-      flag_wait_static_update_point = 0;
+      printf("recevie SIGUSR2\n");
+      if(info->si_pid == app_pid)
+        flag_wait_static_update_point = 1;
       break;
     default:
       break;
@@ -354,32 +359,45 @@ static void manager_signal_handler_wait_static_update_point(int sig){
 
 char preupdate_setup_static_update_point(int pid){
   flag_application_ready_to_update = 0;
-  flag_wait_static_update_point = 1;
-  if(signal(SIGUSR1, manager_signal_handler_wait_static_update_point) == SIG_ERR){
-    fprintf(stderr, "Unable to create signal handler\n");
-    return -1;
+  flag_wait_static_update_point = 0;
+  app_pid = pid;
+
+  struct sigaction act;
+  act.sa_sigaction = manager_signal_handler_wait_static_update_point; //sa_sigaction与sa_handler只能取其一
+
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = SA_SIGINFO; // set flag to enable sa_sigaction
+
+  if (sigaction(SIGUSR1, &act, NULL) < 0){
+    fprintf(stderr, "fail to register sigaction\n");
+    exit(-1);
+  }
+
+  if (sigaction(SIGUSR2, &act, NULL) < 0){
+    fprintf(stderr, "fail to register sigaction\n");
+    exit(-1);
   }
 
   kill(pid, SIGUSR1);
+  printf("send SIGUSR1 to process %d\n", pid);
   //wait application to response
   sleep(2);
-  printf("send SIGUSR1 to process %d, send the pid of manager and makes the application ready for coming update\n", pid);
   return 0;
 }
 
 
 
-char wait_static_update_point(unsigned int timeout){
+char wait_static_update_point(unsigned timeout_in_seconds){
   //application is not ready to updates
   if(!flag_application_ready_to_update){
     return -1;
   }
   const struct timespec rqtp = {0, 100000000};
   float time_consumed = 0;
-  while(flag_wait_static_update_point){
+  while(!flag_wait_static_update_point){
     nanosleep(&rqtp, NULL);
     time_consumed += 0.1;
-    if(time_consumed > timeout){
+    if(time_consumed > timeout_in_seconds){
       //can't wait static update point in timeout, may due to maybe the application is down or the application
       //can't get into static update point, etc.
       return -1;
@@ -395,6 +413,7 @@ void cleanup_static_update_point(int pid){
 
   kill(pid, SIGUSR2);
   printf("send SIGUSR2 to process %d, pull the process out of the static point\n", pid);
+  app_pid = -1;
 }
 
 
@@ -406,21 +425,23 @@ void cleanup_static_update_point(int pid){
 
 /*functions for application*/
 
-extern int manager_pid = 0;
+static int manager_pid = -1;
 
-static bool application_static_update_point_update_finished;
+static bool application_static_update_point_update_finished = 0;
 
 static void application_signal_handler_wait_static_update_point(int sig, siginfo_t *info, void *ctx){
-  printf("\nreceive a sig %d\n", sig);
   switch(sig){
     case SIGUSR1:
       manager_pid = info->si_pid;
+      printf("recevie SIGUSR1\n");
       printf("manager pid is %d\n\n", info->si_pid);
       //tell manager the application is ready for the coming update
       kill(manager_pid, SIGUSR1);
       break;
     case SIGUSR2:
-      application_static_update_point_update_finished = 1;
+      printf("recevie SIGUSR2\n");
+      if(info->si_pid == manager_pid)
+        application_static_update_point_update_finished = 1;
       break;
     default:
       break;
@@ -447,16 +468,21 @@ void pre_setup_static_update_point(){
   }
 }
 
-void static_update_point(){
-  if(manager_pid != 0){
+void static_update_point(unsigned timeout_in_seconds){
+  if(manager_pid != -1){
     printf("trapping into static update point, send SIGUSR1 to manager of pid %d\n", manager_pid);
     kill(manager_pid, SIGUSR2);
-    manager_pid = 0;
 
     application_static_update_point_update_finished = 0;
+    unsigned time_passed = 0;
     while(!application_static_update_point_update_finished){
       sleep(1);
+      time_passed += 1;
+      if(time_passed > timeout_in_seconds) {
+        break;
+      }
     }
+    manager_pid = -1;
   }
 }
 ```
@@ -517,21 +543,19 @@ void __attribute__ ((noinline)) func2(){
   printf("func2()\n");
 }
 
-int manager_pid = 0;
-
 int main(){
   pre_setup_static_update_point();
   while(1){
-    static_update_point();
     func1();
-    sleep(1);
+    sleep(10);
+    static_update_point(60); //timeout 60s
   }
   return 0;
 }
 ```
 
-###2.4, Update Data
-####2.4.1, Update Approach
+###2.4 Update Data
+####2.4.1 Update Approach
 Update data involves updating data in heap and data in stack.
 #####2.4.1.1 Key APIs
 Some of the key APIs are as following.
@@ -651,17 +675,17 @@ char* p; //here the pointer p itself can only be updated in place
 ```
 
 #####2.4.1.4 Update Pointer
-######2.4.1.4.1 Update Pointer Itself
+######2.4.1.4.1 Update Pointer Itself (Redirect Pointer)
 Pointer itself can only be updated in place as updating non-pointed values.
 ######2.4.1.4.2 Update Pointer Values
-Firstly calculate the address of the pointed values by reading the content of pointer address, then write a new address to the pointer address.
+Firstly calculate the address of the pointed values by reading the content of pointer address, then write new values to the pointed address.
 ######2.4.1.4.3 Allocate New Memory and Redirect Pointer
 Allocate New Memory and Redirect Pointer can be used to write new values which have bigger size than the old values and couldn't be written in the in-place way. In this case, firstly, new memory is allocated, new values are written to the new address, and then the pointer is redirected to the new address.
 
 #####2.4.1.5 Update String
 Cause in C a string is usually a char* variable in heap or const memory, update string can either be done in place or by allocating new moemory and using pointer redirection.
 
-The API **um_write_str** and **um_set_str_pointer** are for this purpose. These two functions both accept a parameter **flag**, which is used to decide whether new memory need be allocated. Curretly there are four kinds of flags which are described as below
+The API **um_write_str** and **um_set_str_pointer** are for this purpose. These two functions both accept a parameter **flag**, which is used to decide whether new memory need to be allocated. Curretly there are three kinds of flags which are described as below
 * FORCE_REALLOC————force allocate new memory
 * NOT_REALLOC————force not allocate new memory
 * AUTO_REALLOC————let Cmoult decide whether to allocate memoery or not (recommended). Cmoult will get the length of the old string and the length of the new string, then use them to decide whether allocating new momery is needed
@@ -785,9 +809,9 @@ uint64_t um_set_pointer_to_values(um_data* dbg, uint64_t pointer_addr, size_t ol
 ```
 
 #####2.4.1.7 Update Struct
-Similar to update buffer, but instead providing new values, a transform function pointer is provided as a parameter to do the transformation.
+Similar to update buffer, but instead of providing new values, a transform function is provided as a parameter to do the transformation.
 
-In the pointer case, cause new memory could be allocated and pointer redirection is used, thus increasing the size of the struct is possible, i.e., add or remove member from struct is also possible. Otherwise, increasing or keeping the size of the struct is not possible, but descreasing it is possible.
+In the pointer case, cause new memory could be allocated and pointer redirection is used, thus increasing the size of the struct is possible, e.g., add members to struct is possible. In the non-pointed case, increasing the size of the struct is not possible, but descreasing or keeping the size is still possible.
 
 E.g., for variable like `struct some_struct s`, if we modify `some_struct` to `some_struct_2`, if size of `some_struct_2` is bigger than `some_struct`, then the update is not doable (if size of `some_struct_2` is smaller than or equal to `some_struct`, then it's still doable). But for variable like `struct some_struct* s`, no matter what the size of the new struct `some_struct_2` is, the udpate is always doable. So if users want to use this version of Cmoult and want to add member to exsiting struct at runtime, it must program in a more Cmoult way, i.e., for struct variable, always allocate it in heap other than stack.
 ```CPP
@@ -865,7 +889,7 @@ uint64_t um_transform_struct_pointer(um_data* dbg, uint64_t pointer_addr, size_t
 }
 ```
 #####2.4.1.7 Update Array
-Cause arrays are allocated in stack, and the array variable can't be redirected (it is kindly equivalenet to a const pointer). Update an array is always in place.
+Cause arrays are allocated in stack, and the array variable can't be redirected (it is kindly equivalenet to const pointer). Update an array is always in place.
 ```CPP
 //all-in-one function for updating an array in place
 uint64_t um_set_by_array_variable(um_data* dbg, bool is_local, char* name, char* scope, void* new_values, size_t new_size){
@@ -884,13 +908,13 @@ uint64_t um_set_by_array_variable(um_data* dbg, bool is_local, char* name, char*
 
 ####2.4.2 Access Strategy
 #####2.4.2.1 Progressive
-I implement a basic version of progressive access strategy using the X86 debug registers. The X86 debug registers can monitor access to specific sections of memory and cause process to interrupt when access is monitored. Such kind of memory breakpoint is called watchpoint in a gdb way. The description of the format of the X86 debug registers could be found in wikipedia, see [x86 debug resiters](https://en.wikipedia.org/wiki/X86_debug_register).
+I implement a basic version of progressive access strategy using the X86 debug registers. The X86 debug registers can monitor access to specific sections of memory (three modes of monitoring memory actuallyȄ————write, access, execute) and cause the process to interrupt when access is detected. Such kinds of memory breakpoints are called watchpoints in a gdb way. The description of the format of the X86 debug registers could be found in wikipedia, see [x86 debug resiters](https://en.wikipedia.org/wiki/X86_debug_register).
 
-But this approach has some obvious limitations, such as,
+This approach has some limitations, such as,
 * The memory monitored concurrently is limited, in a X86-64 case, maximum 32 Bytes.
 * Platform dependency. Have to recode for each architecture. Some architectures don't provide debug registers.
 
-Below is the code of the key API of add a watchpoint in Cmoult.
+Below is the code of a key function of adding a watchpoint in Cmoult.
 
 ```CPP
 static int um_add_aligned_watchpoint(um_data* dbg, uint64_t addr_to_watch, uint8_t len,
@@ -972,25 +996,24 @@ The original Cmoult project and the libuminati all have a lot of bugs, which stu
 
 ##3.1 Bug Fix
 #3.1.1 Unwind Stack
-The original unwind_stack doesn't work if a system call exists. This is probably due to the problems below
+The original `unwind_stack` doesn't work if a system call exists. This is probably due to but not limited to the reasons below:
 * Reading registers to get all the PC for all frames is not reliable.
 * The original API `int get_cfa_from_frame(um_frame* context, um_data* dbg)` doesn't work in a system call case, cause the cfi is not always the same for different modules.
-* Other potential reasons.
 
 #3.1.2 Get Local Variable Address
 Dwarf_Attribute can't be directly assigned, e.g., `Dwarf_Attribute a = b;` seems to result in segmenation error.
 
 #3.1.3 Segmentation Fault in Cmoult Manager
-Due to wrong use of `<system/queue>` and when malloc for string, forget to plus 1 for the ending character. I replace the system queue with my own queue implementation because using system queue macros is not easy reading and easy to make error.
+Due to wrong usage of `<system/queue>` and when malloc for string, forget to plus 1 for the ending character. I replace the system queue with my own queue implementation because using system queue macros is not easy for reading and much easier to make mistakes.
 
 #3.1.4 Other Bugs
-May still have some bugs which are not listed above.
+May still have some bugs which are not listed above and have got fixed.
 
 #3.2 Enhancement
-I added a lot of API to libuminati to enhance its functionality, including but not limited to read/write facilities, watchpoint supports, etc.
+I added a lot of APIs to libuminati to enhance its functionality, including but not limited to read/write facilities, watchpoint supports, etc.
 
 #3.3 Demos
-I implement demos for different kinds of update for demostrating how to use Cmoult, including 
+I implement serveral demos for different kinds of updates for demonstrating how to use Cmoult, including:
 * eager_conversion_update
 * modify_integer_pointer
 * force_quiescence_update
@@ -998,17 +1021,34 @@ I implement demos for different kinds of update for demostrating how to use Cmou
 * lazy_update
 * static_update_point_redefine_function
 
+Just simply run the **test.sh** under each folder.
 
 #4 Future Work
 #4.1 Bug Fix
-There are some bugs which I have payed a lot of time and attention and still can't resolve, which I list below.
-* The API in libuminati `um_load_code` seems not work properly. I have tried to load the new function at runtime and then do an insert jump to the new function address but this always results in segmentation fault.
-* The `um_unwind` function is still not perfect, in some special case, the result is not reliable.
-Resolving these bugs requires stepping more deeply into the libdw library and understanding more of the call stack implementation in X86, apparently it is goint to be hard and a long term work.
+There are still some bugs which I have payed a lot of time and efforts but still can't resolve. I list some of them below.
+* The API in libuminati `um_load_code` seems not working properly. I have tried to load a new functions at runtime and then do an insert jump to the new function address but this always results in a segmentation fault.
+* The `um_unwind` function is still not perfect, in some extreme cases, the result is not reliable.
+
+Resolving these bugs requires stepping much more deeply into the libdw library and understanding much more of the call stack in X86, thus won't be easy.
 
 #4.2 Potential Enhancement
 * For non-pointed variables, such as `struct some_struct s`, increasing the size of the struct is not possible, which limits the usage of Cmoult. Need read more papers to find out if it is doable, and if yes one possible solution.
 
+* The limitation of using X86 debug register to do lazy conversion. 
+
+   One of the possible alternative solutions is to use software watchpoint, but software watchpoint also has some limitations as listed below:
+
+    * The software watchpoint will severely slow down the execution of the application cause it uses single step execution. Below is a paragraph that I found from the gdb website [gdb watchpoint](https://sourceware.org/gdb/onlinedocs/gdb/Set-Watchpoints.html):
+    &nbsp;&nbsp;&nbsp;*Depending on your system, watchpoints may be implemented in software or hardware. gdb does software watchpointing by single-stepping your program and testing the variable's value each time, which is hundreds of times slower than normal execution. (But this may still be worth it, to catch errors where you have no clue what part of your program is the culprit.)*
+
+    * Software watchpoint for monitor memory read is hard to implement. Below is another paragraph that I found from the gdb website [gdb watchpoint](https://sourceware.org/gdb/onlinedocs/gdb/Set-Watchpoints.html):
+    &nbsp;&nbsp;&nbsp;*Currently, the awatch and rwatch commands can only set hardware watchpoints, because accesses to data that don't change the value of the watched expression cannot be detected without examining every instruction as it is being executed, and gdb does not do that currently.*
+    
+  Anyway, it's still better in some cases to use software watchpoints than use the X86-64 registers, thus combination of both 2 approaches is a better solution.
+
+
 
 #5 Remerciement
-Thanks for Fabien Dagnat and Sebastien Martinez for their help during this project.
+Honestly, the project is not easy. One reason is that it needs a deep knowledge of the debug system————dwarf, elf, gdb, etc. which is a domain that I have never get involved before. Especially for fixing the bugs in libuminati, I read tons of code in libdw and spent plenty of time to debug them. Another reason is that due to the inconvenience of communication I almost never asked for help.
+
+Thanks to Fabien Dagnat and Telecom Bretagne for give me this chance to get involved in this project. Thanks to Sebastien Martinez, Arnaud and Dorianand for their pervious work. Thanks to my tuteurs for their help during the project. Since this project is an open source project, I am very pleased to get involved in the future.

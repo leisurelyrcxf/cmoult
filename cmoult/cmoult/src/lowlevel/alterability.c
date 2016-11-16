@@ -3,14 +3,19 @@
 
 static bool flag_wait_static_update_point = 0;
 static bool flag_application_ready_to_update = 0;
-static void manager_signal_handler_wait_static_update_point(int sig){
+static int app_pid = -1;
+
+static void manager_signal_handler_wait_static_update_point(int sig, siginfo_t *info, void *ctx){
   switch(sig){
     case SIGUSR1:
-      flag_application_ready_to_update = 1;
+      printf("recevie SIGUSR1\n");
+      if(info->si_pid == app_pid)
+        flag_application_ready_to_update = 1;
       break;
     case SIGUSR2:
-      printf("recevie SIGUSR1\n");
-      flag_wait_static_update_point = 0;
+      printf("recevie SIGUSR2\n");
+      if(info->si_pid == app_pid)
+        flag_wait_static_update_point = 1;
       break;
     default:
       break;
@@ -19,14 +24,27 @@ static void manager_signal_handler_wait_static_update_point(int sig){
 
 char preupdate_setup_static_update_point(int pid){
   flag_application_ready_to_update = 0;
-  flag_wait_static_update_point = 1;
-  if(signal(SIGUSR1, manager_signal_handler_wait_static_update_point) == SIG_ERR){
-    fprintf(stderr, "Unable to create signal handler\n");
-    return -1;
+  flag_wait_static_update_point = 0;
+  app_pid = pid;
+
+  struct sigaction act;
+  act.sa_sigaction = manager_signal_handler_wait_static_update_point; //sa_sigaction与sa_handler只能取其一
+
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = SA_SIGINFO; // set flag to enable sa_sigaction
+
+  if (sigaction(SIGUSR1, &act, NULL) < 0){
+    fprintf(stderr, "fail to register sigaction\n");
+    exit(-1);
+  }
+
+  if (sigaction(SIGUSR2, &act, NULL) < 0){
+    fprintf(stderr, "fail to register sigaction\n");
+    exit(-1);
   }
 
   kill(pid, SIGUSR1);
-  printf("send SIGUSR1 to process %d, send the pid of manager and makes the application ready for coming update\n", pid);
+  printf("send SIGUSR1 to process %d\n", pid);
   //wait application to response
   sleep(2);
   return 0;
@@ -34,17 +52,17 @@ char preupdate_setup_static_update_point(int pid){
 
 
 
-char wait_static_update_point(unsigned int timeout){
+char wait_static_update_point(unsigned timeout_in_seconds){
   //application is not ready to updates
   if(!flag_application_ready_to_update){
     return -1;
   }
   const struct timespec rqtp = {0, 100000000};
   float time_consumed = 0;
-  while(flag_wait_static_update_point){
+  while(!flag_wait_static_update_point){
     nanosleep(&rqtp, NULL);
     time_consumed += 0.1;
-    if(time_consumed > timeout){
+    if(time_consumed > timeout_in_seconds){
       //can't wait static update point in timeout, may due to maybe the application is down or the application
       //can't get into static update point, etc.
       return -1;
@@ -60,6 +78,7 @@ void cleanup_static_update_point(int pid){
 
   kill(pid, SIGUSR2);
   printf("send SIGUSR2 to process %d, pull the process out of the static point\n", pid);
+  app_pid = -1;
 }
 
 
@@ -71,21 +90,23 @@ void cleanup_static_update_point(int pid){
 
 /*functions for application*/
 
-extern int manager_pid = 0;
+static int manager_pid = -1;
 
-static bool application_static_update_point_update_finished;
+static bool application_static_update_point_update_finished = 0;
 
 static void application_signal_handler_wait_static_update_point(int sig, siginfo_t *info, void *ctx){
-  printf("\nreceive a sig %d\n", sig);
   switch(sig){
     case SIGUSR1:
       manager_pid = info->si_pid;
+      printf("recevie SIGUSR1\n");
       printf("manager pid is %d\n\n", info->si_pid);
       //tell manager the application is ready for the coming update
       kill(manager_pid, SIGUSR1);
       break;
     case SIGUSR2:
-      application_static_update_point_update_finished = 1;
+      printf("recevie SIGUSR2\n");
+      if(info->si_pid == manager_pid)
+        application_static_update_point_update_finished = 1;
       break;
     default:
       break;
@@ -112,15 +133,20 @@ void pre_setup_static_update_point(){
   }
 }
 
-void static_update_point(){
-  if(manager_pid != 0){
+void static_update_point(unsigned timeout_in_seconds){
+  if(manager_pid != -1){
     printf("trapping into static update point, send SIGUSR1 to manager of pid %d\n", manager_pid);
     kill(manager_pid, SIGUSR2);
-    manager_pid = 0;
 
     application_static_update_point_update_finished = 0;
+    unsigned time_passed = 0;
     while(!application_static_update_point_update_finished){
       sleep(1);
+      time_passed += 1;
+      if(time_passed > timeout_in_seconds) {
+        break;
+      }
     }
+    manager_pid = -1;
   }
 }

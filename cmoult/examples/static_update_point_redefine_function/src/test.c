@@ -11,14 +11,12 @@ void __attribute__ ((noinline)) func2(){
   printf("func2()\n");
 }
 
-int manager_pid = 0;
-
 int main(){
   pre_setup_static_update_point();
   while(1){
-    static_update_point();
     func1();
-    sleep(1);
+    sleep(10);
+    static_update_point(60); //timeout 60s
   }
   return 0;
 }

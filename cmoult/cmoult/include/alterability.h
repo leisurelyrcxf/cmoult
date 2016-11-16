@@ -8,7 +8,7 @@
 
 char preupdate_setup_static_update_point(int pid);
 
-char wait_static_update_point();
+char wait_static_update_point(unsigned timeout_in_seconds);
 
 void cleanup_static_update_point(int pid);
 
@@ -18,6 +18,6 @@ void cleanup_static_update_point(int pid);
 
 void pre_setup_static_update_point();
 
-void static_update_point();
+void static_update_point(unsigned timeout_in_seconds);
 
 #endif
