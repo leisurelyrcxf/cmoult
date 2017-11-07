@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ "$1" == "h" ]
+then
+    path=$(find /usr/include/ -name libdw.h | head -n 1)
+    if [ -z "$path" ]
+    then
+        path=$(find /usr/local/include/ -name libdw.h | head -n 1)
+    fi
+elif [ "$1" == "l" ]
+then
+    path=$(find /usr/lib -name libdw.* | head -n 1)
+    if [ -z "$path" ]
+    then
+        path=$(find /usr/local/lib -name libdw.* | head -n 1)    
+    fi
+fi
+
+echo $(dirname "$path")
